@@ -1,0 +1,3 @@
+/Users/mbmcgarry/git/mbmore/build/CMakeFiles/uninstall.dir
+/Users/mbmcgarry/git/mbmore/build/src/CMakeFiles/mbmore_unit_tests.dir
+/Users/mbmcgarry/git/mbmore/build/src/CMakeFiles/mbmore.dir

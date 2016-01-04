@@ -1,3 +1,5 @@
+
+#line 1 "/Users/mbmcgarry/git/mbmore/src/behavior_functions.cc"
 #include "behavior_functions.h"
 #include <ctime> // to make truly random
 #include <cstdlib>
@@ -92,9 +94,8 @@ double RNG_NormalDist(double mean, double sigma, int rng_seed) {
   
   double d = std::sqrt(-2.0*log(r)/r);
   double n1 = x*d;
-  n2 = y*d;
-  
-  /*
+  n2 = y*d;/*
+#line 98 "/Users/mbmcgarry/git/mbmore/src/behavior_functions.cc"
   if (!n2_cached) {
     n2_cached = 1;
     return n1*sigma + mean;
@@ -146,4 +147,4 @@ double uniform_deviate_ ( int seed ){
 */
 
 
-} // namespace mbmore
+}
