@@ -1,6 +1,8 @@
 #ifndef MBMORE_SRC_BEHAVIOR_FUNCTIONS_H_
 #define MBMORE_SRC_BEHAVIOR_FUNCTIONS_H_
 
+namespace mbmore {
+
 // returns true every X interval (ie every 5th timestep)
 bool EveryXTimestep(int curr_time, int interval);
 
@@ -23,5 +25,7 @@ double RNG_NormalDist(double mean, double sigma, int rng_seed);
 
 double RNG_Integer(double min, double max, int rng_seed);
 
+
+} // namespace mbmore
 
 #endif  //  MBMORE_SRC_BEHAVIOR_FUNCTIONS_H_

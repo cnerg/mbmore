@@ -1,5 +1,5 @@
-#ifndef MBMORE_SRC_SINK_H_
-#define MBMORE_SRC_SINK_H_
+#ifndef MBMORE_SRC_RANDOMSINK_H_
+#define MBMORE_SRC_RANDOMSINK_H_
 
 #include <algorithm>
 #include <string>
@@ -208,4 +208,4 @@ class RandomSink : public cyclus::Facility  {
 
 }  // namespace mbmore
 
-#endif  // MBMORE_SRC_SINK_H_
+#endif  // MBMORE_SRC_RANDOMSINK_H_
