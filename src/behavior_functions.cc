@@ -4,7 +4,9 @@
 #include <iostream>
 #include <cmath>
 
+
 bool seeded;
+namespace mbmore {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool EveryXTimestep(int curr_time, int interval) {
@@ -142,3 +144,6 @@ double uniform_deviate_ ( int seed ){
   return seed * ( 1.0 / ( RAND_MAX + 1.0 ) );
 }
 */
+
+
+} // namespace mbmore
