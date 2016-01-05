@@ -104,7 +104,7 @@ double RNG_NormalDist(double mean, double sigma, int rng_seed) {
     return n2*sigma + mean;
   }
   */
-  std::cout << "NormalDist: " << n1*sigma + mean  << std::endl;
+  //  std::cout << "NormalDist: " << n1*sigma + mean  << std::endl;
   return n1*sigma + mean;
 
 }
