@@ -179,7 +179,7 @@ class RandomSink : public cyclus::Facility  {
   double sigma; 
 
   #pragma cyclus var {"default": 0,					\
-                      "tooltip": "time to being allowing trades",\
+                      "tooltip": "time to being allowing trades (starts at 0)",\
                           "doc": "At all timesteps before this value, the "   \
                                  "facility does make material requests. At " \
                                  "times at or beyond this value, requests are "\
