@@ -432,6 +432,106 @@ TEST(RandomEnrichTests, ZeroU235) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(RandomEnrichTests, TestEvery) {
+  // Tests that Enrichment only supplies material on the correct interval
+  // when 'social_behav = Every'
+
+  std::string config = 
+    "   <feed_commod>natu</feed_commod> "
+    "   <feed_recipe>natu1</feed_recipe> "
+    "   <product_commod>leu</product_commod> "
+    "   <tails_commod>tails</tails_commod> "
+    "   <tails_assay>0.003</tails_assay> "
+    "	<social_behav>Every</social_behav> "
+    "  	<behav_interval>2</behav_interval> ";
+
+  int simdur = 5;
+  cyclus::MockSim sim(cyclus::AgentSpec
+		      (":mbmore:RandomEnrich"), config, simdur);
+  sim.AddRecipe("natu1", c_natu1());
+  sim.AddRecipe("leu", c_leu());
+
+  sim.AddSource("natu")
+    .recipe("natu1")
+    .capacity(1)
+    .Finalize();
+
+  
+  sim.AddSink("leu")
+    .capacity(1)
+    .recipe("leu")
+    .Finalize();
+  
+  int id = sim.Run();
+
+  std::vector<Cond> conds;
+  conds.push_back(Cond("Commodity", "==", std::string("leu")));
+  QueryResult qr = sim.db().Query("Transactions", &conds);
+  
+  // Should be only two transactions into the sink
+  EXPECT_EQ(2.0, qr.rows.size());
+  
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(RandomEnrichTests, TestTailsAssay) {
+  // When tails has a truncated normal distribution (tails_sigma),
+  // then each timestep should have a different tails assay, but always
+  // within the range tails-sigma <= val <= tails+sigma
+
+  std::string config = 
+    "   <feed_commod>natu</feed_commod> "
+    "   <feed_recipe>natu1</feed_recipe> "
+    "   <product_commod>enr_u</product_commod> "
+    "   <tails_commod>tails</tails_commod> "
+    "   <tails_assay>0.002</tails_assay> "
+    "   <sigma_tails>0.001</sigma_tails> ";
+
+  // time 1-source to EF, 2-Enrich, add to tails, 3-tails avail. for trade
+  int simdur = 4;
+  cyclus::MockSim sim(cyclus::AgentSpec
+		      (":mbmore:RandomEnrich"), config, simdur);
+  sim.AddRecipe("natu1", c_natu1());
+  sim.AddRecipe("leu", c_leu());
+  
+  sim.AddSource("natu")
+    .recipe("natu1")
+    .Finalize();
+  sim.AddSink("enr_u")
+    .recipe("leu")
+    .capacity(1.0)
+    .Finalize();
+   sim.AddSink("tails")
+    .Finalize();
+  
+  int id = sim.Run();
+
+  std::vector<Cond> conds;
+  conds.push_back(Cond("Commodity", "==", std::string("tails")));
+  QueryResult qr = sim.db().Query("Transactions", &conds);
+  int n_trans = qr.rows.size();
+  EXPECT_EQ(2, n_trans) << "expected 2 transactions, got " << n_trans;
+
+  int res_id = qr.GetVal<int>("ResourceId", 0);
+  cyclus::Material::Ptr m0 = sim.GetMaterial(res_id);
+
+  res_id = qr.GetVal<int>("ResourceId", 1);
+  cyclus::Material::Ptr m1 = sim.GetMaterial(res_id);
+
+  cyclus::toolkit::MatQuery mq0(m0);
+  cyclus::toolkit::MatQuery mq1(m1);
+
+  double t0 = mq0.mass(922350000)/(mq0.mass(922350000) + mq0.mass(922380000));
+  double t1 = mq1.mass(922350000)/(mq1.mass(922350000) + mq1.mass(922380000));
+
+  
+  // Two tails values should be different from one another
+  EXPECT_GT(std::abs(t0 - t1), 0.0);
+
+ //And they should be no more than 2xsigma_tails different
+  EXPECT_LE(std::abs(t0 - t1), 0.002);
+
+}
 
  
 } // namespace randomenrichtests
