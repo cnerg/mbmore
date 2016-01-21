@@ -11,11 +11,6 @@ using cyclus::Material;
 using cyclus::Composition;
 
 namespace mbmore {
-  /*
-    rng_seed: cannot be tested
-    avg_qty: for normal dist (already tested in behavior fns)
-    sigma: for normal dist (already tested in behavior fns)
-  */
 
 Composition::Ptr c_leu() {
   cyclus::CompMap m;
@@ -147,6 +142,12 @@ TEST(RandomSinkTests, TestTradeTime) {
   
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  /*
+    rng_seed: cannot be tested
+    avg_qty: for normal dist (already tested in behavior fns)
+    sigma: for normal dist (already tested in behavior fns)
+  */
+
 //TEST(RandomSinkTests, TestReference) {
   // Not sure how to test the Reference Flag:
   // When Reference is on, then normal distribution should be the same as
