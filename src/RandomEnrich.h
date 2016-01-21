@@ -229,16 +229,6 @@ class RandomEnrich : public cyclus::Facility {
     ConsiderMatlRequests(cyclus::CommodMap<cyclus::Material>::type&
 		     commod_requests);
 
-  inline void SetMaxInventorySize(double size) {
-    max_feed_inventory = size;
-    inventory.capacity(size);
-  }
- 
-  inline void SwuCapacity(double capacity) {
-    swu_capacity = capacity;
-    current_swu_capacity = swu_capacity;
-  }
-
   inline double SwuCapacity() const { return swu_capacity; }
 
   inline const cyclus::toolkit::ResBuf<cyclus::Material>& Tails() const {

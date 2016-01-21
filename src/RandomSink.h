@@ -67,41 +67,6 @@ class RandomSink : public cyclus::Facility  {
       const std::vector< std::pair<cyclus::Trade<cyclus::Product>,
       cyclus::Product::Ptr> >& responses);
 
-  ///  add a commodity to the set of input commodities
-  ///  @param name the commodity name
-  inline void AddCommodity(std::string name) { in_commods.push_back(name); }
-
-  /// @return the current inventory storage size
-  inline double InventorySize() const { return inventory.quantity(); }
-
-  /// ***
-  /// For use only in tests
-  
-  ///  sets the size of the storage inventory for received material
-  ///  @param size the storage size
-  inline void SetMaxInventorySize(double size) {
-    max_inv_size = size;
-    inventory.capacity(size);
-  }
-
-  /// @return the maximum inventory storage size
-  inline double MaxInventorySize() const { return inventory.capacity(); }
-
-  /// sets the capacity of a material generated at any given time step
-  /// @param capacity the reception capacity
-  inline void Capacity(double cap) { capacity = cap; }
-
-  /// @return the reception capacity at any given time step
-  inline double Capacity() const { return capacity; }
-
-  /// determines the amount to request
-  inline double RequestAmt() const {
-    return std::min(capacity, std::max(0.0, inventory.space()));
-  }
-  
-  /// End Use in Test only
-  /// ***
-  
   // Amount of material to be requested. Re-assessed at each timestep
   // in the Tick
   double amt ;
@@ -110,10 +75,6 @@ class RandomSink : public cyclus::Facility  {
   // (re-assessed in the Tick)
   cyclus::Composition::Ptr curr_recipe;
   
-  /// @return the input commodities
-  inline const std::vector<std::string>&
-      input_commodities() const { return in_commods; }
-
  private:
   /// all facilities must have at least one input commodity
   #pragma cyclus var {"tooltip": "input commodities", \

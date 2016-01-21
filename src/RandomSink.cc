@@ -251,8 +251,6 @@ void RandomSink::Tock() {
                                    << context()->time() << ".";
   LOG(cyclus::LEV_INFO3, "SnkFac") << "}";
 
-  std::cout << "sink is holding" << inventory.quantity() << " at "
-	    << context()->time() << std::endl;
 }
 
 
