@@ -88,7 +88,7 @@ void RandomEnrich::Tick() {
     curr_tails_assay = tails_assay + sigma_tails;
   }
 
-  std::cout << "Tails is " << curr_tails_assay << std::endl;
+  //  std::cout << "Tails is " << curr_tails_assay << std::endl;
       
   LOG(cyclus::LEV_INFO3, "EnrFac") << prototype() << " is ticking {";
   LOG(cyclus::LEV_INFO3, "EnrFac") << "}";
