@@ -81,7 +81,8 @@ class NatUConverter : public cyclus::Converter<cyclus::Material> {
   double feed_, tails_;
 };
 
-///  The RandomEnrich facility is a simple Agent that enriches natural
+///  The RandomEnrich is based on the Cycamore Enrich facility.
+///  It is a simple Agent that enriches natural
 ///  uranium in a Cyclus simulation. It does not explicitly compute
 ///  the physical enrichment process, rather it calculates the SWU
 ///  required to convert an source uranium recipe (ie. natural uranium)
@@ -99,7 +100,7 @@ class NatUConverter : public cyclus::Converter<cyclus::Material> {
 ///  to -1 and the material is not accepted.  Any material components other
 ///  other than U235 and U238 are sent directly to the tails buffer.
 ///
-///  The RandomEnrich facility will bid on any request for its output commodity
+///  The RandomEnrich facility can bid on requests for its output commodity
 ///  up to the maximum allowed enrichment (if not specified, default is 100%)
 ///  It bids on either the request quantity, or the maximum quanity allowed
 ///  by its SWU constraint or natural uranium inventory, whichever is lower.
@@ -108,15 +109,21 @@ class NatUConverter : public cyclus::Converter<cyclus::Material> {
 ///  to meet all requests, the requests are fully, then partially filled
 ///  in unspecified but repeatable order.
 ///
-///  The RandomEnrich facility also offers its tails as an output commodity with
+///  The RandomEnrich facility offers its tails as an output commodity with
 ///  no associated recipe.  Bids for tails are constrained only by total
 ///  tails inventory.
-
+///
+///  The custom features of Random Enrich are:
+///  variable tails assay and bidding behavior can be set to occur at Every X
+///  timestep or at Random timesteps
+///
+ 
 class RandomEnrich : public cyclus::Facility {
 #pragma cyclus note {   	  \
   "niche": "enrichment facility",				  \
   "doc":								\
-  "The RandomEnrich facility is a simple agent that enriches natural "	 \
+  "The RandomEnrich facility based on the Cycamore Enrich facility. " \
+  "It is a simple agent that enriches natural "	 \
   "uranium in a Cyclus simulation. It does not explicitly compute "	\
   "the physical enrichment process, rather it calculates the SWU "	\
   "required to convert an source uranium recipe (i.e. natural uranium) " \
@@ -134,7 +141,7 @@ class RandomEnrich : public cyclus::Facility {
   "preference is set to -1 and the material is not accepted.  Any material " \
   "components other than U235 and U238 are sent directly to the tails buffer."\
   "\n\n"								\
-  "The RandomEnrich facility will bid on any request for its output commodity "\
+  "The RandomEnrich facility will bid on requests for its output commodity "\
   "up to the maximum allowed enrichment (if not specified, default is 100%) "\
   "It bids on either the request quantity, or the maximum quanity allowed " \
   "by its SWU constraint or natural uranium inventory, whichever is lower. " \
@@ -144,8 +151,13 @@ class RandomEnrich : public cyclus::Facility {
   "in unspecified but repeatable order."				\
   "\n\n"								\
   "Accumulated tails inventory is offered for trading as a specifiable " \
-  "output commodity.", \
+  "output commodity."\
+  "\n\n" \
+  "The custom features of Random Enrich are: variable tails assay and " \
+  "bidding behavior can be set to occur at Every X timestep or at Random "\
+  "timesteps",						\
 }
+  
  public:
   // --- Module Members ---
   ///    Constructor for the RandomEnrich class

@@ -13,11 +13,19 @@ namespace mbmore {
 
 class Context;
 
-/// This facility acts as a sink of materials and products with a fixed
-/// throughput (per time step) capacity and a lifetime capacity defined by a
-/// total inventory size.  The inventory size and throughput capacity both
-/// default to infinite. If a recipe is provided, it will request material with
-/// that recipe. Requests are made for any number of specified commodities.
+/// Based on the Cycamore Sink, this facility acts as a sink of materials and
+/// products with a fixed maximum throughput (per time step) capacity and a
+/// lifetime capacity defined by a total inventory size.  The inventory size
+/// and throughput capacity both default to infinite. If a recipe is provided,
+/// it will request material with that recipe. Requests are made for any
+/// number of specified commodities.
+
+/// The unique features of the RandomSink: it can accept multiple recipes,
+/// has modifiable material preference, material request behavior can be set,
+/// trading can be suppressed before a specified timestep, material requests
+/// can occur at Every X timestep or at Random timesteps, and quantity
+/// requested can be varied with a Gaussian distribution function.
+///
 class RandomSink : public cyclus::Facility  {
  public:
   RandomSink(cyclus::Context* ctx);
@@ -26,13 +34,19 @@ class RandomSink : public cyclus::Facility  {
 
   #pragma cyclus note { \
     "doc": \
-    " A sink facility that accepts materials and products with a fixed\n"\
+    " A sink facility that accepts materials and products with a fixed maximum\n"\
     " throughput (per time step) capacity and a lifetime capacity defined by\n"\
     " a total inventory size. The inventory size and throughput capacity\n"\
     " both default to infinite. If a recipe is provided, it will request\n"\
     " material with that recipe. Requests are made for any number of\n"\
     " specified commodities.\n" \
-    }
+    "\n" \
+    " The unique features of the RandomSink: it can accept multiple recipes,\n"\
+    "has modifiable material preference, material request behavior can be \n"\
+    "set, trading can be suppressed before a specified timestep, material  \n"\
+    "requests can occur at Every X timestep or at Random timesteps, and  \n"\
+    "quantity requested can be varied with a Gaussian distribution function.\n"\
+}
 
   #pragma cyclus decl
 
@@ -111,8 +125,8 @@ class RandomSink : public cyclus::Facility  {
   std::string social_behav;
 
   #pragma cyclus var {"default": 0, "tooltip": "interval for behavior" ,\
-                      "doc": "interval of social behavior: Every or "\
-                             "EveryRandom.  If 0 then behavior is not " \
+                      "doc": "integer interval of social behavior (Every or "\
+                             "Random).  If 0 then behavior is not " \
                              "implemented"}
   double behav_interval;
 
@@ -142,9 +156,9 @@ class RandomSink : public cyclus::Facility  {
   #pragma cyclus var {"default": 0,					\
                       "tooltip": "time to being allowing trades (starts at 0)",\
                           "doc": "At all timesteps before this value, the "   \
-                                 "facility does make material requests. At " \
-                                 "times at or beyond this value, requests are "\
-                                 "made subject to the other behavioral " \
+                                 "facility does not make material requests. " \
+                                 "At times at or beyond this value, requests "\
+                                 "are made subject to the other behavioral " \
                                  "features available in this archetype"  }
   double t_trade;   //*** 
 
