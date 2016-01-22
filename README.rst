@@ -1,130 +1,80 @@
-.. _hello_world:
 
-Hello, Cyclus!
+Mbmore!
 ==============
-This pages walks you through a very simple hello world example using
-|cyclus| agents.  First make sure that you have the dependencies installed,
-namely |Cyclus|, CMake, and a recent version of Python (2.7 or 3.3+).
+This repository is a collection of custom Cyclus facility archetypes that
+utilize a random number generator (RNG) to create non-deterministic behaviors.
+General methods controlling the behavior (including random number generation
+and Gaussian distributions) are defined in the `behavior functions. <https://github.com/mbmcgarry/mbmore/blob/master/src/behavior_functions.h>`_
 
-First, you need to get the ``cycstub`` code.  Cycstub is a skeleton code base
-that you can use to quick-start new |cyclus| module development projects.
-You can grab cycstub either by using git to
-`clone the repository <https://github.com/cyclus/cycstub.git>`_ or by
-`downloading the zip file <https://github.com/cyclus/cycstub/archive/develop.zip>`_.
-Let's put this code in a ``tutorial`` directory and go into it.
 
-**Getting cycstub via git:**
+Behavior Functions
+------------------
+These functions use the C++ 'srand' to create behaviors that change in time.
+The RNG is seeded only once per simulation.  The seed value can be controlled
+by the <rng_seed> tag in individual archetypes. (Although there are rng_seed
+inputs for each archetype, it is only set once, so avoid defining it multiple
+times in one input file). If set to -1, rng_seed is seeded on the system time at
+simulation execution. Otherwise RNG is seeded on the value of rng_seed, for
+reproducibility.
 
-.. code-block:: bash
+Available behavior functions are:
 
-    $ git clone https://github.com/cyclus/cycstub.git tutorial
-    $ cd tutorial
+* EveryXTimestep - Returns true every X interval
+* EveryRandomXTimestep - Returns true with an approximate frequency defined by
+X, with individual instances randomly determined.
+* RNG_NormalDist - Returns a randomnly generated number from a normal
+  distribution defined by a mean and a sigma (full-width-half-max)
+* RNG_Integer - Returns a randomnly choses discrete number between the
+  defined min and max.
 
-**Getting cycstub via zip:**
 
-.. code-block:: bash
 
-    $ curl -L https://api.github.com/repos/cyclus/cycstub/zipball > tutorial.zip
-    $ unzip tutorial.zip
-    $ mv cyclus-cycstub-* tutorial
-    $ cd tutorial
+Archetypes
+----------
 
-------------
+* RandomEnrich - Based on `cycamore:Enrich <http://fuelcycle.org/user/cycamoreagents.html#cycamore-enrichment>`_ , its additional features include variable
+  tails assay, and bidding behavior that can be set to occur at Every X timestep
+  or at Random timesteps. All additional behaviors default back to the
+  standard cycamore:Enrich.
+  - ``social_behav``: Defines the character of time-varying behavior on offering
+    bids. Options are 'None' (defaults to cycamore archetype), 'Every' (bid
+    frequency is determined by ``behav_interval``, 'Random' (effective bid
+    frequency is determined by ``behav_interval``.
+  - ``behav_interval``: Defines the effective frequency with which bids are
+    placed. During all other timesteps, no bids are made to offer out
+    materials from the enrichment facility.
+  - ``sigma_tails``: If set, it defines the standard deviation of a
+    truncated Gaussian distribution that is used
+    to vary the tails assay over time. The mean of the distribution is set
+    with ``tails_assay``. The variation limited to be within the range
+    [tails_assay - sigma_tails, tails_assay + sigma_tails]
+  - ``rng_seed``: sets the RNG seed value for the simulation (should be defined
+    only once in the input file). If set to -1, the system time at simulation
+    runtime is used, otherwise the integer is passed directly as the seed.
 
-Since cycstub is a template project everything is named ``stub``. We need to
-change this to reflect the name we want our new project to be called -
-``tutorial`` here.  Cycstub comes with a renaming tool to do just this! From
-the command line, run Python in the following way:
-
-.. code-block:: bash
-
-    tutorial $ python rename.py tutorial
-
-------------
-
-Let's now change the behavior of the TutorialFacility's ``Tick()`` &
-``Tock()`` member functions to print "Hello" and "World" respectively.  To do
-this, please open up the :file:`src/tutorial_facility.cc` file in your
-favorite text editor (vim, emacs, gedit, `notepad++ <http://exofrills.org>`_).
-Change the original functions to look like:
-
-**Original Tick() and Tock() in src/tutorial_facility.cc:**
-
-.. code-block:: c++
-
-    void TutorialFacility::Tick() {}
-
-    void TutorialFacility::Tock() {}
-
-**New Tick() and Tock() in src/tutorial_facility.cc:**
-
-.. code-block:: c++
-
-    void TutorialFacility::Tick() {std::cout << "Hello, ";}
-
-    void TutorialFacility::Tock() {std::cout << "World!\n";}
-
-------------
-
-Now that we have altered the behavior of the TutorialFacility, let's compile and
-install the ``tutorial`` project.  This done with the install.py script.
-The install script puts the project into your cyclus userspace,
-``${HOME}/.local/lib/cyclus``.
-
-.. code-block:: bash
-
-    tutorial $ python install.py
-
-------------
-
-Let's run |cyclus| with the TutorialFacility! In the directory there is
-an :file:`example.xml`. Running |cyclus| on this file with the command
-``cyclus example.xml`` should produce the following output.
-
-.. code-block:: bash
-
-    tutorial $ cyclus example.xml
-                  :
-              .CL:CC CC             _Q     _Q  _Q_Q    _Q    _Q              _Q
-            CC;CCCCCCCC:C;         /_\)   /_\)/_/\\)  /_\)  /_\)            /_\)
-            CCCCCCCCCCCCCl       __O|/O___O|/O_OO|/O__O|/O__O|/O____________O|/O__
-         CCCCCCf     iCCCLCC     /////////////////////////////////////////////////
-         iCCCt  ;;;;;.  CCCC
-        CCCC  ;;;;;;;;;. CClL.                          c
-       CCCC ,;;       ;;: CCCC  ;                   : CCCCi
-        CCC ;;         ;;  CC   ;;:                CCC`   `C;
-      lCCC ;;              CCCC  ;;;:             :CC .;;. C;   ;    :   ;  :;;
-      CCCC ;.              CCCC    ;;;,           CC ;    ; Ci  ;    :   ;  :  ;
-       iCC :;               CC       ;;;,        ;C ;       CC  ;    :   ; .
-      CCCi ;;               CCC        ;;;.      .C ;       tf  ;    :   ;  ;.
-      CCC  ;;               CCC          ;;;;;;; fC :       lC  ;    :   ;    ;:
-       iCf ;;               CC         :;;:      tC ;       CC  ;    :   ;     ;
-      fCCC :;              LCCf      ;;;:         LC :.  ,: C   ;    ;   ; ;   ;
-      CCCC  ;;             CCCC    ;;;:           CCi `;;` CC.  ;;;; :;.;.  ; ,;
-        CCl ;;             CC    ;;;;              CCC    CCL
-       tCCC  ;;        ;; CCCL  ;;;                  tCCCCC.
-        CCCC  ;;     :;; CCCCf  ;                     ,L
-         lCCC   ;;;;;;  CCCL
-         CCCCCC  :;;  fCCCCC
-          . CCCC     CCCC .
-           .CCCCCCCCCCCCCi
-              iCCCCCLCf
-               .  C. ,
-                  :
-    Hello, World!
-    Hello, World!
-    Hello, World!
-    Hello, World!
-    Hello, World!
-    Hello, World!
-    Hello, World!
-    Hello, World!
-    Hello, World!
-    Hello, World!
-
-    Status: Cyclus run successful!
-    Output location: cyclus.sqlite
-    Simulation ID: 0ae730e0-a9a8-4576-afaa-d1db6399d5a2
-
-If you look in the input file you'll see that the simulation duration was set
-to 10.  This is why "Hello, World!" is printed ten times.
+*RandomSink - Based on `cycamore:Sink <http://fuelcycle.org/user/cycamoreagents.html#cycamore-sink>`_ , its additional features include
+      ability to accept multiple recipes,  modifiable material preference,
+      material request behavior can be set, trading can be suppressed before
+      a specified timestep, material requests can occur at Every X timestep
+      or at Random timesteps, and quantity requested can be varied using a
+      Gaussian distribution function.
+  - ``avg_qty``: Quantity of material requested. If ``sigma`` is also set then
+    this is the mean value of time-varying material request defined by a
+    Gaussian distribution.
+  - ``sigma``: The standard deviation (FWHM) of the gaussian distribution used
+    to generate the quantity of material requested.
+  - ``social_behav``: Defines the character of time-varying behavior in
+    requesting materials. Options are 'None' (defaults to cycamore archetype),
+    'Every' (bid frequency is determined by ``behav_interval``, 'Random'
+    (effective bid frequency is determined by ``behav_interval``, 'Reference'
+    (queries the RNG to preserve order but requests a zero quantity, preserving
+    the RNG querying of other archetypes)
+  - ``behav_interval``: Defines the effective frequency with which request for
+    material are placed. During all other timesteps, no bids are made to offer
+    out materials from the enrichment facility.
+  - ``rng_seed``: sets the RNG seed value for the simulation (should be defined
+    only once in the input file). If set to -1, the system time at simulation
+    runtime is used, otherwise the integer is passed directly as the seed.
+  - ``t_trade``: At all timesteps before this value, the facility does not make
+    material requests. At times at or beyond this value, requests are made,
+    subject to the other behavior features available in this arcehtype.
