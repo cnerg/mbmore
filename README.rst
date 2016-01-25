@@ -32,10 +32,10 @@ X, with individual instances randomly determined.
 Archetypes
 ----------
 
-* RandomEnrich - Based on `cycamore:Enrich <http://fuelcycle.org/user/cycamoreagents.html#cycamore-enrichment>`_ , its additional features include variable
-  tails assay, and bidding behavior that can be set to occur at Every X timestep
-  or at Random timesteps. All additional behaviors default back to the
-  standard cycamore:Enrich.
+RandomEnrich
+~~~~~~~~~~~~
+Based on `cycamore:Enrich <http://fuelcycle.org/user/cycamoreagents.html#cycamore-enrichment>`_ , its additional features include variable tails assay, and bidding behavior that can be set to occur at Every X timestep or at Random timesteps. All additional behaviors default back to the standard cycamore:Enrich.
+
   - ``social_behav``: Defines the character of time-varying behavior on offering
     bids. Options are 'None' (defaults to cycamore archetype), 'Every' (bid
     frequency is determined by ``behav_interval``, 'Random' (effective bid
@@ -47,17 +47,15 @@ Archetypes
     truncated Gaussian distribution that is used
     to vary the tails assay over time. The mean of the distribution is set
     with ``tails_assay``. The variation limited to be within the range
-    [tails_assay - sigma_tails, tails_assay + sigma_tails]
+    [``tails_assay`` - ``sigma_tails``, ``tails_assay`` + ``sigma_tails``]
   - ``rng_seed``: sets the RNG seed value for the simulation (should be defined
     only once in the input file). If set to -1, the system time at simulation
     runtime is used, otherwise the integer is passed directly as the seed.
 
-*RandomSink - Based on `cycamore:Sink <http://fuelcycle.org/user/cycamoreagents.html#cycamore-sink>`_ , its additional features include
-      ability to accept multiple recipes,  modifiable material preference,
-      material request behavior can be set, trading can be suppressed before
-      a specified timestep, material requests can occur at Every X timestep
-      or at Random timesteps, and quantity requested can be varied using a
-      Gaussian distribution function.
+RandomSink
+~~~~~~~~~~~
+Based on `cycamore:Sink <http://fuelcycle.org/user/cycamoreagents.html#cycamore-sink>`_ , its additional features include ability to accept multiple recipes,  modifiable material preference, material request behavior can be set, trading can be suppressed before a specified timestep, material requests can occur at Every X timestep or at Random timesteps, and quantity requested can be varied using a Gaussian distribution function.
+
   - ``avg_qty``: Quantity of material requested. If ``sigma`` is also set then
     this is the mean value of time-varying material request defined by a
     Gaussian distribution.
