@@ -31,6 +31,7 @@ Archetypes
 
 RandomEnrich
 ~~~~~~~~~~~~
+
 Based on `cycamore:Enrich <http://fuelcycle.org/user/cycamoreagents.html#cycamore-enrichment>`_ , its additional features include variable tails assay, and bidding behavior that can be set to occur at Every X timestep or at Random timesteps. All additional behaviors default back to the standard cycamore:Enrich.
   - ``social_behav``: Defines the character of time-varying behavior on offering
     bids. Options are 'None' (defaults to cycamore archetype), 'Every' (bid
@@ -50,6 +51,7 @@ Based on `cycamore:Enrich <http://fuelcycle.org/user/cycamoreagents.html#cycamor
 
 RandomSink
 ~~~~~~~~~~~
+
 Based on `cycamore:Sink <http://fuelcycle.org/user/cycamoreagents.html#cycamore-sink>`_ , its additional features include ability to accept multiple recipes,  modifiable material preference, material request behavior can be set, trading can be suppressed before a specified timestep, material requests can occur at Every X timestep or at Random timesteps, and quantity requested can be varied using a Gaussian distribution function.
   - ``avg_qty``: Quantity of material requested. If ``sigma`` is also set then
     this is the mean value of time-varying material request defined by a
