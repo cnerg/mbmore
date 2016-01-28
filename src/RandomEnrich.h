@@ -379,7 +379,13 @@ class RandomEnrich : public cyclus::Facility {
                              "implemented"}
   double behav_interval;
 
-
+  #pragma cyclus var {"default": 0, "tooltip": "interval for inspections" ,\
+                      "doc": "average interval for inspections, will always " \
+                             "be implemented with EveryRandom.  If 0" \
+                             "then Inspections table is not filled out. If "\
+                             "negative then RNG is queried but no inspections" \
+                             "are recorded (to preserve reproducibility)."}
+  int inspect_freq;
 
   #pragma cyclus var {"default": 0, "tooltip": "Seed for RNG" ,		\
                           "doc": "seed on current system time if set to -1," \
