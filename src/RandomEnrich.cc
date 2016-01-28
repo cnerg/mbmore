@@ -16,11 +16,11 @@ RandomEnrich::RandomEnrich(cyclus::Context* ctx)
     : cyclus::Facility(ctx),
       tails_assay(0),
       sigma_tails(0),
+      social_behav("None"), 
+      behav_interval(0),
+      rng_seed(0),   
       swu_capacity(0),
       max_enrich(1), 
-      social_behav("None"), //***
-      behav_interval(0), //***
-      rng_seed(0),   //***
       initial_feed(0),
       feed_commod(""),
       feed_recipe(""),

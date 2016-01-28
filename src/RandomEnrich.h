@@ -379,10 +379,12 @@ class RandomEnrich : public cyclus::Facility {
                              "implemented"}
   double behav_interval;
 
+
+
   #pragma cyclus var {"default": 0, "tooltip": "Seed for RNG" ,		\
                           "doc": "seed on current system time if set to -1," \
                                  " otherwise seed on number defined"}
-  bool rng_seed;
+  int rng_seed;
   //***
   
   #pragma cyclus var {						       \
