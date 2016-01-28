@@ -13,11 +13,18 @@ bool EveryXTimestep(int curr_time, int interval);
 
 bool EveryRandomXTimestep(int frequency, int rng_seed);
 
+// returns True with a defined probability
+// (ie. if probability is 0.2 then will return True on average
+// 1 in 5 calls).
+// 
+bool XLikely(double prob, int rng_seed);
+
 // returns a randomly generated number from a
 // normal distribution defined by mean and
 // sigma (full-width-half-max)
 //double RNG_NormalDist(double mean, double sigma);
 
+ 
 double RNG_NormalDist(double mean, double sigma, int rng_seed);
 
 // returns a randomly chosen discrete number between min and max
