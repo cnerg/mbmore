@@ -30,7 +30,7 @@ bool EveryRandomXTimestep(int frequency, int rng_seed) {
     }
     seeded = true;
   }
-  int midpoint = frequency / 2;  
+  double midpoint = frequency / 2;  
  
   // The interwebs say that rand is not truly random.
   //  tRan = rand() % frequency;
@@ -40,6 +40,45 @@ bool EveryRandomXTimestep(int frequency, int rng_seed) {
   //    std::cout << "EveryRandom: " << cur_rand/RAND_MAX << std::endl;
 
   if (tRan == midpoint) {
+    return true;
+  } else {
+   return false;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Returns true for this instance with a particular likelihood of getting a
+// True over all instances. (same calculation as EveryRandomX, but with
+// probability = 1/frequency (and a bunch of ints -> doubles as a result)
+
+  bool XLikely(double prob, int rng_seed) {
+
+  if (prob == 0) {
+    return false;
+  }
+
+  if (!seeded) {
+    if (rng_seed == -1) {
+      srand(time(0));    // seed random
+    }
+    else {
+      srand(rng_seed);   // user-defined fixed seed
+    }
+    seeded = true;
+  }
+  double frequency = 1 / prob;
+  double midpoint = frequency / 2;  
+ 
+  // The interwebs say that rand is not truly random.
+  //  tRan = rand() % frequency;
+  double cur_rand = rand();
+  double tRan = 1 + (cur_rand*(1.0/(RAND_MAX+1.0))) * frequency;
+  //  int tRan = 1 + uniform_deviate_(rand()) * frequency;
+  //    std::cout << "EveryRandom: " << cur_rand/RAND_MAX << std::endl;
+
+  double abs_diff = std::abs(tRan - midpoint);
+  
+  if (abs_diff < 1.0e-2) {
     return true;
   } else {
    return false;
