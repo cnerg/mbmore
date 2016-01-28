@@ -18,6 +18,7 @@ RandomEnrich::RandomEnrich(cyclus::Context* ctx)
       sigma_tails(0),
       social_behav("None"), 
       behav_interval(0),
+      inspect_freq(0),
       rng_seed(0),   
       swu_capacity(0),
       max_enrich(1), 
@@ -87,9 +88,8 @@ void RandomEnrich::Tick() {
   if (curr_tails_assay > (tails_assay + sigma_tails)) {
     curr_tails_assay = tails_assay + sigma_tails;
   }
-
   //  std::cout << "Tails is " << curr_tails_assay << std::endl;
-      
+
   LOG(cyclus::LEV_INFO3, "EnrFac") << prototype() << " is ticking {";
   LOG(cyclus::LEV_INFO3, "EnrFac") << "}";
   current_swu_capacity = SwuCapacity();
@@ -100,6 +100,13 @@ void RandomEnrich::Tock() {
   using cyclus::toolkit::RecordTimeSeries;
   RecordTimeSeries<cyclus::toolkit::ENRICH_SWU>(this, intra_timestep_swu_);
   RecordTimeSeries<cyclus::toolkit::ENRICH_FEED>(this, intra_timestep_feed_);
+
+  // Add any inspections to the Inspection table
+  bool do_inspect = EveryRandomXTimestep(inspect_freq, rng_seed);
+  if (do_inspect == True){
+    RecordInspection();
+  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -490,6 +497,64 @@ void RandomEnrich::RecordRandomEnrich_(double natural_u, double swu) {
       ->AddVal("Natural_Uranium", natural_u)
       ->AddVal("SWU", swu)
       ->Record();
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RandomEnrich::RecordInspection_(double natural_u, double swu) {
+  using cyclus::Context;
+  using cyclus::Agent;
+
+  std::string sample_location = "Cascade";
+
+  // TODO: Add multiple samples to an inspection, rules about only Cascade
+  // having true positives? Or increased chance of true based on location?
+
+  // TODO: These will all be state variables
+  int n_swipes = 6;
+  float false_pos = 0.5;
+  float false_neg = 0.0;
+
+  // TODO: HEU Cannot be present if no HEU has been made.
+  // If HEU has been made, then its presence becomes more likely to detect
+  // scaling with quantity produced
+  bool HEU_present = 1;
+  //  float likely_detect = 0.5;
+
+  // Each sample is 6 swipes, analyzed independently with a high rate of
+  // false readigs.
+  // Based on whether HEU is 'detected' in the sample, determine whether or not
+  // any false positives or negatives change the swipe result.
+  int pos_swipes = 0;
+  for (int swipeit = 0; swipeit < n_swipes; swipeit++) {
+    double prob;
+    if (HEU_present == 1){
+      prob = false_neg;
+    }
+    else {
+      prob = false_pos;
+    }
+
+    bool flip = XLikely(prob, rng_seed);
+
+    if ((HEU_present && !flip) || (!HEU_present && flip)){
+      pos_swipes++;
+    }
+  }
+    
+  Context* ctx = Agent::context();
+  context()->NewDatum("Inspections")
+    ->AddVal("AgentID", id())
+    ->AddVal("Time", context()->time())
+    ->AddVal("SampleLoc", sample_location)
+    ->AddVal("PosSwipeFrac", float(pos_swipes)/float(n_swipes))
+    ->Record();
+
+  /*
+  LOG(cyclus::LEV_DEBUG1, "EnrFac") << prototype()
+                                    << " Has been inspected:";
+  LOG(cyclus::LEV_DEBUG1, "EnrFac") << "  * N_Samples: " << natural_u;
+  LOG(cyclus::LEV_DEBUG1, "EnrFac") << "  *    Swipe_frac: " << swu;
+  */
+  
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Decide whether each individual bid will be responded to.
