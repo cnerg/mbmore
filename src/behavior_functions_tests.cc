@@ -54,6 +54,35 @@ TEST(Behavior_Functions_Test, TestEveryRandomX) {
   }
   EXPECT_TRUE(good);
 }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Should return True about 1/freq times. For freq=2, should have ~equal
+// number of True and False, but on a given instance can vary by 15% or
+// more. Therefore, give it 3 tries to get within a reasonable tolerance.
+TEST(Behavior_Functions_Test, XLikely){
+
+  double prob = 0.5;
+  int rng_seed = -1;
+
+  double tol = 0.05;
+
+  bool good = false;
+  int ntries = 0;
+  
+  while ((good == false) and (ntries < 3)){
+    double n_true = 0;
+    double n_false = 0;
+    for (int i = 0; i < 10000; i++) {
+      bool res = XLikely(prob, rng_seed);
+      (res == true) ? (n_true++) : (n_false++);
+    }
+    
+    ((n_true/n_false < 1.0 + tol) && (n_true/n_false > 1.0 - tol)) ?
+      good = true : ntries++;
+    std::cout << "T: " << n_true << "F: "<< n_false << std::endl;
+    std::cout << "ntries: " << ntries << std::endl;
+  }
+  EXPECT_TRUE(good);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Mean and Standard deviation of a Normal Gaussian Distribution should be
