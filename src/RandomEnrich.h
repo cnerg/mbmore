@@ -275,7 +275,12 @@ class RandomEnrich : public cyclus::Facility {
 
   ///  @brief records and enrichment with the cyclus::Recorder
   void RecordRandomEnrich_(double natural_u, double swu);
-  
+
+  /// @brief if an inspection is performed, the resulting fraction of
+  /// positive swipes/total swipes is recorded in the database for each
+  /// unique sampling location
+  void RecordInspection_();
+
   #pragma cyclus var { \
     "tooltip": "feed commodity",					\
     "doc": "feed commodity that the enrichment facility accepts",	\
@@ -373,19 +378,40 @@ class RandomEnrich : public cyclus::Facility {
                                  "time interval for behavior action"}
   std::string social_behav;
 
-  #pragma cyclus var {"default": 0, "tooltip": "interval for behavior" ,\
+  #pragma cyclus var {"default": 0, "tooltip": "interval for behavior",\
                       "doc": "interval of social behavior: Every or "\
                              "EveryRandom.  If 0 then behavior is not " \
                              "implemented"}
   double behav_interval;
 
-  #pragma cyclus var {"default": 0, "tooltip": "interval for inspections" ,\
-                      "doc": "average interval for inspections, will always " \
+  #pragma cyclus var {"default": 0, "tooltip": "interval for inspections",\
+                      "doc": "average interval for inspections, will always "\
                              "be implemented with EveryRandom.  If 0" \
                              "then Inspections table is not filled out. If "\
-                             "negative then RNG is queried but no inspections" \
+                             "negative then RNG is queried but no inspections"\
                              "are recorded (to preserve reproducibility)."}
   int inspect_freq;
+ 
+  #pragma cyclus var {"default": 10, "tooltip": "number of swipes per "\
+                             "inspection sample",      \
+                      "doc": "number of swipes taken for a single sampled "\
+                             "location by an inspector. Only used if " \
+			     "inspection frequency is non-zero. Each swipe " \
+			     "can have a false result as defined by false_pos "\
+			     "and false_neg"}
+  int n_swipes;
+
+  #pragma cyclus var {"default": 0, "tooltip": "rate of false-positive swipes",\
+                      "doc": "average rate of swipes that falsely detect HEU "\
+                             "when in fact no HEU was present.  Applied "\
+			     "individually to each swipe in a sample"}
+  double false_pos;
+
+  #pragma cyclus var {"default": 0, "tooltip": "rate of false-negative swipes",\
+                      "doc": "average rate of swipes that falsely report no "\
+                             "HEU when in fact HEU is present.  Applied "\
+			     "individually to each swipe in a sample"}
+  double false_neg;
 
   #pragma cyclus var {"default": 0, "tooltip": "Seed for RNG" ,		\
                           "doc": "seed on current system time if set to -1," \

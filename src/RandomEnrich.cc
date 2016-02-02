@@ -19,6 +19,9 @@ RandomEnrich::RandomEnrich(cyclus::Context* ctx)
       social_behav("None"), 
       behav_interval(0),
       inspect_freq(0),
+      n_swipes(10),
+      false_pos(0),
+      false_neg(0),
       rng_seed(0),   
       swu_capacity(0),
       max_enrich(1), 
@@ -103,8 +106,8 @@ void RandomEnrich::Tock() {
 
   // Add any inspections to the Inspection table
   bool do_inspect = EveryRandomXTimestep(inspect_freq, rng_seed);
-  if (do_inspect == True){
-    RecordInspection();
+  if (do_inspect == true){
+    RecordInspection_();
   }
 
 }
@@ -499,7 +502,7 @@ void RandomEnrich::RecordRandomEnrich_(double natural_u, double swu) {
       ->Record();
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RandomEnrich::RecordInspection_(double natural_u, double swu) {
+void RandomEnrich::RecordInspection_() {
   using cyclus::Context;
   using cyclus::Agent;
 
@@ -508,16 +511,11 @@ void RandomEnrich::RecordInspection_(double natural_u, double swu) {
   // TODO: Add multiple samples to an inspection, rules about only Cascade
   // having true positives? Or increased chance of true based on location?
 
-  // TODO: These will all be state variables
-  int n_swipes = 6;
-  float false_pos = 0.5;
-  float false_neg = 0.0;
-
   // TODO: HEU Cannot be present if no HEU has been made.
   // If HEU has been made, then its presence becomes more likely to detect
   // scaling with quantity produced
   bool HEU_present = 1;
-  //  float likely_detect = 0.5;
+  //  double likely_detect = 0.5;
 
   // Each sample is 6 swipes, analyzed independently with a high rate of
   // false readigs.
@@ -545,7 +543,7 @@ void RandomEnrich::RecordInspection_(double natural_u, double swu) {
     ->AddVal("AgentID", id())
     ->AddVal("Time", context()->time())
     ->AddVal("SampleLoc", sample_location)
-    ->AddVal("PosSwipeFrac", float(pos_swipes)/float(n_swipes))
+    ->AddVal("PosSwipeFrac", double(pos_swipes)/double(n_swipes))
     ->Record();
 
   /*
