@@ -248,8 +248,17 @@ class RandomEnrich : public cyclus::Facility {
   } 
   // Tails assay at each timestep. Re-assessed at each Tick if sigma_tails > 0
   double curr_tails_assay ;
- 
 
+  // Total HEU (defined as > 20% enrichment) produced in the simulation at each
+  // timestep
+  double net_heu;
+
+  // Presence of heu in the enrichment facility. Once it is present, it will
+  // remain present for the rest of the simulation
+  bool HEU_present;
+
+  // Find the simulation duration
+  cyclus::SimInfo si_;
 
  private:
   ///   @brief adds a material into the natural uranium inventory
