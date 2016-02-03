@@ -69,7 +69,13 @@ void RandomEnrich::Build(cyclus::Agent* parent) {
 void RandomEnrich::Tick() {
 
   int cur_time = context()->time();
-  
+
+  // set inspection defaults
+  if (cur_time == 0) {
+    net_heu = 0;
+    HEU_present = 0;
+  }
+
   // decide whether trading if trading only sometimes.
   trade_timestep = 0 ;
   if (social_behav == "Every" && behav_interval > 0) {
@@ -414,7 +420,8 @@ cyclus::Material::Ptr RandomEnrich::Enrich_(
   using cyclus::toolkit::TailsQty;
 
   // get enrichment parameters
-  Assays assays(FeedAssay(), UraniumAssay(mat), curr_tails_assay);
+  double u_assay = UraniumAssay(mat);
+  Assays assays(FeedAssay(), u_assay, curr_tails_assay);
   double swu_req = SwuRequired(qty, assays);
   double natu_req = FeedQty(qty, assays);
 
@@ -461,6 +468,13 @@ cyclus::Material::Ptr RandomEnrich::Enrich_(
   intra_timestep_feed_ += feed_req;
   RecordRandomEnrich_(feed_req, swu_req);
 
+  // If enriched to HEU then record total HEU produced
+  double heu_definition = 0.2;
+  std::cout << "uassay is " << u_assay << "Qty is " << qty << std::endl;
+  if (u_assay > heu_definition){
+    net_heu += qty;
+  }
+
   LOG(cyclus::LEV_INFO5, "EnrFac") << prototype() <<
                                 " has performed an enrichment: ";
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Qty: "
@@ -505,19 +519,32 @@ void RandomEnrich::RecordRandomEnrich_(double natural_u, double swu) {
 void RandomEnrich::RecordInspection_() {
   using cyclus::Context;
   using cyclus::Agent;
+  std::cout << "Inspection at " << context()->time() << "HEU qty" << net_heu << std::endl;
 
   std::string sample_location = "Cascade";
 
   // TODO: Add multiple samples to an inspection, rules about only Cascade
   // having true positives? Or increased chance of true based on location?
 
-  // TODO: HEU Cannot be present if no HEU has been made.
   // If HEU has been made, then its presence becomes more likely to detect
-  // scaling with quantity produced
-  bool HEU_present = 1;
-  //  double likely_detect = 0.5;
+  // scaling with quantity produced or time elapsed (depending on model)
+  double heu_ship_qty = 0.1;
+  if (social_behav == "None"){
+    // HEU is produced continuously, and removed when some quantity has been
+    // produced. Risk of leakage increases with time in discrete steps
+    if (net_heu >= heu_ship_qty){
+      std::cout << "No Social and heu is being shippped" << std::endl;
+      HEU_present = XLikely(context()->time()/si_.duration, rng_seed);
+      net_heu = net_heu - heu_ship_qty;
+    }
+  }
+  else if ((net_heu > 0.0) && (HEU_present == 0)){
+    // HEU is not produced continuously, test whether any has been made since
+    // last inspection
+    HEU_present = XLikely(context()->time()/si_.duration, rng_seed);
+  }
 
-  // Each sample is 6 swipes, analyzed independently with a high rate of
+  // Each sample is N, swipes, analyzed independently with a high rate of
   // false readigs.
   // Based on whether HEU is 'detected' in the sample, determine whether or not
   // any false positives or negatives change the swipe result.
@@ -555,7 +582,8 @@ void RandomEnrich::RecordInspection_() {
   
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Decide whether each individual bid will be responded to.
+// Decide whether each individual bid will be responded to based on whether
+// the enrichment facility is trading
 cyclus::BidPortfolio<cyclus::Material>::Ptr RandomEnrich::ConsiderMatlRequests(
   cyclus::CommodMap<cyclus::Material>::type& out_requests) {
   using cyclus::Bid;
