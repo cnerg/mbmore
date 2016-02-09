@@ -43,6 +43,12 @@ Composition::Ptr c_heu() {
   m[922380000] = 0.80;
   return Composition::CreateFromMass(m);
 };
+Composition::Ptr c_heu90() {
+  cyclus::CompMap m;
+  m[922350000] = 0.90;
+  m[922380000] = 0.10;
+  return Composition::CreateFromMass(m);
+};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(RandomEnrichTests, RequestQty) {
@@ -535,12 +541,9 @@ TEST(RandomEnrichTests, TestTailsAssay) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(RandomEnrichTests, TestInspectionNegatives) {
-  // Inspections should occur with an average frequency, and swipe rate
-  // should have the expected # of HEU detections given false positive
-  // and false negative rates
-  // TODO: TEST FALSE POSITIVE RATE
-
-  //TODO: AN exception occurs if the definition of HEU == 20%. Why?
+  // Inspections occur with an average frequency (50%),
+  // False_Neg: swipe rate should have 50% false negative rate when HEU is
+  // present
   
   std::string config = 
     "   <feed_commod>natu</feed_commod> "
@@ -560,14 +563,72 @@ TEST(RandomEnrichTests, TestInspectionNegatives) {
   cyclus::MockSim sim(cyclus::AgentSpec
 		      (":mbmore:RandomEnrich"), config, simdur);
   sim.AddRecipe("natu1", c_natu1());
-  sim.AddRecipe("heu", c_heu());
+  sim.AddRecipe("enr_u", c_heu90());
   
   sim.AddSource("natu")
     .recipe("natu1")
-    .Finalize();
-  sim.AddSink("enr_heu")
-    .recipe("heu")
     .capacity(1.0)
+    .Finalize();
+  sim.AddSink("enr_u")
+    .recipe("enr_u")
+    .Finalize();
+  
+  int id = sim.Run();
+  std::vector<Cond> conds;
+  conds.push_back(Cond("SampleLoc", "==", std::string("Cascade")));
+  QueryResult qr = sim.db().Query("Inspections", &conds);
+  int n_inspect = qr.rows.size();
+
+  double eps = 0.1;
+  double inspect_ratio = double(n_inspect)/double(simdur);
+  EXPECT_NEAR(inspect_ratio, 0.5, eps) <<
+    "expected 50 inspections, got " << n_inspect;
+
+  // start counting fraction of positive swipes once HEU has been officially
+  // detected.
+  int n_heu_detected = 0;
+  double swipe_tot = 0;
+  for (int it=0; it < n_inspect; it++){
+    double posfrac = qr.GetVal<double>("PosSwipeFrac", it);
+    swipe_tot += posfrac;
+    if (posfrac > 0) { n_heu_detected++; } 
+  }
+  double pos_rate = swipe_tot/double(n_heu_detected);
+  EXPECT_NEAR(pos_rate, 0.5, eps);
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(RandomEnrichTests, TestInspectionPositives) {
+  // If no HEU is actually in the facility, the inspections should still
+  // falsely measure the presence of HEU with some liklihood (50%)
+
+ std::string config = 
+    "   <feed_commod>natu</feed_commod> "
+    "   <feed_recipe>natu1</feed_recipe> "
+    "   <product_commod>enr_u</product_commod> "
+    "   <tails_commod>tails</tails_commod> "
+    "   <tails_assay>0.002</tails_assay> "
+    "   <social_behav>Every</social_behav> "
+    "   <behav_interval>1</behav_interval> "
+    "   <inspect_freq>2</inspect_freq> "
+    "   <n_swipes>10</n_swipes> "
+    "   <false_pos>0.5</false_pos> "
+    "   <false_neg>0</false_neg> ";
+
+  // time 1-source to EF, 2-Enrich to sink
+  int simdur = 100;
+  cyclus::MockSim sim(cyclus::AgentSpec
+		      (":mbmore:RandomEnrich"), config, simdur);
+  sim.AddRecipe("natu1", c_natu1());
+  sim.AddRecipe("enr_u", c_leu()); // this is 4% enriched, still "LEU"
+  
+  sim.AddSource("natu")
+    .recipe("natu1")
+    .capacity(1.0)
+    .Finalize();
+  sim.AddSink("enr_u")
+    .recipe("enr_u")
     .Finalize();
   
   int id = sim.Run();
@@ -577,72 +638,16 @@ TEST(RandomEnrichTests, TestInspectionNegatives) {
   int n_inspect = qr.rows.size();
 
   double eps = 0.05;
-  double inspect_ratio = double(n_inspect)/double(simdur);
-  EXPECT_NEAR(inspect_ratio, 0.5, eps) <<
-    "expected 50 inspections, got " << n_inspect;
 
   double swipe_tot = 0;
   for (int it=0; it < n_inspect; it++){
-    swipe_tot += qr.GetVal<double>("PosSwipeFrac", it);
+    double posfrac = qr.GetVal<double>("PosSwipeFrac", it);
+    swipe_tot += posfrac;
   }
   double pos_rate = swipe_tot/double(n_inspect);
   EXPECT_NEAR(pos_rate, 0.5, eps);
 
-}
+  } 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-  TEST(RandomEnrichTests, TestInspectionPositives) {
-  // inspections should have the expected # of HEU detections
-  // given false positive rate (test assumes no actual HEU presence)
-//TODO: TEST by having simulation with no HEU so that all swipes are negative  
-
-  std::string config = 
-    "   <feed_commod>natu</feed_commod> "
-    "   <feed_recipe>natu1</feed_recipe> "
-    "   <product_commod>enr_u</product_commod> "
-    "   <tails_commod>tails</tails_commod> "
-    "   <tails_assay>0.002</tails_assay> "
-    "   <inspect_freq>2</inspect_freq> "
-    "   <n_swipes>10</n_swipes> "
-    "   <false_pos>0</false_pos> "
-    "   <false_neg>0.5</false_neg> ";
-
-  // time 1-source to EF, 2-Enrich to sink
-  int simdur = 100;
-  cyclus::MockSim sim(cyclus::AgentSpec
-		      (":mbmore:RandomEnrich"), config, simdur);
-  sim.AddRecipe("natu1", c_natu1());
-  sim.AddRecipe("leu", c_leu());
-  sim.AddRecipe("heu", c_heu());
-  
-  sim.AddSource("natu")
-    .recipe("natu1")
-    .Finalize();
-  sim.AddSink("enr_u")
-    .recipe("leu")
-    .capacity(1.0)
-    .Finalize();
-   sim.AddSink("enr_heu")
-    .recipe("heu")
-    .capacity(1.0)
-    .Finalize();
-  
-  int id = sim.Run();
-  std::vector<Cond> conds;
-  conds.push_back(Cond("Time", "<", simdur));
-  QueryResult qr = sim.db().Query("Inspections", &conds);
-  int n_inspect = qr.rows.size();
-
-  double swipe_tot = 0;
-  for (int it=0; it < n_inspect; it++){
-    swipe_tot += qr.GetVal<double>("PosSwipeFrac", it);
-  }
-  double pos_rate = swipe_tot/double(n_inspect);
-  double eps = 0.05;
-  EXPECT_NEAR(pos_rate, 0.5, eps);
-}
-*/
-  
 } // namespace randomenrichtests
 } // namespace mbmore

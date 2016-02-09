@@ -1,6 +1,7 @@
 // Implements the RandomEnrich class
 #include "RandomEnrich.h"
 #include "behavior_functions.h"
+#include "sim_init.h"
 
 #include <algorithm>
 #include <cmath>
@@ -8,6 +9,7 @@
 #include <sstream>
 #include <vector>
 #include <boost/lexical_cast.hpp>
+
 
 namespace mbmore {
 
@@ -112,6 +114,7 @@ void RandomEnrich::Tock() {
 
   // Add any inspections to the Inspection table
   bool do_inspect = EveryRandomXTimestep(inspect_freq, rng_seed);
+  std::cout << "Inspection occuring? " << do_inspect << std::endl;
   if (do_inspect == true){
     RecordInspection_();
   }
@@ -534,14 +537,17 @@ void RandomEnrich::RecordInspection_() {
     // produced. Risk of leakage increases with time in discrete steps
     if (net_heu >= heu_ship_qty){
       std::cout << "No Social and heu is being shippped" << std::endl;
-      HEU_present = XLikely(context()->time()/si_.duration, rng_seed);
-      net_heu = net_heu - heu_ship_qty;
+      HEU_present = XLikely(double(context()->time())/double(simdur), rng_seed);
+      net_heu -= heu_ship_qty;
     }
   }
-  else if ((net_heu > 0.0) && (HEU_present == 0)){
+  else if ((net_heu > 0.0) && (HEU_present == false)){
+    std::cout << "some HEU has been detected" << std::endl;
     // HEU is not produced continuously, test whether any has been made since
     // last inspection
-    HEU_present = XLikely(context()->time()/si_.duration, rng_seed);
+    std::cout << "Time is : " << context()->time() << "simdur " << simdur << std::endl;
+      //      context()->sim_info().duration << std::endl;
+    HEU_present = XLikely(double(context()->time())/double(simdur), rng_seed);
   }
 
   // Each sample is N, swipes, analyzed independently with a high rate of
@@ -551,15 +557,14 @@ void RandomEnrich::RecordInspection_() {
   int pos_swipes = 0;
   for (int swipeit = 0; swipeit < n_swipes; swipeit++) {
     double prob;
-    if (HEU_present == 1){
+    if (HEU_present == true){
       prob = false_neg;
     }
     else {
       prob = false_pos;
     }
-
     bool flip = XLikely(prob, rng_seed);
-
+    std::cout << "HEU present: " << HEU_present << " Flip? " << flip << std::endl;
     if ((HEU_present && !flip) || (!HEU_present && flip)){
       pos_swipes++;
     }
