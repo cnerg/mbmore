@@ -114,7 +114,6 @@ void RandomEnrich::Tock() {
 
   // Add any inspections to the Inspection table
   bool do_inspect = EveryRandomXTimestep(inspect_freq, rng_seed);
-  std::cout << "Inspection occuring? " << do_inspect << std::endl;
   if (do_inspect == true){
     RecordInspection_();
   }
@@ -473,7 +472,6 @@ cyclus::Material::Ptr RandomEnrich::Enrich_(
 
   // If enriched to HEU then record total HEU produced
   double heu_definition = 0.2;
-  std::cout << "uassay is " << u_assay << "Qty is " << qty << std::endl;
   if (u_assay > heu_definition){
     net_heu += qty;
   }
@@ -522,12 +520,13 @@ void RandomEnrich::RecordRandomEnrich_(double natural_u, double swu) {
 void RandomEnrich::RecordInspection_() {
   using cyclus::Context;
   using cyclus::Agent;
-  std::cout << "Inspection at " << context()->time() << "HEU qty" << net_heu << std::endl;
 
   std::string sample_location = "Cascade";
 
   // TODO: Add multiple samples to an inspection, rules about only Cascade
   // having true positives? Or increased chance of true based on location?
+  // TODO: Make Shipping quantity a State Var.
+  // TODO: Make HEU definition a State Var (in Tock)
 
   // If HEU has been made, then its presence becomes more likely to detect
   // scaling with quantity produced or time elapsed (depending on model)
@@ -536,17 +535,13 @@ void RandomEnrich::RecordInspection_() {
     // HEU is produced continuously, and removed when some quantity has been
     // produced. Risk of leakage increases with time in discrete steps
     if (net_heu >= heu_ship_qty){
-      std::cout << "No Social and heu is being shippped" << std::endl;
       HEU_present = XLikely(double(context()->time())/double(simdur), rng_seed);
       net_heu -= heu_ship_qty;
     }
   }
   else if ((net_heu > 0.0) && (HEU_present == false)){
-    std::cout << "some HEU has been detected" << std::endl;
     // HEU is not produced continuously, test whether any has been made since
     // last inspection
-    std::cout << "Time is : " << context()->time() << "simdur " << simdur << std::endl;
-      //      context()->sim_info().duration << std::endl;
     HEU_present = XLikely(double(context()->time())/double(simdur), rng_seed);
   }
 
@@ -564,7 +559,6 @@ void RandomEnrich::RecordInspection_() {
       prob = false_pos;
     }
     bool flip = XLikely(prob, rng_seed);
-    std::cout << "HEU present: " << HEU_present << " Flip? " << flip << std::endl;
     if ((HEU_present && !flip) || (!HEU_present && flip)){
       pos_swipes++;
     }
