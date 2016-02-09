@@ -4,6 +4,7 @@
 #include <string>
 
 #include "cyclus.h"
+#include "sim_init.h"
 
 namespace mbmore {
 
@@ -258,8 +259,9 @@ class RandomEnrich : public cyclus::Facility {
   bool HEU_present;
 
   // Find the simulation duration
-  cyclus::SimInfo si_;
-
+  //  cyclus::SimInfo si_;
+  int simdur = context()->sim_info().duration;
+  
  private:
   ///   @brief adds a material into the natural uranium inventory
   ///   @throws if the material is not the same composition as the feed_recipe
