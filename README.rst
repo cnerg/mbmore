@@ -65,6 +65,12 @@ Based on `cycamore:Enrich <http://fuelcycle.org/user/cycamoreagents.html#cycamor
     detectable when increments of 0.1kg have been accumulated (imagining that it
     is removed from the cascades in this increment and therefore there are
     discrete opportunities for contamination).
+  - ``n_swipes`` : number of swipes for a single sample during inspection.
+    (default 10)
+  - ``false_pos`` : likelihood that an inherently negative swipe will falsely
+    record as positive (default 0)
+  - ``false_neg`` : likelihood that an inherently positive swipe will falsely
+    record as negative (default 0)
 
 RandomSink
 +++++++++++
