@@ -23,6 +23,7 @@ Available behavior functions are:
 * EveryRandomXTimestep - Returns true with an approximate frequency defined by X, with individual instances randomly determined.
 * RNG_NormalDist - Returns a randomnly generated number from a normal distribution defined by a mean and a sigma (full-width-half-max)
 * RNG_Integer - Returns a randomnly choses discrete number between the defined min and max.
+* XLikely - Returns true with an average likelihood defined by X [0-1], with individual instances randomly determined. 
 
 
 
@@ -31,7 +32,7 @@ Archetypes
 
 RandomEnrich
 +++++++++++++
-Based on `cycamore:Enrich <http://fuelcycle.org/user/cycamoreagents.html#cycamore-enrichment>`_ , its additional features include variable tails assay, and bidding behavior that can be set to occur at Every X timestep or at Random timesteps. All additional behaviors default back to the standard cycamore:Enrich.
+Based on `cycamore:Enrich <http://fuelcycle.org/user/cycamoreagents.html#cycamore-enrichment>`_ , its additional features include variable tails assay, inspector swipe tests, and bidding behavior that can be set to occur at Every X timestep or at Random timesteps. All additional behaviors default back to the standard cycamore:Enrich.
   - ``social_behav``: Defines the character of time-varying behavior on offering
     bids. Options are 'None' (defaults to cycamore archetype), 'Every' (bid
     frequency is determined by ``behav_interval``, 'Random' (effective bid
@@ -47,6 +48,23 @@ Based on `cycamore:Enrich <http://fuelcycle.org/user/cycamoreagents.html#cycamor
   - ``rng_seed``: sets the RNG seed value for the simulation (should be defined
     only once in the input file). If set to -1, the system time at simulation
     runtime is used, otherwise the integer is passed directly as the seed.
+  - ``inspect_freq`` : defines an average frequency of inspections (implemented
+    with EveryRandomX).  Creates an Inspections Table (if inspect_freq!=0)
+    containing the columns: ``AgentID``, ``Time``, ``SampleLoc``,
+    ``PosSwipeFrac``.  For each inspection and swipe location, ``n_swipes``
+    are taken, and the fraction of these swipes that is positive for HEU (>20%
+    enriched) is recorded in the table.  If the liklihood of a false positive (
+    ``false_pos``) is non-zero, then XLikely is applied to every swipe that
+    originally measures negative.  If the liklihood of a false negative
+    (``false_neg``) is non-zero, then XLikely is applied to every swipe that
+    originally measures positive for the remainder of the simulation. A swipe
+    can measure inherently positive only if HEU has actually been produced.  If
+    HEU has been produced and not previously detected, it's likelihood of
+    detection increases approximately linearly across duration of the
+    simulation.  If HEU is produced continuously, then it only registers as
+    detectable when increments of 0.1kg have been accumulated (imagining that it
+    is removed from the cascades in this increment and therefore there are
+    discrete opportunities for contamination).
 
 RandomSink
 +++++++++++

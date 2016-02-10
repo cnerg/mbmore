@@ -82,7 +82,30 @@ TEST(Behavior_Functions_Test, XLikely){
     std::cout << "ntries: " << ntries << std::endl;
   }
   EXPECT_TRUE(good);
+
+  // Endpoints Likely =1 and Likely = 0 should be always consistent
+  prob = 0.0;
+  double n_true = 0;
+  double n_false = 0;
+  for (int i = 0; i < 1000; i++) {
+    bool res = XLikely(prob, rng_seed);
+    (res == true) ? (n_true++) : (n_false++);
+  }
+
+  EXPECT_EQ(n_true, 0.0);
+
+  prob = 1.0;
+  n_true = 0;
+  n_false = 0;
+  for (int i = 0; i < 1000; i++) {
+    bool res = XLikely(prob, rng_seed);
+    (res == true) ? (n_true++) : (n_false++);
+  }
+
+  EXPECT_EQ(n_false, 0.0);
+
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Mean and Standard deviation of a Normal Gaussian Distribution should be
