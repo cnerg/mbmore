@@ -52,10 +52,12 @@ bool EveryRandomXTimestep(int frequency, int rng_seed) {
 
   bool XLikely(double prob, int rng_seed) {
 
+    /*
   if (prob == 0) {
     return false;
   }
-
+    */
+    
   if (!seeded) {
     if (rng_seed == -1) {
       srand(time(0));    // seed random

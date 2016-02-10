@@ -115,8 +115,9 @@ class NatUConverter : public cyclus::Converter<cyclus::Material> {
 ///  tails inventory.
 ///
 ///  The custom features of Random Enrich are:
-///  variable tails assay and bidding behavior can be set to occur at Every X
-///  timestep or at Random timesteps
+///  variable tails assay, inspector swipe tests, and bidding behavior can be
+///  set to occur at Every X timestep or at Random timesteps (see README for
+//// full implementation documentation)
 ///
  
 class RandomEnrich : public cyclus::Facility {
@@ -154,9 +155,10 @@ class RandomEnrich : public cyclus::Facility {
   "Accumulated tails inventory is offered for trading as a specifiable " \
   "output commodity."\
   "\n\n" \
-  "The custom features of Random Enrich are: variable tails assay and " \
+  "The custom features of Random Enrich are: variable tails assay, inspector "\
+  " swipe tests, and " \
   "bidding behavior can be set to occur at Every X timestep or at Random "\
-  "timesteps",						\
+  "timesteps (see README for full implementation documentation ",\
 }
   
  public:

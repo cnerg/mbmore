@@ -529,7 +529,7 @@ void RandomEnrich::RecordInspection_() {
   // TODO: Make HEU definition a State Var (in Tock)
 
   // If HEU has been made, then its presence becomes more likely to detect
-  // scaling with quantity produced or time elapsed (depending on model)
+  // scaling with time elapsed (TODO: scale with quantity HEU produced)
   double heu_ship_qty = 0.1;
   if (social_behav == "None"){
     // HEU is produced continuously, and removed when some quantity has been
