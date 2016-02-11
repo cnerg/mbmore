@@ -16,7 +16,7 @@ bool EveryXTimestep(int curr_time, int interval) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool EveryRandomXTimestep(int frequency, int rng_seed) {
-
+  //TODO: Doesn't work for a frequency of 1
   if (frequency == 0) {
     return false;
   }
@@ -30,15 +30,19 @@ bool EveryRandomXTimestep(int frequency, int rng_seed) {
     }
     seeded = true;
   }
-  double midpoint = frequency / 2;  
- 
+
+  // Because this relies on integer rounding, it fails for a frequency of
+  // 1 because the midpoint rounds to zero.
+  double midpoint;
+  (frequency == 1) ? (midpoint = 1) : (midpoint = frequency / 2);
+    
   // The interwebs say that rand is not truly random.
   //  tRan = rand() % frequency;
   double cur_rand = rand();
   int tRan = 1 + (cur_rand*(1.0/(RAND_MAX+1.0))) * frequency;
   //  int tRan = 1 + uniform_deviate_(rand()) * frequency;
-  //    std::cout << "EveryRandom: " << cur_rand/RAND_MAX << std::endl;
-
+  //  std::cout << "tRan: " << tRan << " midpoint " << midpoint << std::endl;
+  
   if (tRan == midpoint) {
     return true;
   } else {
