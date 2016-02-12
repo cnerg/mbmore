@@ -397,6 +397,13 @@ class RandomEnrich : public cyclus::Facility {
                              "implemented"}
   double behav_interval;
 
+  #pragma cyclus var {"default": 0, "tooltip": "amount of HEU that accrues in"\
+                              " cascade before being removed for shipment",\
+                      "doc": "If non-zero and no social_behav, HEU cascade "\
+                             "is emptied only when this qty of HEU has "\
+                             "accumulated."}
+  double heu_ship_qty;
+
   #pragma cyclus var {"default": 0, "tooltip": "interval for inspections",\
                       "doc": "average interval for inspections, will always "\
                              "be implemented with EveryRandom.  If 0" \
@@ -405,7 +412,7 @@ class RandomEnrich : public cyclus::Facility {
                              "are recorded (to preserve reproducibility)."}
   int inspect_freq;
  
-  #pragma cyclus var {"default": 10, "tooltip": "number of swipes per "\
+  #pragma cyclus var {"default": 10, "tooltip": "number of swipes per "	\
                              "inspection sample",      \
                       "doc": "number of swipes taken for a single sampled "\
                              "location by an inspector. Only used if " \
