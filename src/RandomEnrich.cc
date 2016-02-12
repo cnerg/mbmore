@@ -20,6 +20,7 @@ RandomEnrich::RandomEnrich(cyclus::Context* ctx)
       sigma_tails(0),
       social_behav("None"), 
       behav_interval(0),
+      heu_ship_qty(0),
       inspect_freq(0),
       n_swipes(10),
       false_pos(0),
@@ -99,7 +100,6 @@ void RandomEnrich::Tick() {
   if (curr_tails_assay > (tails_assay + sigma_tails)) {
     curr_tails_assay = tails_assay + sigma_tails;
   }
-  //  std::cout << "Tails is " << curr_tails_assay << std::endl;
 
   LOG(cyclus::LEV_INFO3, "EnrFac") << prototype() << " is ticking {";
   LOG(cyclus::LEV_INFO3, "EnrFac") << "}";
@@ -525,12 +525,10 @@ void RandomEnrich::RecordInspection_() {
 
   // TODO: Add multiple samples to an inspection, rules about only Cascade
   // having true positives? Or increased chance of true based on location?
-  // TODO: Make Shipping quantity a State Var.
   // TODO: Make HEU definition a State Var (in Tock)
 
   // If HEU has been made, then its presence becomes more likely to detect
   // scaling with time elapsed (TODO: scale with quantity HEU produced)
-  double heu_ship_qty = 0.1;
   if (social_behav == "None"){
     // HEU is produced continuously, and removed when some quantity has been
     // produced. Risk of leakage increases with time in discrete steps

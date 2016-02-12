@@ -648,6 +648,51 @@ TEST(RandomEnrichTests, TestInspectionPositives) {
   EXPECT_NEAR(pos_rate, 0.5, eps);
 
   } 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  TEST(RandomEnrichTests, TestHeuShipQty) {
+    // Even though inspections are set to occur every timestep, HEU is not
+    // 'present' until timestep 4 because that is the first time it's removed
+    // from the cascade to be shipped.
+
+ std::string config = 
+    "   <feed_commod>natu</feed_commod> "
+    "   <feed_recipe>natu1</feed_recipe> "
+    "   <product_commod>enr_u</product_commod> "
+    "   <tails_commod>tails</tails_commod> "
+    "   <tails_assay>0.002</tails_assay> "
+    "   <heu_ship_qty>0.015</heu_ship_qty> "
+    "   <inspect_freq>1</inspect_freq> "
+    "   <n_swipes>10</n_swipes> " ;
+
+  // time 1-source to EF, 2-Enrich to sink 0.0056kg,
+  // 3- Enrich to sink 0.011kg, 4 - Enrich to sink 0.016kg > heu_ship_qty
+  int simdur = 4;
+  cyclus::MockSim sim(cyclus::AgentSpec
+		      (":mbmore:RandomEnrich"), config, simdur);
+  sim.AddRecipe("natu1", c_natu1());
+  sim.AddRecipe("enr_u", c_heu90()); 
+  
+  sim.AddSource("natu")
+    .recipe("natu1")
+    .capacity(1.0)
+    .Finalize();
+  sim.AddSink("enr_u")
+    .recipe("enr_u")
+    .Finalize();
+  
+  int id = sim.Run();
+  std::vector<Cond> conds;
+  conds.push_back(Cond("SampleLoc", "==", std::string("Cascade")));
+  QueryResult qr = sim.db().Query("Inspections", &conds);
+  int n_inspect = qr.rows.size();
+
+  double swipe_tot=0.0;
+  for (int it=0; it < n_inspect; it++){
+    swipe_tot += qr.GetVal<double>("PosSwipeFrac", it);
+  }
+  EXPECT_EQ(swipe_tot, 1);
+  
+  } 
 
 } // namespace randomenrichtests
 } // namespace mbmore
