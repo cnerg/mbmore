@@ -4,6 +4,7 @@ USE_CYCLUS("mbmore" "mytest")
 USE_CYCLUS("mbmore" "behavior_functions")
 USE_CYCLUS("mbmore" "RandomEnrich")
 USE_CYCLUS("mbmore" "RandomSink")
+USE_CYCLUS("mbmore" "StateInst")
 
 INSTALL_CYCLUS_MODULE("mbmore" "./")
 
