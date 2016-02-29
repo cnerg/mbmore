@@ -533,7 +533,8 @@ void RandomEnrich::RecordInspection_() {
     // HEU is produced continuously, and removed when some quantity has been
     // produced. Risk of leakage increases with time in discrete steps
     if (net_heu >= heu_ship_qty){
-      HEU_present = XLikely(double(context()->time())/double(simdur), rng_seed);
+      HEU_present = XLikely(double(context()->time())/
+			    (double(simdur)-1.0), rng_seed);
       net_heu -= heu_ship_qty;
     }
   }
