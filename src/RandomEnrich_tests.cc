@@ -593,6 +593,7 @@ TEST(RandomEnrichTests, TestInspectionNegatives) {
     swipe_tot += posfrac;
     if (posfrac > 0) { n_heu_detected++; } 
   }
+  std::cout << "N HEu dectections: "  <<  n_heu_detected << std::endl;
   double pos_rate = swipe_tot/double(n_heu_detected);
   EXPECT_NEAR(pos_rate, 0.5, eps);
 

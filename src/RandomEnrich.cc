@@ -527,25 +527,37 @@ void RandomEnrich::RecordInspection_() {
   // having true positives? Or increased chance of true based on location?
   // TODO: Make HEU definition a State Var (in Tock)
 
-  // If HEU has been made, then its presence becomes more likely to detect
-  // scaling with time elapsed (TODO: scale with quantity HEU produced)
-  if (social_behav == "None"){
-    // HEU is produced continuously, and removed when some quantity has been
+  // If HEU has been made, then we see if a perfect swipe test would find it
+  // by calculating HEU_present (ie. maybe heu has been made but swipe is in
+  // the wrong spot).  Its presence becomes more likely to detect
+  // scaling with time elapsed because we presume there is increasing
+  // contamination. Once contamination would be theoretically measured, this
+  // contamination remains for the rest of the simulation.
+  // (TODO: scale with quantity HEU produced)
+  double cur_time = double(context()->time());
+  if ((social_behav == "None") && (HEU_present == false)) {
+    // HEU is produced continuously (as requested), and removed when some
+    // quantity has been
     // produced. Risk of leakage increases with time in discrete steps
-    if (net_heu >= heu_ship_qty){
-      HEU_present = XLikely(double(context()->time())/
-			    (double(simdur)-1.0), rng_seed);
+    // TODO: This will fail if a facility is producing HEU but never shipping
+    // it and inspections are still supposed to occur because it assumes
+    // that HEU can only be detected if it has been removed from cascades for
+    // shipping.
+    std::cout << "Time: " << cur_time <<  "  Net HEU produced " << net_heu << std::endl;
+    if ((net_heu >= heu_ship_qty) && (heu_ship_qty > 0.0)){
+      HEU_present = XLikely(cur_time/(double(simdur) - 1.0), rng_seed);
+      std::cout << "HEU Presence? " << HEU_present << std::endl;
       net_heu -= heu_ship_qty;
     }
   }
   else if ((net_heu > 0.0) && (HEU_present == false)){
-    // HEU is not produced continuously, test whether any has been made since
-    // last inspection
-    HEU_present = XLikely(double(context()->time())/double(simdur), rng_seed);
+    // HEU is made/shipped at specific intervals defined by behavior fns,
+    // so test whether any has been made/shipped since last inspection
+    HEU_present = XLikely(cur_time/(double(simdur) - 1.0), rng_seed);
   }
 
-  // Each sample is N, swipes, analyzed independently with a high rate of
-  // false readigs.
+  // Each sample is N swipes, analyzed independently (with a high rate of
+  // false readings in practice).
   // Based on whether HEU is 'detected' in the sample, determine whether or not
   // any false positives or negatives change the swipe result.
   int pos_swipes = 0;
@@ -558,6 +570,7 @@ void RandomEnrich::RecordInspection_() {
       prob = false_pos;
     }
     bool flip = XLikely(prob, rng_seed);
+    //    std::cout << "Flip? " << flip << std::endl;
     if ((HEU_present && !flip) || (!HEU_present && flip)){
       pos_swipes++;
     }
