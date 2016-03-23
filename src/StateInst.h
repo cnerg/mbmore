@@ -30,6 +30,13 @@ class StateInst : public cyclus::Institution {
       " any combination of the same or different build times, build number," \
       " and lifetimes. " \
   }
+
+ private:
+
+  std::string prototype = "Secret_Sink";
+  int build_time = 10;
+
+  
  public:
   StateInst(cyclus::Context* ctx);
 
@@ -41,43 +48,17 @@ class StateInst : public cyclus::Institution {
 
   virtual void EnterNotify();
 
+  virtual void Tock();
+
  protected:
-  #pragma cyclus var { \
-    "doc": "Ordered list of prototypes to build.", \
-    "uitype": ("oneormore", "prototype"), \
-    "uilabel": "Prototypes to deploy", \
-  }
-  std::vector<std::string> prototypes;
-
-  #pragma cyclus var { \
-    "doc": "Time step on which to deploy agents given in prototype list " \
-           "(same order).",						\
-    "uilabel": "Deployment times",					\
-  }
-  std::vector<int> build_times;
-
-  #pragma cyclus var { \
-    "doc": "Number of each prototype given in prototype list that should be " \
-           "deployed (same order).", \
-    "uilabel": "Number to deploy", \
-  }
-  std::vector<int> n_build;
+  #pragma cyclus var {"default": 0, "tooltip": "pursuit param" ,	\
+    "doc": "input for pursuit eqn"}
+  
+  double pursuit_param;
 
 
-#pragma cyclus var {							\
-    "doc": "Lifetimes for each prototype in prototype list (same order)." \
-           " These lifetimes override the lifetimes in the original prototype" \
-           " definition." \
-           " If unspecified, lifetimes from the original prototype definitions"\
-           " are used." \
-           " Although a new prototype is created in the Prototypes table for" \
-           " each lifetime with the suffix '_life_[lifetime]'," \
-           " all deployed agents themselves will have the same original" \
-           " prototype name (and so will the Agents tables).", \
-    "default": [], \
-    "uilabel": "Lifetimes" \
-  }
-  std::vector<int> lifetimes;
+  
+
 };
 
 }  // namespace mbmore
