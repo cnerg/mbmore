@@ -81,7 +81,7 @@ void StateInst::Tock() {
 
   
   if (context()->time() == 4) {
-    LOG(cyclus::LEV_INFO4, "StateInst") << "StateInst " << this->id()
+    LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
 					<< " is deploying a HEUSink at:" 
 					<< context()->time() << ".";
     DeploySecret();
@@ -104,13 +104,14 @@ void StateInst::DeploySecret() {
   for (int i = 0; i < secret_protos.size(); i++) {
     std::string s_proto = secret_protos[i];
     
-    std::stringstream ss;
-    ss << s_proto;
+    //    std::stringstream ss;
+    //    ss << s_proto;
     
-    cyclus::Agent* a = context()->CreateAgent<Agent>(s_proto);
-    s_proto = ss.str();
-    context()->AddPrototype(s_proto, a);
+    //    cyclus::Agent* a = context()->CreateAgent<Agent>(s_proto);
+    //    s_proto = ss.str();
+    //    context()->AddPrototype(s_proto, a);
     context()->SchedBuild(this, s_proto);  //builds on next timestep
+    BuildNotify(this);
   }
 }
 
