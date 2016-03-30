@@ -49,7 +49,7 @@ class StateInst
   void WriteProducerInformation(cyclus::toolkit::CommodityProducer*
                                 producer);
 
- private:
+ protected:
   /// register a child
   void Register_(cyclus::Agent* agent);
 
@@ -66,7 +66,6 @@ class StateInst
     }
   std::vector<std::string> declared_protos;
 
- protected:
   #pragma cyclus var { \
     "uilabel": "Secret prototypes to deploy", \
     "uitype": ("oneormore", "prototype"), \
