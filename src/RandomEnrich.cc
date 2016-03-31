@@ -561,6 +561,9 @@ void RandomEnrich::RecordInspection_() {
   // Based on whether HEU is 'detected' in the sample, determine whether or not
   // any false positives or negatives change the swipe result.
   int pos_swipes = 0;
+  int n_false_pos = 0;
+  int n_false_neg = 0;
+  
   for (int swipeit = 0; swipeit < n_swipes; swipeit++) {
     double prob;
     if (HEU_present == true){
@@ -571,9 +574,24 @@ void RandomEnrich::RecordInspection_() {
     }
     bool flip = XLikely(prob, rng_seed);
     //    std::cout << "Flip? " << flip << std::endl;
-    if ((HEU_present && !flip) || (!HEU_present && flip)){
-      pos_swipes++;
+
+    // record false positives, false negatives and net 'positive' swipe results
+    if (flip) {
+      if (!HEU_present){
+	pos_swipes++ ;
+	n_false_pos++;
+      }
+      else {
+	n_false_neg++;
+      }
     }
+    else {
+      if (HEU_present) { pos_swipes++; }
+    }
+    
+    //    if ((HEU_present && !flip) || (!HEU_present && flip)){
+    //      pos_swipes++;
+    //    }
   }
     
   Context* ctx = Agent::context();
@@ -581,6 +599,8 @@ void RandomEnrich::RecordInspection_() {
     ->AddVal("AgentID", id())
     ->AddVal("Time", context()->time())
     ->AddVal("SampleLoc", sample_location)
+    ->AddVal("FalsePos", double(n_false_pos)/double(n_swipes))
+    ->AddVal("FalseNeg", double(n_false_neg)/double(n_swipes))
     ->AddVal("PosSwipeFrac", double(pos_swipes)/double(n_swipes))
     ->Record();
 
