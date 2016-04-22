@@ -40,15 +40,20 @@ class StateInst
   /// deploy secret child facilities
   //  virtual void DeploySecret(cyclus::Agent* parent);
   virtual void DeploySecret();
-
+  
   virtual void Tock();
 
-  
+  // Adjusts preferences so SecretSink cannot trade until acquired=1
+  virtual void AdjustMatlPrefs(cyclus::PrefMap<cyclus::Material>::type& prefs);
+
   /// write information about a commodity producer to a stream
   /// @param producer the producer
   void WriteProducerInformation(cyclus::toolkit::CommodityProducer*
                                 producer);
 
+  bool pursuing = 0;
+  bool acquired = 0;
+  
  protected:
   /// register a child
   void Register_(cyclus::Agent* agent);

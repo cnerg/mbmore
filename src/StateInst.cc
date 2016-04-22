@@ -4,7 +4,9 @@
 namespace mbmore {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-StateInst::StateInst(cyclus::Context* ctx) : cyclus::Institution(ctx) {
+StateInst::StateInst(cyclus::Context* ctx)
+  : cyclus::Institution(ctx){
+    //    kind("State"){
   cyclus::Warn<cyclus::EXPERIMENTAL_WARNING>("the StateInst agent is experimental.");
 }
 
@@ -77,20 +79,64 @@ void StateInst::Unregister_(Agent* a) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::Tock() {
-  //  LOG(cyclus::LEV_INFO3, "StateInst") << prototype << " is tocking {";
+  // Has a secret sink already been deployed?
+  // TODO:: How to force SecretEnrich to trade Only with SecretSink??
 
-  
-  if (context()->time() == 4) {
-    LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
-					<< " is deploying a HEUSink at:" 
-					<< context()->time() << ".";
-    DeploySecret();
-    
+  if (pursuing == 1) {
+    // TODO: calc AE
+    bool calc_acquire = 0;
+    if (calc_acquire == 1) {
+      // Makes Sink bid for HEU in AdjustMatlPrefs
+      std::cout << "t = " <<context()->time() << ",  Acquired" << std::endl;
+    }
   }
-  LOG(cyclus::LEV_INFO3, "StateInst") << "}";
+  else {
+    bool calc_pursuit = 0;
+    // calc PE
+    if (context()->time() == 4) {calc_pursuit = 1;}
+    // if PE == 1 :
+    if (calc_pursuit == 1) {
+      LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
+					  << " is deploying a HEUSink at:" 
+					  << context()->time() << ".";
+      DeploySecret();
+      pursuing = 1;
+    }
+  }
+   
     
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// State inst disallows any trading from SecretSink or SecretEnrich when
+// until acquired = 1.
+virtual void StateInst::AdjustMatlPrefs(
+  cyclus::PrefMap<cyclus::Material>::type& prefs) {
 
-    
+  using cyclus::Bid;
+  using cyclus::Material;
+  using cyclus::Request;
+
+  cyclus::PrefMap<cyclus::Material>::type::iterator pmit;
+  for (pmit = prefs.begin(); pmit != prefs.end(); ++pmit) {
+    std::map<Bid<Material>*, double>::iterator mit;
+    Request<Material>* req = pmit->first;
+    for (mit = pmit->second.begin(); mit != pmit->second.end(); ++mit) {
+      Bid<Material>* bid = mit->first;
+      Agent* you = bid->bidder()->manager()->parent();
+      Agent* me = this;
+      // If you are my child (then you're secret),
+      // AND you're a type of Sink
+      if (you.parent() == me) &&
+	((you.prototype() == "Sink") || (you.prototype() == "RandomSink")){
+	  if (acquired == 1){
+	    mit->second += 1; 
+	  }
+	  else {
+	    mit->second = 0;
+	  }
+	}
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -99,8 +145,7 @@ void StateInst::DeploySecret() {
   //void StateInst::DeploySecret(cyclus::Agent* parent) {
   //  cyclus::Institution::Build(parent);
   BuildSched::iterator it;
-  std::cout << "SECRET DEPLOY!!!! at " << context()->time() << std::endl;
-  
+
   for (int i = 0; i < secret_protos.size(); i++) {
     std::string s_proto = secret_protos[i];
     
@@ -113,6 +158,7 @@ void StateInst::DeploySecret() {
     context()->SchedBuild(this, s_proto);  //builds on next timestep
     BuildNotify(this);
   }
+  std::cout << "SECRET DEPLOY!!!! at " << context()->time() << std::endl;
 }
 
 
