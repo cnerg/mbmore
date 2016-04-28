@@ -109,12 +109,14 @@ void StateInst::Tock() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // State inst disallows any trading from SecretSink or SecretEnrich when
 // until acquired = 1.
-virtual void StateInst::AdjustMatlPrefs(
+void StateInst::AdjustMatlPrefs(
   cyclus::PrefMap<cyclus::Material>::type& prefs) {
 
   using cyclus::Bid;
   using cyclus::Material;
   using cyclus::Request;
+
+  std::cout << "Adjusting Matl Prefs" << std::endl;
 
   cyclus::PrefMap<cyclus::Material>::type::iterator pmit;
   for (pmit = prefs.begin(); pmit != prefs.end(); ++pmit) {
@@ -122,13 +124,17 @@ virtual void StateInst::AdjustMatlPrefs(
     Request<Material>* req = pmit->first;
     for (mit = pmit->second.begin(); mit != pmit->second.end(); ++mit) {
       Bid<Material>* bid = mit->first;
-      Agent* you = bid->bidder()->manager()->parent();
+      Agent* you = bid->bidder()->manager();
       Agent* me = this;
       // If you are my child (then you're secret),
-      // AND you're a type of Sink
-      if (you.parent() == me) &&
-	((you.prototype() == "Sink") || (you.prototype() == "RandomSink")){
-	  if (acquired == 1){
+      // and you're a type of Sink
+      std::string full_name = you->spec();
+      std::string archetype = full_name.substr(full_name.rfind(':'));
+      std::cout << "Archetype" << archetype << std::endl;
+      if ((you->parent() == me) &&
+	  ((archetype == "Sink") || (archetype == "RandomSink"))){
+	std::cout << "Testing acquisition" << std::endl;
+	if (acquired == 1){
 	    mit->second += 1; 
 	  }
 	  else {
