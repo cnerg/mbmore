@@ -543,7 +543,7 @@ void RandomEnrich::RecordInspection_() {
     // it and inspections are still supposed to occur because it assumes
     // that HEU can only be detected if it has been removed from cascades for
     // shipping.
-    std::cout << "Time: " << cur_time <<  "  Net HEU produced " << net_heu << std::endl;
+    std::cout << "Inspect Time: " << cur_time <<  "  Net HEU produced " << net_heu << std::endl;
     if ((net_heu >= heu_ship_qty) && (heu_ship_qty > 0.0)){
       HEU_present = XLikely(cur_time/(double(simdur) - 1.0), rng_seed);
       std::cout << "HEU Presence? " << HEU_present << std::endl;
