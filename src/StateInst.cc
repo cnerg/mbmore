@@ -122,26 +122,25 @@ void StateInst::AdjustMatlPrefs(
   for (pmit = prefs.begin(); pmit != prefs.end(); ++pmit) {
     std::map<Bid<Material>*, double>::iterator mit;
     Request<Material>* req = pmit->first;
-    for (mit = pmit->second.begin(); mit != pmit->second.end(); ++mit) {
-      Bid<Material>* bid = mit->first;
-      Agent* you = bid->bidder()->manager();
-      Agent* me = this;
+    Agent* you = req->requester()->manager();
+    Agent* me = this;
       // If you are my child (then you're secret),
-      // and you're a type of Sink
+      // and you're a type of Sink, then adjust preferences
       std::string full_name = you->spec();
       std::string archetype = full_name.substr(full_name.rfind(':'));
       std::cout << "Archetype" << archetype << std::endl;
       if ((you->parent() == me) &&
 	  ((archetype == "Sink") || (archetype == "RandomSink"))){
 	std::cout << "Testing acquisition" << std::endl;
-	if (acquired == 1){
+	for (mit = pmit->second.begin(); mit != pmit->second.end(); ++mit) {
+	  if (acquired == 1){
 	    mit->second += 1; 
 	  }
 	  else {
 	    mit->second = 0;
 	  }
 	}
-    }
+      }
   }
 }
 
