@@ -1,5 +1,6 @@
 // Implements the StateInst class
 #include "StateInst.h"
+#include "behavior_functions.h"
 
 namespace mbmore {
 
@@ -91,11 +92,9 @@ void StateInst::Tock() {
     }
   }
   else {
-    bool calc_pursuit = 0;
-    // calc PE
-    if (context()->time() == 4) {calc_pursuit = 1;}
-    // if PE == 1 :
-    if (calc_pursuit == 1) {
+    std::cout << "Calculating pursuit" << std::endl;
+    bool pursuit_decision = DecidePursuit();
+    if (pursuit_decision == 1) {
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
 					  << " is deploying a HEUSink at:" 
 					  << context()->time() << ".";
@@ -166,7 +165,53 @@ void StateInst::DeploySecret() {
   std::cout << "SECRET DEPLOY!!!! at " << context()->time() << std::endl;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// At each timestep where pursuit has not yet occurred, calculate whether to
+// pursue at this time step.
+bool StateInst::DecidePursuit() {
 
+  // TODO: Weights will be moved to the Region and be uniform across all StateInst
+  // TODO: Add in a check that total weighting equals One.
+  std::map <std::string, double> P_wt;
+  P_wt["Dem"] = 0.5;
+  P_wt["React"] = 0.5;
+
+  // TODO: Create a set of toolkit fns to call
+  // map[factor_name] = pair(Function, vector<C1, C2, ...>) 
+
+  // TODO: loop over all Factors to calc Y value for current time.
+  //       Write to a map map[Factor] = y(t_now)
+  std::map<std::string, double> y_current;
+
+  std::map<std::string,
+	   std::pair<std::string, std::vector<double> > >::iterator eqn_it;
+  for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
+    std::string factor = eqn_it->first;
+    std::string function = eqn_it->second.first;
+    std::vector<double> constants = eqn_it->second.second;
+
+    std::cout << "factor " << factor << " fn " << function << std::endl;
+
+    y_current[factor] = CalcYVal(function, constants,context()->time());
+  }
+  
+  // TODO: use y_now for each part of the eqn to do the calculation
+  double y_int = P_f["Dem"].second[0]; 
+
+  std::cout << "Dem weight  " << P_wt["Dem"] << "  yint  " << y_int << std::endl;
+  
+  double pursuit_eqn = P_wt["Dem"]*y_int; //+ P_wt["Reactors"] * y_int; 
+  std::cout << "Pursuit Eqn equals : " << pursuit_eqn << std:: endl;
+
+  // Convert pursuit eqn value to a binary value using whatever equation
+  
+  bool decision = 0;
+  if (context()->time() == 4) {
+    decision = 1;
+  }
+  return decision;  
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::WriteProducerInformation(
   cyclus::toolkit::CommodityProducer* producer) {

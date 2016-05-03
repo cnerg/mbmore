@@ -40,7 +40,12 @@ class StateInst
   /// deploy secret child facilities
   //  virtual void DeploySecret(cyclus::Agent* parent);
   virtual void DeploySecret();
-  
+
+
+  // Do calculation of pursuit equation and convert to a Y/N on whether to
+  // start pursuing a weapon at each timestep.
+  bool DecidePursuit();
+
   virtual void Tock();
 
   // Adjusts preferences so SecretSink cannot trade until acquired=1
@@ -53,6 +58,13 @@ class StateInst
 
   bool pursuing = 0;
   bool acquired = 0;
+
+  
+  //  std::map<std::string, std::pair<std::string, std::vector<double> > > P_f ;
+
+  //  P_f["Dem"]=std::pair("constant", std::[3]);
+  //  P_f["React"]=std::pair("constant", [7]);
+  
   
  protected:
   /// register a child
@@ -80,7 +92,30 @@ class StateInst
   std::vector<std::string> secret_protos;
 
 
-  }; // Toolkit::Builder
+  /*
+    "uitype": ["oneormore", "string",		\
+    ["pair", "string", ["double"]]],		\
+    
+    " Each pursuit factor has an associated function (describing time dynamics)" \
+    " and constants. For example, if democracy index is linearly increasing with" \
+    " a y-intercept of 2 and a slope of 0.5, then it looks like "	\
+    " P_f[\"Dem\"]= (\"linear\", [y-int, slope])"			\
+    " Available functions are linear (y-int, slope), constant (y-int), "\ 
+    " step (y-int, y_end, t_step] " \ 
+    " The required Factors are: Dem (Democracy Index), React (# reactors)." \
+  */
+
+  //    "alias": ["factor", "function",["name","params",["val"]]], \
+  
+  #pragma cyclus var { \
+    "alias": ["Pursuit", "factor", ["function","name", ["params","val"]]], \
+    "doc": "Pursuit Factors "					   \
+    " All factors must be between 0 and 10.", \
+  }
+  std::map<std::string, std::pair<std::string, std::vector<double> > > P_f ;
+
+
+   }; // Toolkit::Builder
 }  // namespace mbmore
 
 #endif  // MBMORE_SRC_STATE_INST_H_
