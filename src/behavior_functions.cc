@@ -4,10 +4,9 @@
 #include <iostream>
 #include <cmath>
 
-
 bool seeded;
 namespace mbmore {
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool EveryXTimestep(int curr_time, int interval) {
   // true when there is no remainder, so it is the Xth timestep
@@ -166,6 +165,26 @@ double RNG_Integer(double min, double max, int rng_seed) {
   return tRan;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// For various types of time varying curves, calculate y for some t
+  double CalcYVal(std::string function, std::vector<double> constants,
+		  double time) {
+    /*
+    std::string fn_lc = tolower(function);
+
+    switch(fn_lc) {
+    case 'linear':
+      std::cout << "Fn isn Linear" << std::endl;
+      break;
+    case 'constant':
+      std::cout << "Fn is const" << std::endl;
+      break;
+    }
+
+    std::cout << "now do the all case thing" << std::endl;
+    */
+    return 1;
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /*
 double RNG_NormalDist(double mean, double sigma) {

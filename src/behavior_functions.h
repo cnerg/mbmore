@@ -1,6 +1,9 @@
 #ifndef MBMORE_SRC_BEHAVIOR_FUNCTIONS_H_
 #define MBMORE_SRC_BEHAVIOR_FUNCTIONS_H_
 
+#include <string>
+#include <vector>
+
 namespace mbmore {
 
 // returns true every X interval (ie every 5th timestep)
@@ -32,6 +35,10 @@ double RNG_NormalDist(double mean, double sigma, int rng_seed);
 
 double RNG_Integer(double min, double max, int rng_seed);
 
+// For various types of time varying curves, calculate y for some t
+double CalcYVal(std::string function, std::vector<double> constants,
+		double time);
+ 
 
 } // namespace mbmore
 
