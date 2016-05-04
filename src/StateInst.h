@@ -46,6 +46,8 @@ class StateInst
   // start pursuing a weapon at each timestep.
   bool DecidePursuit();
 
+  virtual void Tick();
+
   virtual void Tock();
 
   // Adjusts preferences so SecretSink cannot trade until acquired=1
@@ -73,6 +75,10 @@ class StateInst
   /// unregister a child
   void Unregister_(cyclus::Agent* agent);
 
+  // Find the simulation duration
+  //  cyclus::SimInfo si_;
+  int simdur = context()->sim_info().duration;
+  
   #pragma cyclus var { \
     "tooltip": "Declared facility prototypes (at start of sim)",         \
     "uilabel": "Producer Prototype List",                               \
@@ -91,6 +97,10 @@ class StateInst
   }
   std::vector<std::string> secret_protos;
 
+  #pragma cyclus var {"default": 0, "tooltip": "Seed for RNG" ,		\
+                          "doc": "seed on current system time if set to -1," \
+                                 " otherwise seed on number defined"}
+  int rng_seed;
 
   /*
     "uitype": ["oneormore", "string",		\
@@ -101,7 +111,9 @@ class StateInst
     " a y-intercept of 2 and a slope of 0.5, then it looks like "	\
     " P_f[\"Dem\"]= (\"linear\", [y-int, slope])"			\
     " Available functions are linear (y-int, slope), constant (y-int), "\ 
-    " step (y-int, y_end, t_step] " \ 
+    " step (y-int, y_end, t_step). For Random events, use the Step function: " \
+    " if no t_step is defined, then the time" \
+    " is randomly defined at the beginning of the simulation" \
     " The required Factors are: Dem (Democracy Index), React (# reactors)." \
   */
 
