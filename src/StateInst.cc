@@ -152,13 +152,6 @@ void StateInst::DeploySecret() {
 
   for (int i = 0; i < secret_protos.size(); i++) {
     std::string s_proto = secret_protos[i];
-    
-    //    std::stringstream ss;
-    //    ss << s_proto;
-    
-    //    cyclus::Agent* a = context()->CreateAgent<Agent>(s_proto);
-    //    s_proto = ss.str();
-    //    context()->AddPrototype(s_proto, a);
     context()->SchedBuild(this, s_proto);  //builds on next timestep
     BuildNotify(this);
   }
@@ -176,15 +169,10 @@ bool StateInst::DecidePursuit() {
   P_wt["Dem"] = 0.5;
   P_wt["React"] = 0.5;
 
-  // TODO: Create a set of toolkit fns to call
-  // map[factor_name] = pair(Function, vector<C1, C2, ...>) 
-
-  // TODO: loop over all Factors to calc Y value for current time.
-  //       Write to a map map[Factor] = y(t_now)
   std::map<std::string, double> y_current;
-
   std::map<std::string,
 	   std::pair<std::string, std::vector<double> > >::iterator eqn_it;
+
   for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
     std::string factor = eqn_it->first;
     std::string function = eqn_it->second.first;
@@ -195,12 +183,9 @@ bool StateInst::DecidePursuit() {
     y_current[factor] = CalcYVal(function, constants,context()->time());
   }
   
-  // TODO: use y_now for each part of the eqn to do the calculation
-  double y_int = P_f["Dem"].second[0]; 
-
-  std::cout << "Dem weight  " << P_wt["Dem"] << "  yint  " << y_int << std::endl;
+  std::cout << "Dem weight  " << P_wt["Dem"] << "  yint  " << y_current["Dem"] << std::endl;
   
-  double pursuit_eqn = P_wt["Dem"]*y_int; //+ P_wt["Reactors"] * y_int; 
+  double pursuit_eqn = P_wt["Dem"]*y_current["Dem"]; //+ P_wt["Reactors"] * y_int; 
   std::cout << "Pursuit Eqn equals : " << pursuit_eqn << std:: endl;
 
   // Convert pursuit eqn value to a binary value using whatever equation
