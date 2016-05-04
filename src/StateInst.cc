@@ -77,7 +77,36 @@ void StateInst::Unregister_(Agent* a) {
   if (cp_cast != NULL)
     CommodityProducerManager::Unregister(cp_cast);
 }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StateInst::Tick() {
+  // At the beginning of the simulation, calculate the time points for
+  // any randomly occuring changes to the factors
 
+  if (context()->time() == 0){
+
+    std::map<std::string,
+	     std::pair<std::string, std::vector<double> > >::iterator eqn_it;
+    for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
+      std::string factor = eqn_it->first;
+      std::string function = eqn_it->second.first;
+      std::vector<double> constants = eqn_it->second.second;
+      
+      // If a factor is random, calculate event times
+      // RandomStep occurs once and changes the amplitude
+      if ((function == "Step" || function == "step")
+	  && (constants.size() == 2)){
+	double y0 = constants[0];
+	double yf = constants[1];
+	int t_change = RNG_Integer(0, simdur, rng_seed);
+	// add the t_change to the P_f record
+	eqn_it->second.second.push_back(t_change);
+	std::cout << "Adding random step at : " << t_change << std::endl;
+      }
+    }
+  }
+
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::Tock() {
   // Has a secret sink already been deployed?
@@ -163,16 +192,21 @@ void StateInst::DeploySecret() {
 // pursue at this time step.
 bool StateInst::DecidePursuit() {
 
-  // TODO: Weights will be moved to the Region and be uniform across all StateInst
+  // TODO: Weights will be moved to the Region and be uniform across all StateInst 
   // TODO: Add in a check that total weighting equals One.
+  // TODO: Write factors vs time to a database table 
   std::map <std::string, double> P_wt;
   P_wt["Dem"] = 0.5;
   P_wt["React"] = 0.5;
 
-  std::map<std::string, double> y_current;
+  //  std::map<std::string, double> y_current;
   std::map<std::string,
 	   std::pair<std::string, std::vector<double> > >::iterator eqn_it;
 
+  double pursuit_eqn = 0;
+  // TODO: Adjust any particular factors appropriately (ie, flip democracy
+  //       index to "10-Dem"
+  // TODO: Add a Random Time event (delta fn?)
   for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
     std::string factor = eqn_it->first;
     std::string function = eqn_it->second.first;
@@ -180,15 +214,13 @@ bool StateInst::DecidePursuit() {
 
     std::cout << "factor " << factor << " fn " << function << std::endl;
 
-    y_current[factor] = CalcYVal(function, constants,context()->time());
+    double factor_curr_y = CalcYVal(function, constants,context()->time());
+    pursuit_eqn += (factor_curr_y * P_wt[factor]);
+
+    std::cout << "Factor: " << factor << "  Pursuit Eqn: " << pursuit_eqn << std:: endl;
   }
   
-  std::cout << "Dem weight  " << P_wt["Dem"] << "  yint  " << y_current["Dem"] << std::endl;
-  
-  double pursuit_eqn = P_wt["Dem"]*y_current["Dem"]; //+ P_wt["Reactors"] * y_int; 
-  std::cout << "Pursuit Eqn equals : " << pursuit_eqn << std:: endl;
-
-  // Convert pursuit eqn value to a binary value using whatever equation
+  // TODO: Convert pursuit eqn value to a binary value using whatever equation
   
   bool decision = 0;
   if (context()->time() == 4) {
