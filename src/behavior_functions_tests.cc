@@ -179,5 +179,39 @@ TEST(Behavior_Functions_Test, TestRNGInteger) {
 
   }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Each number in the range from min to max should be selected with equal
+// frequency to within tolerance (5%)
+TEST(Behavior_Functions_Test, TestCalcYVal) {
+  double y0 = 2;
+  double slope = 0.5;
+  double y10 = 7;
+  double t_change = 5;
+  double t_final = 10;
+  double tol = 1e-6;
+  
+  std::vector<double> constants;
+  double y_curr;
+  
+  // Constant
+  constants.push_back(y0);
+    y_curr = CalcYVal("constant", constants, t_final);
+  EXPECT_NEAR(y_curr, y0, tol);
+
+  // Linear
+  constants.push_back(slope);
+  y_curr = CalcYVal("linear", constants, t_final);
+  EXPECT_NEAR(y_curr, y10, tol);
+
+  // Step
+  constants[1] = y10;
+  constants.push_back(t_change);
+  y_curr = CalcYVal("step", constants, t_change - 1);
+  EXPECT_NEAR(y_curr, y0, tol);
+  y_curr = CalcYVal("step", constants, y10);
+  EXPECT_NEAR(y_curr, y10, tol);
+  
+  }
+
 
 } // namespace mbmore

@@ -167,23 +167,40 @@ double RNG_Integer(double min, double max, int rng_seed) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // For various types of time varying curves, calculate y for some t
+// Constants = [y_int, (slope or y_final), (t_change)]
   double CalcYVal(std::string function, std::vector<double> constants,
 		  double time) {
-    /*
-    std::string fn_lc = tolower(function);
 
-    switch(fn_lc) {
-    case 'linear':
-      std::cout << "Fn isn Linear" << std::endl;
-      break;
-    case 'constant':
-      std::cout << "Fn is const" << std::endl;
-      break;
+    double curr_y;
+    
+    if (function == "Constant" || function == "constant"){
+      if (constants.size() < 1) {
+	throw "incorrect number of equation parameters";
+      } else {
+	curr_y = constants[0];
+      }
+    } else if (function == "Linear" || function == "linear"){
+      if (constants.size() < 2) {
+	throw "incorrect number of equation parameters";
+      } else {
+	curr_y = constants[0] + constants[1]*time;
+      }
+    } else if (function == "Step" || function == "step"){
+      if (constants.size() < 3) {
+	throw "incorrect number of equation parameters";
+      } else {
+	if (time < constants[2]){
+	  curr_y = constants[0];
+	}
+	else {
+	  curr_y = constants[1];
+	}
+      }
+    } else {
+      throw "Pursuit Eqn Function choices are constant, linear (no caps)";
     }
-
-    std::cout << "now do the all case thing" << std::endl;
-    */
-    return 1;
+    
+    return curr_y;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /*
