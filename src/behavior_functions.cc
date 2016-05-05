@@ -166,10 +166,10 @@ double RNG_Integer(double min, double max, int rng_seed) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// For various types of time varying curves, calculate y for some t
+// For various types of x_val varying curves, calculate y for some x
 // Constants = [y_int, (slope or y_final), (t_change)]
   double CalcYVal(std::string function, std::vector<double> constants,
-		  double time) {
+		  double x_val) {
 
     double curr_y;
     
@@ -183,13 +183,23 @@ double RNG_Integer(double min, double max, int rng_seed) {
       if (constants.size() < 2) {
 	throw "incorrect number of equation parameters";
       } else {
-	curr_y = constants[0] + constants[1]*time;
+	curr_y = constants[0] + constants[1]*x_val;
       }
+    } else if (function == "Power" || function == "power"){
+      // If powerlaw has only one constant, then that is the power (B)
+      // Ax^B  and A is assumed to be 1.
+      double c_a = 1;
+      if (constants.size() < 1) {
+	throw "incorrect number of equation parameters";
+      } else if (constants.size() == 2) {
+	c_a = constants[1];
+      } 
+      curr_y = c_a*(pow( x_val, constants[0]));
     } else if (function == "Step" || function == "step"){
       if (constants.size() < 3) {
 	throw "incorrect number of equation parameters";
       } else {
-	if (time < constants[2]){
+	if (x_val < constants[2]){
 	  curr_y = constants[0];
 	}
 	else {
@@ -197,10 +207,10 @@ double RNG_Integer(double min, double max, int rng_seed) {
 	}
       }
     } else {
-      throw "Pursuit Eqn Function choices are constant, linear (no caps)";
+      throw "Function choices are constant, linear, step, power";
     }
-    
-    return curr_y;
+  
+  return curr_y;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /*

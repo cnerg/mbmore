@@ -35,9 +35,9 @@ double RNG_NormalDist(double mean, double sigma, int rng_seed);
 
 double RNG_Integer(double min, double max, int rng_seed);
 
-// For various types of time varying curves, calculate y for some t
-double CalcYVal(std::string function, std::vector<double> constants,
-		double time);
+// For various types of time varying curves, calculate y for some x
+ double CalcYVal(std::string function, std::vector<double> constants,
+		double x_val);
  
 
 } // namespace mbmore

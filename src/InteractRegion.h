@@ -1,8 +1,6 @@
 #ifndef MBMORE_SRC_INTERACT_REGION_H_
 #define MBMORE_SRC_INTERACT_REGION_H_
 
-#include <set>
-
 #include "cyclus.h"
 
 namespace mbmore {
@@ -39,6 +37,10 @@ class InteractRegion
   // shares the pursuit and acquisition equation weighting information
   // with the child institutions
   std::map<std::string, double> GetWeights(std::string eqn_type);
+
+  // Uses the pursuit or acquire likelihood conversion equation to determine the
+  // likeliness of pursuit and acquire on a 0-1 scale for the requested timestep
+  std::map<std::string, double> GetLikely(double eqn_val);
   
   /// every agent should be able to print a verbose description
   virtual std::string str();
@@ -50,21 +52,21 @@ class InteractRegion
     " Total weight should add to 1 (otherwise it will be normalized)",	\
     }
   std::map<std::string, double> p_wts ;
-  
-  /*
-#pragma cyclus var {
-  //    "alias": ["Likely", "eqn_", ["function","name", ["params","val"]]], \
-  "alias": ["pursuit_likely", "function", "name",["constants","val"]],	\
-    "doc": "Relational Equation to convert from Pursuit Score to a Likelihood" \
-    "Beginning with pursuit score between 0-10, equation converts to a " \
-    "likelihood between 0-1. Function option is (Power,A) in the "	\
-    "form (x over 10) to the A power",						\
+
+  #pragma cyclus var {      \
+  "alias": ["Likely", "phase", ["function","name", ["params","val"]]],	\
+    "doc": "Relational Equation to convert from Pursuit or acquire score to a " \
+    " Likelihood of occuring"						\
+    "Beginning with pursuit score between 0 to 10, equation converts to a " \
+    "likelihood between 0 to 1. Function option is (Power,A) in the "	\
+    "form (x over 10) to the A power"					\
+    "The required Phases are Pursuit and Acquire",			\
     }
- std::pair<std::string, vector<double> >p_likely ;
+ std::map<std::string, std::pair<std::string, std::vector<double> > > likely ;
  
-  */
- 
-  }; //cyclus::Region
+
+  
+}; //cyclus::Region
 
 }  // namespace mbmore
 #endif  // MBMORE_SRC_INTERACT_REGION_H_
