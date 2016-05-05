@@ -189,17 +189,25 @@ TEST(Behavior_Functions_Test, TestCalcYVal) {
   double t_change = 5;
   double t_final = 10;
   double tol = 1e-6;
+  double x_val = 3;
   
   std::vector<double> constants;
   double y_curr;
   
   // Constant
   constants.push_back(y0);
-    y_curr = CalcYVal("constant", constants, t_final);
+  y_curr = CalcYVal("constant", constants, t_final);
   EXPECT_NEAR(y_curr, y0, tol);
 
-  // Linear
+  // Power
+  y_curr = CalcYVal("power", constants, x_val);
+  EXPECT_NEAR(y_curr, 9, tol);
+
   constants.push_back(slope);
+  y_curr = CalcYVal("power", constants, x_val);
+  EXPECT_NEAR(y_curr, 4.5, tol);
+
+  // Linear
   y_curr = CalcYVal("linear", constants, t_final);
   EXPECT_NEAR(y_curr, y10, tol);
 
@@ -210,7 +218,7 @@ TEST(Behavior_Functions_Test, TestCalcYVal) {
   EXPECT_NEAR(y_curr, y0, tol);
   y_curr = CalcYVal("step", constants, y10);
   EXPECT_NEAR(y_curr, y10, tol);
-  
+       
   }
 
 
