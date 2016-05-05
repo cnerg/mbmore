@@ -30,9 +30,13 @@ std::map<std::string, double>
     return p_wts;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::map<std::string, double>
-  InteractRegion::GetLikely(double eqn_val) {
+double InteractRegion::GetLikely(std::string phase, double eqn_val) {
 
+  std::pair<std::string, std::vector<double> > likely_pair = likely[phase];
+  std::string function = likely_pair.first;
+  std::vector<double> constants = likely_pair.second;
+  
+  /*
   std::map<std::string, double> curr_likely;
   
   std::map<std::string,
@@ -42,13 +46,15 @@ std::map<std::string, double>
     std::string phase = eqn_it->first;
     std::string function = eqn_it->second.first;
     std::vector<double> constants = eqn_it->second.second;
-
-    std::cout << "factor " << phase << " fn " << function << std::endl;
+  */
 
     double phase_likely = CalcYVal(function, constants, eqn_val);
-    curr_likely[phase] = phase_likely;
-  }
-  return curr_likely;
+    std::cout << "phase " << phase << " fn " << function << "likely " << phase_likely << std::endl;
+    return phase_likely;
+
+    //    curr_likely[phase] = phase_likely;
+    //  }
+    //  return curr_likely;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

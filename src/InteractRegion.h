@@ -40,7 +40,7 @@ class InteractRegion
 
   // Uses the pursuit or acquire likelihood conversion equation to determine the
   // likeliness of pursuit and acquire on a 0-1 scale for the requested timestep
-  std::map<std::string, double> GetLikely(double eqn_val);
+  double GetLikely(std::string phase, double eqn_val);
   
   /// every agent should be able to print a verbose description
   virtual std::string str();
