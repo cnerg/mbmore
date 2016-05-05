@@ -1,5 +1,6 @@
 // Implements the StateInst class
 #include "StateInst.h"
+#include "InteractRegion.h"
 #include "behavior_functions.h"
 
 namespace mbmore {
@@ -192,21 +193,28 @@ void StateInst::DeploySecret() {
 // pursue at this time step.
 bool StateInst::DecidePursuit() {
 
-  // TODO: Weights will be moved to the Region and be uniform across all StateInst 
   // TODO: Add in a check that total weighting equals One.
   // TODO: Write factors vs time to a database table 
   std::map <std::string, double> P_wt;
-  P_wt["Dem"] = 0.5;
-  P_wt["React"] = 0.5;
+  //  P_wt["Dem"] = 0.5;
+  //  P_wt["React"] = 0.5;
 
-  //  std::map<std::string, double> y_current;
+  // Make a pointer to my parent region so I can access the RegionLevel
+  // variables (in a similar way to how the Context provides simulation
+  // level information)
+  InteractRegion* pseudo_region =
+    dynamic_cast<InteractRegion*>(this->parent());
+  
+  P_wt = pseudo_region->GetWeights("pursuit");
+
+  std::cout << "Dem Weight is: " << P_wt["Dem"] << std::endl;
+
   std::map<std::string,
 	   std::pair<std::string, std::vector<double> > >::iterator eqn_it;
 
   double pursuit_eqn = 0;
   // TODO: Adjust any particular factors appropriately (ie, flip democracy
   //       index to "10-Dem"
-  // TODO: Add a Random Time event (delta fn?)
   for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
     std::string factor = eqn_it->first;
     std::string function = eqn_it->second.first;
