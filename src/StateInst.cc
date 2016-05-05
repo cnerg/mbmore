@@ -205,7 +205,7 @@ bool StateInst::DecidePursuit() {
   InteractRegion* pseudo_region =
     dynamic_cast<InteractRegion*>(this->parent());
   
-  P_wt = pseudo_region->GetWeights("pursuit");
+  P_wt = pseudo_region->GetWeights("Pursuit");
 
   std::cout << "Dem Weight is: " << P_wt["Dem"] << std::endl;
 
@@ -229,11 +229,18 @@ bool StateInst::DecidePursuit() {
   }
   
   // TODO: Convert pursuit eqn value to a binary value using whatever equation
+
+  P_likely = pseudo_region->GetLikely("Pursuit", pursuit_eqn);
   
+  bool decision = XLikely(P_likely, rng_seed);
+  std::cout << "Decision is " << decision << std::endl;
+  /*  
   bool decision = 0;
   if (context()->time() == 4) {
     decision = 1;
   }
+  */
+  
   return decision;  
 }
   
