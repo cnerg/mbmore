@@ -111,8 +111,8 @@ class StateInst
     " a y-intercept of 2 and a slope of 0.5, then it looks like "	\
     " P_f[\"Dem\"]= (\"linear\", [y-int, slope])"			\
     " Available functions are linear (y-int, slope), constant (y-int), "\ 
-    " step (y-int, y_end, t_step). For Random events, use the Step function: " \
-    " if no t_step is defined, then the time" \
+    " step (y-int, y_end, t_step). For Random events, use the Step function " \
+    " If t_step is not defined, then the time" \
     " is randomly defined at the beginning of the simulation" \
     " The required Factors are: Dem (Democracy Index), React (# reactors)." \
   */

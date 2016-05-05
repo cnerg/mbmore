@@ -33,42 +33,38 @@ class InteractRegion
 
   virtual void Tock() {}
 
-
-  /*
-  // DO NOT call Agent class implementation of this method
-  virtual void InfileToDb(InfileTree* qe, DbInit di) {}
-
-  // DO NOT call Agent class implementation of this method
-  virtual void InitFrom(QueryableBackend* b) {}
-
-  // DO NOT call Agent class implementation of this method
-  virtual void Snapshot(DbInit di) {}
-
-  virtual void InitInv(Inventories& inv) {}
-
-  virtual Inventories SnapshotInv() { return Inventories(); }
-
-  virtual void Decommission();
-
-  virtual void EnterNotify();
-
-  /// register a child
-  void Register_(cyclus::Agent* agent);
-
-  */
-  
-
-  /// perform actions required when entering the simulation
+  // perform actions required when entering the simulation
   virtual void Build(cyclus::Agent* parent);
 
- 
-
+  // shares the pursuit and acquisition equation weighting information
+  // with the child institutions
+  std::map<std::string, double> GetWeights(std::string eqn_type);
+  
   /// every agent should be able to print a verbose description
   virtual std::string str();
 
+ private:
+  #pragma cyclus var {							\
+    "alias": ["pursuit_weights", "factor", "weight"],			\
+    "doc": "Weighting for Pursuit Factors "				\
+    " Total weight should add to 1 (otherwise it will be normalized)",	\
+    }
+  std::map<std::string, double> p_wts ;
+  
+  /*
+#pragma cyclus var {
+  //    "alias": ["Likely", "eqn_", ["function","name", ["params","val"]]], \
+  "alias": ["pursuit_likely", "function", "name",["constants","val"]],	\
+    "doc": "Relational Equation to convert from Pursuit Score to a Likelihood" \
+    "Beginning with pursuit score between 0-10, equation converts to a " \
+    "likelihood between 0-1. Function option is (Power,A) in the "	\
+    "form (x over 10) to the A power",						\
+    }
+ std::pair<std::string, vector<double> >p_likely ;
+ 
+  */
  
   }; //cyclus::Region
 
 }  // namespace mbmore
-
 #endif  // MBMORE_SRC_INTERACT_REGION_H_

@@ -22,6 +22,13 @@ InteractRegion::InteractRegion(cyclus::Context* ctx)
     cyclus::Agent::Build(parent);
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::map<std::string, double>
+  InteractRegion::GetWeights(std::string eqn_type) {
+    //TODO: use eqn_type ot expand in offering PE or AQ results
+    return p_wts;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string InteractRegion::str() {
   std::string s = cyclus::Agent::str();
 
