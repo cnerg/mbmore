@@ -5,6 +5,7 @@ USE_CYCLUS("mbmore" "behavior_functions")
 USE_CYCLUS("mbmore" "RandomEnrich")
 USE_CYCLUS("mbmore" "RandomSink")
 USE_CYCLUS("mbmore" "StateInst")
+USE_CYCLUS("mbmore" "InteractRegion")
 
 INSTALL_CYCLUS_MODULE("mbmore" "./")
 
