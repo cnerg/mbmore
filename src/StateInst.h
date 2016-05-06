@@ -126,6 +126,7 @@ class StateInst
   }
   std::map<std::string, std::pair<std::string, std::vector<double> > > P_f ;
 
+  static std::vector<std::string> column_names;
 
    }; // Toolkit::Builder
 }  // namespace mbmore

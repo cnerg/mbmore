@@ -30,6 +30,35 @@ std::map<std::string, double>
     return p_wts;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Returns a map of regularly used factors and bool to indicate whether they are
+// defined in this sim.
+std::map<std::string, bool>
+  InteractRegion::GetFactors(std::string eqn_type) {
+
+  std::map<std::string, bool> present;
+  std::map<std::string,double>::iterator factor_it;
+
+  //  std::string master_factors [] = { "Dem", "React"};
+  std::string master_factors [] = {				   
+    "Enrich", "Auth", "Conflict", "Mil_Sp", "Reactors", "Mil_Iso", 
+    "Sci_Net", "U_Reserve"};
+  int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
+
+  for(int i = 0; i < n_factors; i++) {
+    factor_it = p_wts.find(master_factors[i]);
+    if (factor_it == p_wts.end()) {   // factor isn't defined in input file
+      present[master_factors[i]]= false;
+    }
+    else {
+      present[master_factors[i]]= true;
+    }
+  }
+  
+  return present;
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Determine the likelihood value for the equation at the current time,
+// (where the current value of the equation is normalized to be between 0-1)
 double InteractRegion::GetLikely(std::string phase, double eqn_val) {
 
   std::pair<std::string, std::vector<double> > likely_pair = likely[phase];
