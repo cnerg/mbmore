@@ -5,6 +5,9 @@
 
 namespace mbmore {
 
+// Globally scoped list of columns for the database
+std::vector<std::string> StateInst::column_names;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 StateInst::StateInst(cyclus::Context* ctx)
   : cyclus::Institution(ctx){
@@ -28,17 +31,17 @@ void StateInst::DecomNotify(Agent* a) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::EnterNotify() {
   cyclus::Institution::EnterNotify();
-  /*
-  std::set<cyclus::Agent*>::iterator sit;
-  for (sit = cyclus::Agent::children().begin();
-       sit != cyclus::Agent::children().end();
-       ++sit) {
-    Agent* a = *sit;
-    Register_(a);
+
+  // Define column names for the database only once.
+  if (column_names.size() == 0){
+    std::map<std::string,
+	     std::pair<std::string, std::vector<double> > >::iterator eqn_it;
+    for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
+      column_names.push_back(eqn_it->first);
+    }
   }
 
-  */
-
+  //TODO: IS THIS NECESSARY???
   using cyclus::toolkit::CommodityProducer;
   std::vector<std::string>::iterator vit;
   for (vit = declared_protos.begin(); vit != declared_protos.end(); ++vit) {
@@ -176,8 +179,6 @@ void StateInst::AdjustMatlPrefs(
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Deploys secret prototypes when called by Tock
 void StateInst::DeploySecret() {
-  //void StateInst::DeploySecret(cyclus::Agent* parent) {
-  //  cyclus::Institution::Build(parent);
   BuildSched::iterator it;
 
   for (int i = 0; i < secret_protos.size(); i++) {
@@ -192,12 +193,18 @@ void StateInst::DeploySecret() {
 // At each timestep where pursuit has not yet occurred, calculate whether to
 // pursue at this time step.
 bool StateInst::DecidePursuit() {
+  using cyclus::Context;
+  using cyclus::Agent;
+  using cyclus::Recorder;
+  std::string eqn_type = "Pursuit";
+  
+  cyclus::Datum *d = context()->NewDatum("WeaponProgress");
+  d->AddVal("Time", context()->time());
+  d->AddVal("P/A", eqn_type);
 
   // TODO: Add in a check that total weighting equals One.
-  // TODO: Write factors vs time to a database table 
   std::map <std::string, double> P_wt;
-  //  P_wt["Dem"] = 0.5;
-  //  P_wt["React"] = 0.5;
+  std::map <std::string, double> P_factors;
 
   // Make a pointer to my parent region so I can access the RegionLevel
   // variables (in a similar way to how the Context provides simulation
@@ -205,41 +212,48 @@ bool StateInst::DecidePursuit() {
   InteractRegion* pseudo_region =
     dynamic_cast<InteractRegion*>(this->parent());
   
-  P_wt = pseudo_region->GetWeights("Pursuit");
+  // All defined factors should be recorded with their actual value
+  P_wt = pseudo_region->GetWeights(eqn_type);
 
-  std::cout << "Dem Weight is: " << P_wt["Dem"] << std::endl;
+  // Any factors not defined for sim should have a value of zero in the table
+  std::map<std::string, bool> present = pseudo_region->GetFactors(eqn_type);
 
-  std::map<std::string,
-	   std::pair<std::string, std::vector<double> > >::iterator eqn_it;
+  std::cout << "Dem Weight is: " << P_wt["Dem"] << std::endl;  
 
   double pursuit_eqn = 0;
   // TODO: Adjust any particular factors appropriately (ie, flip democracy
   //       index to "10-Dem"
-  for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
-    std::string factor = eqn_it->first;
-    std::string function = eqn_it->second.first;
-    std::vector<double> constants = eqn_it->second.second;
+  for(int i = 0; i < column_names.size(); i++){
+    std::string& factor = column_names[i];
+    std::string function = P_f[factor].first;
+    std::vector<double> constants =  P_f[factor].second;
 
-    std::cout << "factor " << factor << " fn " << function << std::endl;
-
-    double factor_curr_y = CalcYVal(function, constants,context()->time());
-    pursuit_eqn += (factor_curr_y * P_wt[factor]);
-
-    std::cout << "Factor: " << factor << "  Pursuit Eqn: " << pursuit_eqn << std:: endl;
+    // Record zeroes for any columns not defined in input file
+    bool f_defined = present[factor];
+    if (!f_defined) {
+      d->AddVal(factor.c_str(), 0);
+      std::cout << "Column name is " <<factor.c_str() << std::endl;
+    }
+    else {
+      std::cout << "factor " << factor << " fn " << function << std::endl;
+      
+      double factor_curr_y = CalcYVal(function, constants,context()->time());
+      pursuit_eqn += (factor_curr_y * P_wt[factor]);
+      P_factors[factor] = factor_curr_y;
+      std::cout << "Factor: " << factor << "  Pursuit Eqn: " << pursuit_eqn << std:: endl;
+      std::cout << "Column name is " <<factor << std::endl;
+      d->AddVal(factor.c_str(), factor_curr_y);
+    }
   }
-  
-  // TODO: Convert pursuit eqn value to a binary value using whatever equation
-
-  P_likely = pseudo_region->GetLikely("Pursuit", pursuit_eqn);
+  //Convert pursuit eqn result to a Y/N decision
+  double P_likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn/10);
   
   bool decision = XLikely(P_likely, rng_seed);
   std::cout << "Decision is " << decision << std::endl;
-  /*  
-  bool decision = 0;
-  if (context()->time() == 4) {
-    decision = 1;
-  }
-  */
+  d->AddVal("EqnVal", pursuit_eqn);
+  d->AddVal("Likelihood", P_likely);
+  d->AddVal("Decision", decision);
+  d->Record();
   
   return decision;  
 }

@@ -41,6 +41,10 @@ class InteractRegion
   // Uses the pursuit or acquire likelihood conversion equation to determine the
   // likeliness of pursuit and acquire on a 0-1 scale for the requested timestep
   double GetLikely(std::string phase, double eqn_val);
+
+  // Returns a map of regularly used factors and bool to indicate whether they are
+  // defined in this sim.
+  std::map<std::string, bool> GetFactors(std::string eqn_type);
   
   /// every agent should be able to print a verbose description
   virtual std::string str();
