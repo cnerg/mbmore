@@ -200,7 +200,7 @@ bool StateInst::DecidePursuit() {
   
   cyclus::Datum *d = context()->NewDatum("WeaponProgress");
   d->AddVal("Time", context()->time());
-  d->AddVal("P/A", eqn_type);
+  d->AddVal("EqnType", eqn_type);
 
   // TODO: Add in a check that total weighting equals One.
   std::map <std::string, double> P_wt;
