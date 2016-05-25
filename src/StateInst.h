@@ -96,7 +96,7 @@ class StateInst
   std::vector<std::string> secret_protos;
 
   #pragma cyclus var { \
-    "default": 0,
+    "default": 0,\
     "tooltip": "Seed for RNG" ,				    \
     "doc": "seed on current system time if set to -1," \
            " otherwise seed on number defined"}
