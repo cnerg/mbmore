@@ -200,6 +200,7 @@ bool StateInst::DecidePursuit() {
   
   cyclus::Datum *d = context()->NewDatum("WeaponProgress");
   d->AddVal("Time", context()->time());
+  d->AddVal("AgentId", cyclus::Agent::id());
   d->AddVal("EqnType", eqn_type);
 
   // TODO: Add in a check that total weighting equals One.
