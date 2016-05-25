@@ -24,9 +24,11 @@ class InteractRegion
 
   #pragma cyclus
 
-  #pragma cyclus note {"doc": "A region that governs a scenario in which " \
-                              "there is growth in demand for a commodity. "}
-  
+  #pragma cyclus note {"doc": "A super-region that defines relationships " \
+                              "between StateInst agents and acts as a Context "\
+                              "to track information needed by multiple " \
+                              "prototypes."}
+
   virtual void Tick() {}
 
   virtual void Tock() {}
@@ -42,8 +44,8 @@ class InteractRegion
   // likeliness of pursuit and acquire on a 0-1 scale for the requested timestep
   double GetLikely(std::string phase, double eqn_val);
 
-  // Returns a map of regularly used factors and bool to indicate whether they are
-  // defined in this sim.
+  // Returns a map of regularly used factors and bool to indicate whether they
+  // are defined in this sim.
   std::map<std::string, bool> GetFactors(std::string eqn_type);
   
   /// every agent should be able to print a verbose description
@@ -52,21 +54,22 @@ class InteractRegion
  private:
   #pragma cyclus var {							\
     "alias": ["pursuit_weights", "factor", "weight"],			\
-    "doc": "Weighting for Pursuit Factors "				\
-    " Total weight should add to 1 (otherwise it will be normalized)",	\
+    "doc": "Weighting for all Pursuit Factors defined in StateInst "	\
+           " Total weight should add to 1 (otherwise it will be normalized)", \
     }
   std::map<std::string, double> p_wts ;
 
   #pragma cyclus var {      \
-  "alias": ["likely_converter", "phase", ["function","name", ["params","val"]]],	\
-    "doc": "Relational Equation to convert from Pursuit or acquire score to a " \
-    " Likelihood of occuring"						\
-    "Beginning with pursuit score between 0 to 10, equation converts to a " \
-    "likelihood between 0 to 1. Function option is (Power,A) in the "	\
-    "form (x over 10) to the A power"					\
-    "The required Phases are Pursuit and Acquire",			\
+    "alias": ["likely_converter", "phase", ["function","name", ["params","val"]]],\
+    "doc": "Relational Equation to convert from Pursuit or acquire score to a "\
+           " Likelihood of occuring."				       \
+           "Beginning with pursuit score between 0 to 10, equation converts to"\
+           "a likelihood between 0 to 1. Function option is (Power,A) in the "\
+           "form (x over 10) to the A power"			       \
+           "The required Phases are Pursuit and Acquire",	         \
     }
- std::map<std::string, std::pair<std::string, std::vector<double> > > likely_rescale ;
+  std::map<std::string, std::pair<std::string, std::vector<double> > >
+    likely_rescale ;
  
 
   
