@@ -24,9 +24,14 @@ class StateInst
 
   #pragma cyclus
 
-  #pragma cyclus note {"doc": "An institution that owns and operates a " \
-                              "manually entered list of facilities in " \
-                              "the input file"}
+  #pragma cyclus note {"doc": "An institution that owns and operates a" \
+                              " manually entered list of facilities in " \
+                              "the input file. Assesses likelihood of pursuing"\
+                              " nuclear weapons through internal motivational "\
+                              "(military spending, nuclear infrastructure etc)"\
+                              " as well as external factors such as conflict" \
+                              " with neighbors. Must be paired with" \
+                              " InteractRegion"}
 
   /// enter the simulation and register any children present
   virtual void EnterNotify();
@@ -61,13 +66,6 @@ class StateInst
   bool pursuing = 0;
   bool acquired = 0;
 
-  
-  //  std::map<std::string, std::pair<std::string, std::vector<double> > > P_f ;
-
-  //  P_f["Dem"]=std::pair("constant", std::[3]);
-  //  P_f["React"]=std::pair("constant", [7]);
-  
-  
  protected:
   /// register a child
   void Register_(cyclus::Agent* agent);
@@ -84,8 +82,8 @@ class StateInst
     "uilabel": "Producer Prototype List",                               \
     "uitype": ["oneormore", "prototype"],                                    \
     "doc": "A set of facility prototypes that this institution can build. " \
-    "All prototypes in this list must be based on an archetype that "   \
-    "implements the cyclus::toolkit::CommodityProducer interface",      \
+           "All prototypes in this list must be based on an archetype that "   \
+           "implements the cyclus::toolkit::CommodityProducer interface",      \
     }
   std::vector<std::string> declared_protos;
 
@@ -97,32 +95,26 @@ class StateInst
   }
   std::vector<std::string> secret_protos;
 
-  #pragma cyclus var {"default": 0, "tooltip": "Seed for RNG" ,		\
-                          "doc": "seed on current system time if set to -1," \
-                                 " otherwise seed on number defined"}
+  #pragma cyclus var { \
+    "default": 0,
+    "tooltip": "Seed for RNG" ,				    \
+    "doc": "seed on current system time if set to -1," \
+           " otherwise seed on number defined"}
   int rng_seed;
 
-  /*
-    "uitype": ["oneormore", "string",		\
-    ["pair", "string", ["double"]]],		\
-    
-    " Each pursuit factor has an associated function (describing time dynamics)" \
-    " and constants. For example, if democracy index is linearly increasing with" \
-    " a y-intercept of 2 and a slope of 0.5, then it looks like "	\
-    " P_f[\"Dem\"]= (\"linear\", [y-int, slope])"			\
-    " Available functions are linear (y-int, slope), constant (y-int), "\ 
-    " step (y-int, y_end, t_step). For Random events, use the Step function " \
-    " If t_step is not defined, then the time" \
-    " is randomly defined at the beginning of the simulation" \
-    " The required Factors are: Dem (Democracy Index), React (# reactors)." \
-  */
 
-  //    "alias": ["factor", "function",["name","params",["val"]]], \
-  
   #pragma cyclus var { \
     "alias": ["pursuit_factors", "factor", ["function","name", ["params","val"]]], \
-    "doc": "Pursuit Factors "					   \
-    " All factors must be between 0 and 10.", \
+    "doc": "Pursuit Factors,  All factors must be between 0 and 10. "  \
+           " Each pursuit factor has an associated function (describing time"\
+           " dynamics) and constants. For example, if democracy index is" \
+           " linearly increasing with a y-intercept of 2 and a slope of 0.5," \
+           " then it looks like P_f[\"Dem\"]= (\"linear\", [y-int, slope])" \
+           " Available functions are linear (y-int, slope), constant (y-int), "\
+           " step (y-int, y_end, t_step). For Random events, use the Step" \
+           " function. If t_step is not defined, then the time"	      \
+           " is randomly defined at the beginning of the simulation.  The" \
+           " required Factors are: Dem (Democracy Index), React (# reactors).",\
   }
   std::map<std::string, std::pair<std::string, std::vector<double> > > P_f ;
 
