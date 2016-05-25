@@ -20,10 +20,12 @@ reproducibility.
 Available behavior functions are:
 
 * ``CalcYVal``: For various functions, returns Y given a set of relevant constants and X.
+  
   - ``Constant`` [y0]:  a constant line with the form y = y0
   - ``Linear`` [y0, m]: line with the form y = y0 + m*x
   - ``Power`` [(A=1), B]: powerlaw fn of the form y = A*(x^B). A defaults to 1 if not specified.
   - ``Step`` [y0, yf, (T)]: step function of the form y = y0  (x < T), y = y1 (x >= T).
+
 * EveryXTimestep - Returns true every X interval
 * EveryRandomXTimestep - Returns true with an approximate frequency defined by X, with individual instances randomly determined.
 * RNG_Integer - Returns a randomnly choses discrete number between the defined min and max.
