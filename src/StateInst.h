@@ -120,12 +120,13 @@ class StateInst
   //    "alias": ["factor", "function",["name","params",["val"]]], \
   
   #pragma cyclus var { \
-    "alias": ["Pursuit", "factor", ["function","name", ["params","val"]]], \
+    "alias": ["pursuit_factors", "factor", ["function","name", ["params","val"]]], \
     "doc": "Pursuit Factors "					   \
     " All factors must be between 0 and 10.", \
   }
   std::map<std::string, std::pair<std::string, std::vector<double> > > P_f ;
 
+  // Defines persistent columne names in WeaponProgress table of database
   static std::vector<std::string> column_names;
 
    }; // Toolkit::Builder

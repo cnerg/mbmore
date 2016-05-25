@@ -203,6 +203,7 @@ bool StateInst::DecidePursuit() {
   d->AddVal("EqnType", eqn_type);
 
   // TODO: Add in a check that total weighting equals One.
+  // TODO: MOVE RNG_SEED INTO InteractRegion so that it's defined for all facilities
   std::map <std::string, double> P_wt;
   std::map <std::string, double> P_factors;
 

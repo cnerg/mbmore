@@ -61,7 +61,7 @@ std::map<std::string, bool>
 // (where the current value of the equation is normalized to be between 0-1)
 double InteractRegion::GetLikely(std::string phase, double eqn_val) {
 
-  std::pair<std::string, std::vector<double> > likely_pair = likely[phase];
+  std::pair<std::string, std::vector<double> > likely_pair = likely_rescale[phase];
   std::string function = likely_pair.first;
   std::vector<double> constants = likely_pair.second;
   
@@ -71,7 +71,7 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
   std::map<std::string,
 	   std::pair<std::string, std::vector<double> > >::iterator eqn_it;
 
-  for(eqn_it = likely.begin(); eqn_it != likely.end(); eqn_it++) {
+  for(eqn_it = likely_rescale.begin(); eqn_it != likely_rescale.end(); eqn_it++) {
     std::string phase = eqn_it->first;
     std::string function = eqn_it->second.first;
     std::vector<double> constants = eqn_it->second.second;

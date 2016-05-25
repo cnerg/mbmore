@@ -58,7 +58,7 @@ class InteractRegion
   std::map<std::string, double> p_wts ;
 
   #pragma cyclus var {      \
-  "alias": ["Likely", "phase", ["function","name", ["params","val"]]],	\
+  "alias": ["likely_converter", "phase", ["function","name", ["params","val"]]],	\
     "doc": "Relational Equation to convert from Pursuit or acquire score to a " \
     " Likelihood of occuring"						\
     "Beginning with pursuit score between 0 to 10, equation converts to a " \
@@ -66,7 +66,7 @@ class InteractRegion
     "form (x over 10) to the A power"					\
     "The required Phases are Pursuit and Acquire",			\
     }
- std::map<std::string, std::pair<std::string, std::vector<double> > > likely ;
+ std::map<std::string, std::pair<std::string, std::vector<double> > > likely_rescale ;
  
 
   
