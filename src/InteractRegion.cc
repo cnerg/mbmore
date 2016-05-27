@@ -85,6 +85,21 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
     //  }
     //  return curr_likely;
 }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Determine the Conflict Factor for the state at each timestep.
+double InteractRegion::GetInteractFactor(std::string factor) {
+  //TODO: MAKE MAP MATRIX OF VALUEs. SUM OVER THE STATE. DIVIDE BY N_ELEMENTS
+  double fractional_val = 0.5;
+  double scaled_val;
+  if (fractional_val <= 0.0) {
+    scaled_val = fractional_val*(-5.0) + 5.0;
+  }
+  else {
+    scaled_val = fractional_val*5.0;
+  }
+  std::cout << "scaled conflict is " << scaled_val << std::endl;
+  return scaled_val;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string InteractRegion::str() {

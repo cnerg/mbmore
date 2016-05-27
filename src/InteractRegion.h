@@ -47,7 +47,11 @@ class InteractRegion
   // Returns a map of regularly used factors and bool to indicate whether they
   // are defined in this sim.
   std::map<std::string, bool> GetFactors(std::string eqn_type);
-  
+
+  // Determines Conflict or Isolation scores for each state based on its net
+  // relationships with other states
+  double GetInteractFactor(std::string factor);
+
   /// every agent should be able to print a verbose description
   virtual std::string str();
 

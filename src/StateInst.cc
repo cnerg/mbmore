@@ -237,9 +237,15 @@ bool StateInst::DecidePursuit() {
       std::cout << "Column name is " <<factor.c_str() << std::endl;
     }
     else {
+      double factor_curr_y;
       std::cout << "factor " << factor << " fn " << function << std::endl;
-      
-      double factor_curr_y = CalcYVal(function, constants,context()->time());
+      // Determine the State's conflict score for this timestep
+      if (factor == "Conflict") {
+	factor_curr_y = pseudo_region->GetInteractFactor("Conflict");
+      }
+      else {
+	factor_curr_y = CalcYVal(function, constants,context()->time());
+      }
       pursuit_eqn += (factor_curr_y * P_wt[factor]);
       P_factors[factor] = factor_curr_y;
       std::cout << "Factor: " << factor << "  Pursuit Eqn: " << pursuit_eqn << std:: endl;
