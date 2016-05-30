@@ -75,6 +75,16 @@ class InteractRegion
   std::map<std::string, std::pair<std::string, std::vector<double> > >
     likely_rescale ;
  
+  //    "alias": ["p_conflict_relations", "primary_state", ["pair_state","name", ["relation","val"]]], \
+  #pragma cyclus var {      \
+    "alias": ["p_conflict_relations", "primary_state", ["pair_state",["relation"]]],\
+    "doc": "Conflict relationships between states at t=0 for Pursuit"\
+           "Each state is entered as the Primary state, with it's perceived " \
+           "relations to each other state as the map values." \
+           "Choices are +1 (allies), 0 (neutral), -1 (enemies)",	 \
+    }
+  std::map<std::string, std::map<std::string, int> >
+    p_conflict_map ;
 
   
 }; //cyclus::Region
