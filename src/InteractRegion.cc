@@ -8,6 +8,17 @@
 
 namespace mbmore {
 
+// Globally scoped list of columns for the database
+  /*
+  std::set<std::string> InteractRegion::column_names = {
+    "Enrich", "Auth", "Conflict", "Mil_Sp", "Reactors", "Mil_Iso", 
+    "Sci_Net", "U_Reserve"};
+
+  std::vector<std::string> InteractRegion::master_factors [] = {
+    "Enrich", "Auth", "Conflict", "Mil_Sp", "Reactors", "Mil_Iso", 
+    "Sci_Net", "U_Reserve"};
+*/
+  std::vector<std::string> InteractRegion::column_names;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 InteractRegion::InteractRegion(cyclus::Context* ctx)
@@ -30,6 +41,21 @@ std::map<std::string, double>
     return p_wts;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void InteractRegion::EnterNotify() {
+  cyclus::Region::EnterNotify();
+
+  // Define column names for the database only once.
+    std::string master_factors [] = {"Enrich", "Auth", "Conflict", "Mil_Sp", "Reactors", "Mil_Iso","Sci_Net", "U_Reserve"};
+   if (column_names.size() == 0){
+     std::map<std::string, double >::iterator f_it;
+     //	   std::pair<std::string, std::vector<double> > >::iterator eqn_it;
+     //  for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
+     for(f_it = p_wts.begin(); f_it != p_wts.end(); f_it++) {
+       column_names.push_back(f_it->first);
+     }
+   }
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
 std::map<std::string, bool>
@@ -38,19 +64,23 @@ std::map<std::string, bool>
   std::map<std::string, bool> present;
   std::map<std::string,double>::iterator factor_it;
 
-  //  std::string master_factors [] = { "Dem", "React"};
+  /*
   std::string master_factors [] = {				   
     "Enrich", "Auth", "Conflict", "Mil_Sp", "Reactors", "Mil_Iso", 
     "Sci_Net", "U_Reserve"};
-  int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
+  */
+
+  int n_factors = sizeof(column_names) / sizeof(column_names[0]);
 
   for(int i = 0; i < n_factors; i++) {
-    factor_it = p_wts.find(master_factors[i]);
+    std::cout << "Master Factors: " << column_names[i] << std::endl;
+    factor_it = p_wts.find(column_names[i]);
     if (factor_it == p_wts.end()) {   // factor isn't defined in input file
-      present[master_factors[i]]= false;
+      present[column_names[i]]= false;
+      //      std::cout << "FALSE for" << master_factors[i] << std::endl;
     }
     else {
-      present[master_factors[i]]= true;
+      present[column_names[i]]= true;
     }
   }
   
@@ -86,10 +116,24 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
     //  return curr_likely;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Determine the Conflict Factor for the state at each timestep.
-double InteractRegion::GetInteractFactor(std::string factor) {
-  //TODO: MAKE MAP MATRIX OF VALUEs. SUM OVER THE STATE. DIVIDE BY N_ELEMENTS
-  double fractional_val = 0.5;
+// Determine the Conflict or Military Isolation actor for the state at each
+// timestep. Begin with the map of relations to all other states, sum these
+// values and normalize. Then convert result to a 0-10 scale (0 == alliance,
+// 5 == neutral, 10 == conflict)
+double InteractRegion::GetInteractFactor(std::string eqn_type, std::string factor, std::string prototype) {
+    
+  std::map<std::string, std::map<std::string, int> > relations_map ;
+  if ((eqn_type == "Pursuit") && (factor == "Conflict")){
+    relations_map = p_conflict_map;
+  }
+  std::map<std::string, int> relations = relations_map[prototype];
+  std::map<std::string, int>::iterator map_it;
+  int net_relation = 0;
+  for(map_it = relations.begin(); map_it != relations.end(); map_it++) {
+    net_relation += map_it->second;
+  }
+
+  double fractional_val = static_cast<double>(net_relation)/relations.size();
   double scaled_val;
   if (fractional_val <= 0.0) {
     scaled_val = fractional_val*(-5.0) + 5.0;

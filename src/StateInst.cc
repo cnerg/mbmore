@@ -5,9 +5,6 @@
 
 namespace mbmore {
 
-// Globally scoped list of columns for the database
-std::vector<std::string> StateInst::column_names;
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 StateInst::StateInst(cyclus::Context* ctx)
   : cyclus::Institution(ctx){
@@ -32,15 +29,18 @@ void StateInst::DecomNotify(Agent* a) {
 void StateInst::EnterNotify() {
   cyclus::Institution::EnterNotify();
 
+  /*
   // Define column names for the database only once.
   if (column_names.size() == 0){
     std::map<std::string,
 	     std::pair<std::string, std::vector<double> > >::iterator eqn_it;
     for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
+      std::cout << "INitialized Factors: " << eqn_it->first << std::endl;
       column_names.push_back(eqn_it->first);
     }
   }
-
+  */
+  
   //TODO: IS THIS NECESSARY???
   using cyclus::toolkit::CommodityProducer;
   std::vector<std::string>::iterator vit;
@@ -125,7 +125,6 @@ void StateInst::Tock() {
     }
   }
   else {
-    std::cout << "Calculating pursuit" << std::endl;
     bool pursuit_decision = DecidePursuit();
     if (pursuit_decision == 1) {
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
@@ -148,8 +147,6 @@ void StateInst::AdjustMatlPrefs(
   using cyclus::Material;
   using cyclus::Request;
 
-  std::cout << "Adjusting Matl Prefs" << std::endl;
-
   cyclus::PrefMap<cyclus::Material>::type::iterator pmit;
   for (pmit = prefs.begin(); pmit != prefs.end(); ++pmit) {
     std::map<Bid<Material>*, double>::iterator mit;
@@ -160,10 +157,8 @@ void StateInst::AdjustMatlPrefs(
       // and you're a type of Sink, then adjust preferences
       std::string full_name = you->spec();
       std::string archetype = full_name.substr(full_name.rfind(':'));
-      std::cout << "Archetype" << archetype << std::endl;
       if ((you->parent() == me) &&
 	  ((archetype == "Sink") || (archetype == "RandomSink"))){
-	std::cout << "Testing acquisition" << std::endl;
 	for (mit = pmit->second.begin(); mit != pmit->second.end(); ++mit) {
 	  if (acquired == 1){
 	    mit->second += 1; 
@@ -220,28 +215,42 @@ bool StateInst::DecidePursuit() {
   // Any factors not defined for sim should have a value of zero in the table
   std::map<std::string, bool> present = pseudo_region->GetFactors(eqn_type);
 
-  std::cout << "Dem Weight is: " << P_wt["Dem"] << std::endl;  
-
   double pursuit_eqn = 0;
-  // TODO: Adjust any particular factors appropriately (ie, flip democracy
-  //       index to "10-Dem"
+
+  // Iterate through master list of factors. If not present then record 0
+  // in database. If present then calculate current value based on time
+  // dynamics
+  std::map<std::string, bool >::iterator column_it;
+  for(column_it = present.begin(); column_it != present.end(); column_it++) {
+    const std::string& factor = column_it->first;
+    bool f_defined  = column_it->second;
+    std::string function = P_f[factor].first;
+    std::vector<double> constants =  P_f[factor].second;
+
+    /*  
   for(int i = 0; i < column_names.size(); i++){
     std::string& factor = column_names[i];
     std::string function = P_f[factor].first;
     std::vector<double> constants =  P_f[factor].second;
-
+    */
+    //    bool f_defined = present[factor];
+    
+    //    std::cout << "Master list:  " << factor << "defined " << f_defined << std::endl;
     // Record zeroes for any columns not defined in input file
-    bool f_defined = present[factor];
     if (!f_defined) {
-      d->AddVal(factor.c_str(), 0);
-      std::cout << "Column name is " <<factor.c_str() << std::endl;
+      std::cout << "NOT DEFINED: " << factor.c_str() << std::endl;
+      d->AddVal(factor.c_str(), 0.0);
     }
     else {
       double factor_curr_y;
-      std::cout << "factor " << factor << " fn " << function << std::endl;
+      std::cout << "Defined: factor " << factor << " fn " << function << std::endl;
       // Determine the State's conflict score for this timestep
-      if (factor == "Conflict") {
-	factor_curr_y = pseudo_region->GetInteractFactor("Conflict");
+      //TODO: ADD ISOLATION
+      if ((factor == "Conflict") || (factor == "Mil_Iso")) {
+	Agent* me = this;
+	std::string proto = me->prototype();
+	factor_curr_y =
+	  pseudo_region->GetInteractFactor("Pursuit", factor, proto);
       }
       else {
 	factor_curr_y = CalcYVal(function, constants,context()->time());
@@ -249,7 +258,6 @@ bool StateInst::DecidePursuit() {
       pursuit_eqn += (factor_curr_y * P_wt[factor]);
       P_factors[factor] = factor_curr_y;
       std::cout << "Factor: " << factor << "  Pursuit Eqn: " << pursuit_eqn << std:: endl;
-      std::cout << "Column name is " <<factor << std::endl;
       d->AddVal(factor.c_str(), factor_curr_y);
     }
   }
