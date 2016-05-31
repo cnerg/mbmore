@@ -56,7 +56,17 @@ class InteractRegion
   virtual std::string str();
 
  private:
-  #pragma cyclus var {							\
+
+#pragma cyclus var {				\
+  "default": False,						    \
+  "tooltip": "Are Conflict and Isolation relationships symmetric?" ,    \
+  "doc": "If True then State A and State B have mutually agreed upon " \
+         "relationships (both allies or enemies). If False then State A " \
+         "and State B can have different perceptions of their relationship", \
+  }
+bool symmetric;
+
+ #pragma cyclus var {							\
     "alias": ["pursuit_weights", "factor", "weight"],			\
     "doc": "Weighting for all Pursuit Factors defined in StateInst "	\
            " Total weight should add to 1 (otherwise it will be normalized)", \
@@ -75,16 +85,14 @@ class InteractRegion
   std::map<std::string, std::pair<std::string, std::vector<double> > >
     likely_rescale ;
  
-  //    "alias": ["p_conflict_relations", "primary_state", ["pair_state","name", ["relation","val"]]], \
   #pragma cyclus var {      \
-    "alias": ["p_conflict_relations", "primary_state", ["pair_state",["relation"]]],\
+	  "alias": ["p_conflict_relations", "primary_state", ["pair_state","name","relation"]], \
     "doc": "Conflict relationships between states at t=0 for Pursuit"\
            "Each state is entered as the Primary state, with it's perceived " \
            "relations to each other state as the map values." \
            "Choices are +1 (allies), 0 (neutral), -1 (enemies)",	 \
     }
-  std::map<std::string, std::map<std::string, int> >
-    p_conflict_map ;
+  std::map<std::string, std::map<std::string, int> > p_conflict_map ;
 
   
 }; //cyclus::Region
