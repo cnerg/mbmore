@@ -36,6 +36,9 @@ class InteractRegion
   // perform actions required when entering the simulation
   virtual void Build(cyclus::Agent* parent);
 
+  /// enter the simulation and register any children present
+  virtual void EnterNotify();
+
   // shares the pursuit and acquisition equation weighting information
   // with the child institutions
   std::map<std::string, double> GetWeights(std::string eqn_type);
@@ -50,7 +53,7 @@ class InteractRegion
 
   // Determines Conflict or Isolation scores for each state based on its net
   // relationships with other states
-  double GetInteractFactor(std::string factor);
+  double GetInteractFactor(std::string eqn_type, std::string factor, std::string prototype);
 
   /// every agent should be able to print a verbose description
   virtual std::string str();
@@ -94,6 +97,11 @@ bool symmetric;
     }
   std::map<std::string, std::map<std::string, int> > p_conflict_map ;
 
+
+// Defines persistent column names in WeaponProgress table of database
+// Must be defined globally so that references to the column name 
+// pointers persist
+static std::vector<std::string> column_names;
   
 }; //cyclus::Region
 
