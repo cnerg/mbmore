@@ -213,17 +213,26 @@ bool StateInst::DecidePursuit() {
   P_wt = pseudo_region->GetWeights(eqn_type);
 
   // Any factors not defined for sim should have a value of zero in the table
-  std::map<std::string, bool> present = pseudo_region->GetFactors(eqn_type);
+  std::vector<std::string>& master_factors = pseudo_region->GetMasterFactors();
+  std::map<std::string, bool> present = pseudo_region->DefinedFactors(eqn_type);
 
   double pursuit_eqn = 0;
 
   // Iterate through master list of factors. If not present then record 0
   // in database. If present then calculate current value based on time
   // dynamics
+  /*
   std::map<std::string, bool >::iterator column_it;
-  for(column_it = present.begin(); column_it != present.end(); column_it++) {
-    const std::string& factor = column_it->first;
+  for(column_it = present.begin(); column_it != present.end(); column_it++){
+  const std::string& factor = column_it->first;
     bool f_defined  = column_it->second;
+    std::string function = P_f[factor].first;
+    std::vector<double> constants =  P_f[factor].second;
+  */
+
+  for(int f = 0; f < master_factors.size(); f++){
+    const std::string& factor = master_factors[f];
+    bool f_defined  = present[std::string(factor)];
     std::string function = P_f[factor].first;
     std::vector<double> constants =  P_f[factor].second;
 

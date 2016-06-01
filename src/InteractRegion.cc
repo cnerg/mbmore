@@ -44,47 +44,51 @@ std::map<std::string, double>
   void InteractRegion::EnterNotify() {
   cyclus::Region::EnterNotify();
 
-  // Define column names for the database only once.
-    std::string master_factors [] = {"Enrich", "Auth", "Conflict", "Mil_Sp", "Reactors", "Mil_Iso","Sci_Net", "U_Reserve"};
-   if (column_names.size() == 0){
-     std::map<std::string, double >::iterator f_it;
+  // Define Master List of column names for the database only once.
+    std::string master_factors [] = { "Auth", "Conflict", "Enrich", "Mil_Iso","Mil_Sp","Reactors", "Sci_Net", "U_Reserve"};
+    int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
+    
+    if (column_names.size() == 0){
+     //     std::map<std::string, double >::iterator f_it;
      //	   std::pair<std::string, std::vector<double> > >::iterator eqn_it;
      //  for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
-     for(f_it = p_wts.begin(); f_it != p_wts.end(); f_it++) {
-       column_names.push_back(f_it->first);
+     //     for(f_it = p_wts.begin(); f_it != p_wts.end(); f_it++) {
+     for(int f_it = 0; f_it < n_factors; f_it++) {
+       std::cout << "EnterNotify adding " << master_factors[f_it] << std::endl;
+       column_names.push_back(master_factors[f_it]);
      }
    }
 }
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
 std::map<std::string, bool>
-  InteractRegion::GetFactors(std::string eqn_type) {
-
+  InteractRegion::DefinedFactors(std::string eqn_type) {
   std::map<std::string, bool> present;
   std::map<std::string,double>::iterator factor_it;
 
-  /*
-  std::string master_factors [] = {				   
-    "Enrich", "Auth", "Conflict", "Mil_Sp", "Reactors", "Mil_Iso", 
-    "Sci_Net", "U_Reserve"};
-  */
-
-  int n_factors = sizeof(column_names) / sizeof(column_names[0]);
-
+  //  int n_factors = sizeof(column_names) / sizeof(column_names[0]);
+  int n_factors = column_names.size();
+  std::cout << "number of master factors is " << n_factors << std::endl;
   for(int i = 0; i < n_factors; i++) {
-    std::cout << "Master Factors: " << column_names[i] << std::endl;
+    std::cout << "Defined Factors: " << column_names[i] << std::endl;
     factor_it = p_wts.find(column_names[i]);
     if (factor_it == p_wts.end()) {   // factor isn't defined in input file
       present[column_names[i]]= false;
-      //      std::cout << "FALSE for" << master_factors[i] << std::endl;
     }
     else {
       present[column_names[i]]= true;
     }
   }
-  
   return present;
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Returns a map of regularly used factors and bool to indicate whether they are
+// defined in this sim.
+std::vector<std::string>&
+  InteractRegion::GetMasterFactors() {
+  return column_names;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determine the likelihood value for the equation at the current time,
