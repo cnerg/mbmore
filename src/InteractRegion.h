@@ -49,7 +49,10 @@ class InteractRegion
 
   // Returns a map of regularly used factors and bool to indicate whether they
   // are defined in this sim.
-  std::map<std::string, bool> GetFactors(std::string eqn_type);
+  std::map<std::string, bool> DefinedFactors(std::string eqn_type);
+
+  // Returns the master list of all factors to be recorded in database
+  std::vector<std::string>& GetMasterFactors();
 
   // Determines Conflict or Isolation scores for each state based on its net
   // relationships with other states
