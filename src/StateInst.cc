@@ -28,18 +28,6 @@ void StateInst::DecomNotify(Agent* a) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::EnterNotify() {
   cyclus::Institution::EnterNotify();
-
-  /*
-  // Define column names for the database only once.
-  if (column_names.size() == 0){
-    std::map<std::string,
-	     std::pair<std::string, std::vector<double> > >::iterator eqn_it;
-    for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
-      std::cout << "INitialized Factors: " << eqn_it->first << std::endl;
-      column_names.push_back(eqn_it->first);
-    }
-  }
-  */
   
   //TODO: IS THIS NECESSARY???
   using cyclus::toolkit::CommodityProducer;

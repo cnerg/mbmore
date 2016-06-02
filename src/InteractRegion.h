@@ -47,9 +47,13 @@ class InteractRegion
   // likeliness of pursuit and acquire on a 0-1 scale for the requested timestep
   double GetLikely(std::string phase, double eqn_val);
 
-  // Returns a map of regularly used factors and bool to indicate whether they
-  // are defined in this sim.
+
+  // Determines which factors are defined for this sim
   std::map<std::string, bool> DefinedFactors(std::string eqn_type);
+
+  // Returns a map of regularly used factors and bool to indicate whether
+  // the are defined in this sim.
+  std::map<std::string, bool> GetDefinedFactors(std::string eqn_type);
 
   // Returns the master list of all factors to be recorded in database
   std::vector<std::string>& GetMasterFactors();
@@ -105,7 +109,12 @@ bool symmetric;
 // Must be defined globally so that references to the column name 
 // pointers persist
 static std::vector<std::string> column_names;
-  
+
+// Defines which of the master factor list are being used based on weights
+std::map<std::string, bool> p_present;
+std::map<std::string, bool> a_present;
+
+ 
 }; //cyclus::Region
 
 }  // namespace mbmore
