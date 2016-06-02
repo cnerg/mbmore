@@ -45,26 +45,60 @@ std::map<std::string, double>
   cyclus::Region::EnterNotify();
 
   // Define Master List of column names for the database only once.
-    std::string master_factors [] = { "Auth", "Conflict", "Enrich", "Mil_Iso","Mil_Sp","Reactors", "Sci_Net", "U_Reserve"};
-    int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
-    
-    if (column_names.size() == 0){
-     //     std::map<std::string, double >::iterator f_it;
-     //	   std::pair<std::string, std::vector<double> > >::iterator eqn_it;
-     //  for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
-     //     for(f_it = p_wts.begin(); f_it != p_wts.end(); f_it++) {
-     for(int f_it = 0; f_it < n_factors; f_it++) {
-       std::cout << "EnterNotify adding " << master_factors[f_it] << std::endl;
-       column_names.push_back(master_factors[f_it]);
-     }
-   }
+  std::string master_factors [] = { "Auth", "Conflict", "Enrich", "Mil_Iso","Mil_Sp","Reactors", "Sci_Net", "U_Reserve"};
+  int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
+  
+  if (column_names.size() == 0){
+    //     std::map<std::string, double >::iterator f_it;
+    //	   std::pair<std::string, std::vector<double> > >::iterator eqn_it;
+    //  for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
+    //     for(f_it = p_wts.begin(); f_it != p_wts.end(); f_it++) {
+    for(int f_it = 0; f_it < n_factors; f_it++) {
+      std::cout << "EnterNotify adding " << master_factors[f_it] << std::endl;
+      column_names.push_back(master_factors[f_it]);
+    }
+  }
+
+  // Determine which factors are used in the simulation based on the defined
+  // weights.
+  p_present = DefinedFactors("Pursuit");
+  //  a_present = DefinedFactors("Acquire");
+  
+  }
+ // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Determines which factors are defined for this sim
+std::map<std::string, bool>
+  InteractRegion::DefinedFactors(std::string eqn_type) {
+
+  std::map<std::string, double> wts;
+  if (eqn_type == "Pursuit"){
+    wts = p_wts;
+  }
+
+  std::map<std::string, bool> present;
+  std::map<std::string,double>::iterator factor_it;
+  int n_factors = column_names.size();
+  std::cout << "number of master factors is " << n_factors << std::endl;
+  //TODO: loop to get a_present also
+  for(int i = 0; i < n_factors; i++) {
+    std::cout << "Defined Factors: " << column_names[i] << std::endl;
+    factor_it = wts.find(column_names[i]);
+    if (factor_it == wts.end()) {   // factor isn't defined in input file
+      present[column_names[i]]= false;
+    }
+    else {
+      present[column_names[i]]= true;
+    }
+  }
+  return present;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
 std::map<std::string, bool>
-  InteractRegion::DefinedFactors(std::string eqn_type) {
+  InteractRegion::GetDefinedFactors(std::string eqn_type) {
+  /*
   std::map<std::string, bool> present;
   std::map<std::string,double>::iterator factor_it;
 
@@ -81,7 +115,13 @@ std::map<std::string, bool>
       present[column_names[i]]= true;
     }
   }
-  return present;
+  */
+  if (eqn_type == "Pursuit"){
+    return p_present;
+  }
+  else {
+    return a_present;
+  }
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
