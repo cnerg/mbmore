@@ -183,9 +183,9 @@ double InteractRegion::GetInteractFactor(std::string eqn_type, std::string facto
     scaled_val = fractional_val*(-5.0) + 5.0;
   }
   else {
-    scaled_val = fractional_val*5.0;
+    scaled_val = 5.0 - fractional_val*5.0;
   }
-  std::cout << "scaled conflict is " << scaled_val << std::endl;
+  std::cout << "raw conflict: " << fractional_val << "  scaled conflict:" << scaled_val << std::endl;
   return scaled_val;
 }
 
