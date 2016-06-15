@@ -188,7 +188,19 @@ double InteractRegion::GetInteractFactor(std::string eqn_type, std::string facto
   std::cout << "raw conflict: " << fractional_val << "  scaled conflict:" << scaled_val << std::endl;
   return scaled_val;
 }
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Change the Conflict value for a state. If the simulation is symmetric,
+// then the change in conflict value is mutual between the two states. Otherwise
+// only the state whose change was initiated is affected, such that the two
+// states may have different perspectives on their relationship.
+void InteractRegion::ChangeConflictFactor(std::string eqn_type, std::string this_state, std::string other_state, int new_val) {
+  if (eqn_type == "Pursuit"){
+    p_conflict_map[this_state][other_state] = new_val;
+    if (symmetric == 1){
+      p_conflict_map[other_state][this_state] = new_val;
+    }
+  }
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string InteractRegion::str() {
   std::string s = cyclus::Agent::str();

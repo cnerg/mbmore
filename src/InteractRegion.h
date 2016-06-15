@@ -58,9 +58,13 @@ class InteractRegion
   // Returns the master list of all factors to be recorded in database
   std::vector<std::string>& GetMasterFactors();
 
-  // Determines Conflict or Isolation scores for each state based on its net
+  // Determines Conflict score for each state based on its net
   // relationships with other states
   double GetInteractFactor(std::string eqn_type, std::string factor, std::string prototype);
+
+  // Changes conflict value from initial value to final value at the specified
+  // time
+  virtual void ChangeConflictFactor(std::string eqn_type, std::string this_state, std::string other_state, int new_val);
 
   /// every agent should be able to print a verbose description
   virtual std::string str();
