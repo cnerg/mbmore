@@ -36,7 +36,9 @@ void InteractRegion::EnterNotify() {
   cyclus::Region::EnterNotify();
 
   // Define Master List of column names for the database only once.
-  std::string master_factors [] = { "Auth", "Conflict", "Enrich", "Mil_Iso","Mil_Sp","Reactors", "Sci_Net", "U_Reserve"};
+  std::string master_factors [] = { "Auth", "Conflict", "Enrich",
+				    "Mil_Iso","Mil_Sp","Reactors",
+				    "Sci_Net", "U_Reserve"};
   int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
   
   if (column_names.size() == 0){
@@ -104,8 +106,7 @@ std::map<std::string, bool>
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
-std::vector<std::string>&
-  InteractRegion::GetMasterFactors() {
+std::vector<std::string>& InteractRegion::GetMasterFactors() {
   return column_names;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -119,7 +120,7 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
   std::vector<double> constants = likely_pair.second;
   
   double phase_likely = CalcYVal(function, constants, eqn_val);
-  std::cout << "phase " << phase << " fn " << function << "likely " << phase_likely << std::endl;
+  //  std::cout << "phase " << phase << " fn " << function << "likely " << phase_likely << std::endl;
   return phase_likely;
   
 }
@@ -128,7 +129,9 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
 // timestep. Begin with the map of relations to all other states, sum these
 // values and normalize. Then convert result to a 0-10 scale (0 == alliance,
 // 5 == neutral, 10 == conflict)
-double InteractRegion::GetInteractFactor(std::string eqn_type, std::string factor, std::string prototype) {
+double InteractRegion::GetInteractFactor(std::string eqn_type,
+					 std::string factor,
+					 std::string prototype) {
     
   std::map<std::string, std::map<std::string, int> > relations_map ;
   if ((eqn_type == "Pursuit") && (factor == "Conflict")){
@@ -149,7 +152,7 @@ double InteractRegion::GetInteractFactor(std::string eqn_type, std::string facto
   else {
     scaled_val = 5.0 - fractional_val*5.0;
   }
-  std::cout << "raw conflict: " << fractional_val << "  scaled conflict:" << scaled_val << std::endl;
+  //  std::cout << "raw conflict: " << fractional_val << "  scaled conflict:" << scaled_val << std::endl;
   return scaled_val;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -157,7 +160,9 @@ double InteractRegion::GetInteractFactor(std::string eqn_type, std::string facto
 // then the change in conflict value is mutual between the two states. Otherwise
 // only the state whose change was initiated is affected, such that the two
 // states may have different perspectives on their relationship.
-void InteractRegion::ChangeConflictFactor(std::string eqn_type, std::string this_state, std::string other_state, int new_val) {
+void InteractRegion::ChangeConflictFactor(std::string eqn_type,
+					  std::string this_state,
+					  std::string other_state, int new_val){
   if (eqn_type == "Pursuit"){
     p_conflict_map[this_state][other_state] = new_val;
     RecordConflictFactor(eqn_type, this_state, other_state, new_val);
@@ -170,7 +175,9 @@ void InteractRegion::ChangeConflictFactor(std::string eqn_type, std::string this
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Record conflict factors for each pair at start of simulation and
 // whenever they are changed 
-void InteractRegion::RecordConflictFactor(std::string eqn_type, std::string this_state, std::string other_state, int new_val) {
+void InteractRegion::RecordConflictFactor(std::string eqn_type,
+					  std::string this_state,
+					  std::string other_state, int new_val){
   using cyclus::Context;
   using cyclus::Recorder;
 
