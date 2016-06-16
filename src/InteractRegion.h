@@ -60,15 +60,20 @@ class InteractRegion
 
   // Determines Conflict score for each state based on its net
   // relationships with other states
-  double GetInteractFactor(std::string eqn_type, std::string factor, std::string prototype);
+  double GetInteractFactor(std::string eqn_type, std::string factor,
+			   std::string prototype);
 
   // Changes conflict value from initial value to final value at the specified
   // time
-  virtual void ChangeConflictFactor(std::string eqn_type, std::string this_state, std::string other_state, int new_val);
+  virtual void ChangeConflictFactor(std::string eqn_type,
+				    std::string this_state,
+				    std::string other_state, int new_val);
 
   // Records conflict value at beginning of simulation and any time the conflict
   // relation changes
-  virtual void RecordConflictFactor(std::string eqn_type, std::string this_state, std::string other_state, int new_val);
+  virtual void RecordConflictFactor(std::string eqn_type,
+				    std::string this_state,
+				    std::string other_state, int new_val);
 
   /// every agent should be able to print a verbose description
   virtual std::string str();
