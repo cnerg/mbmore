@@ -66,13 +66,17 @@ class InteractRegion
   // time
   virtual void ChangeConflictFactor(std::string eqn_type, std::string this_state, std::string other_state, int new_val);
 
+  // Records conflict value at beginning of simulation and any time the conflict
+  // relation changes
+  virtual void RecordConflictFactor(std::string eqn_type, std::string this_state, std::string other_state, int new_val);
+
   /// every agent should be able to print a verbose description
   virtual std::string str();
 
  private:
 
 #pragma cyclus var {				\
-  "default": False,						    \
+  "default": 0,						    \
   "tooltip": "Are Conflict and Isolation relationships symmetric?" ,    \
   "doc": "If True then State A and State B have mutually agreed upon " \
          "relationships (both allies or enemies). If False then State A " \
