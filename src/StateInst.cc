@@ -2,11 +2,9 @@
 #include "StateInst.h"
 #include "InteractRegion.h"
 #include "behavior_functions.h"
+#include <cmath>
 
 namespace mbmore {
-
-// Globally scoped list of columns for the database
-std::vector<std::string> StateInst::column_names;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 StateInst::StateInst(cyclus::Context* ctx)
@@ -31,16 +29,7 @@ void StateInst::DecomNotify(Agent* a) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::EnterNotify() {
   cyclus::Institution::EnterNotify();
-
-  // Define column names for the database only once.
-  if (column_names.size() == 0){
-    std::map<std::string,
-	     std::pair<std::string, std::vector<double> > >::iterator eqn_it;
-    for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
-      column_names.push_back(eqn_it->first);
-    }
-  }
-
+  
   //TODO: IS THIS NECESSARY???
   using cyclus::toolkit::CommodityProducer;
   std::vector<std::string>::iterator vit;
@@ -106,9 +95,19 @@ void StateInst::Tick() {
 	eqn_it->second.second.push_back(t_change);
 	std::cout << "Adding random step at : " << t_change << std::endl;
       }
+      // Conflict occurs once and changes to neutral or opposite original value
+      // If conflict has a single value and its not +1, 0, -1 then it does not
+      // change in the simulation
+      if ((factor == "Conflict" || factor == "conflict")
+	       && (constants.size() == 1)){
+	double yf = constants[0];
+	if (std::abs(yf) <= 1){
+	  int t_change = RNG_Integer(0, simdur, rng_seed);
+	  eqn_it->second.second.push_back(t_change);
+	}
+      }
     }
   }
-
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -125,7 +124,6 @@ void StateInst::Tock() {
     }
   }
   else {
-    std::cout << "Calculating pursuit" << std::endl;
     bool pursuit_decision = DecidePursuit();
     if (pursuit_decision == 1) {
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
@@ -148,8 +146,6 @@ void StateInst::AdjustMatlPrefs(
   using cyclus::Material;
   using cyclus::Request;
 
-  std::cout << "Adjusting Matl Prefs" << std::endl;
-
   cyclus::PrefMap<cyclus::Material>::type::iterator pmit;
   for (pmit = prefs.begin(); pmit != prefs.end(); ++pmit) {
     std::map<Bid<Material>*, double>::iterator mit;
@@ -160,10 +156,8 @@ void StateInst::AdjustMatlPrefs(
       // and you're a type of Sink, then adjust preferences
       std::string full_name = you->spec();
       std::string archetype = full_name.substr(full_name.rfind(':'));
-      std::cout << "Archetype" << archetype << std::endl;
       if ((you->parent() == me) &&
 	  ((archetype == "Sink") || (archetype == "RandomSink"))){
-	std::cout << "Testing acquisition" << std::endl;
 	for (mit = pmit->second.begin(); mit != pmit->second.end(); ++mit) {
 	  if (acquired == 1){
 	    mit->second += 1; 
@@ -218,32 +212,50 @@ bool StateInst::DecidePursuit() {
   P_wt = pseudo_region->GetWeights(eqn_type);
 
   // Any factors not defined for sim should have a value of zero in the table
-  std::map<std::string, bool> present = pseudo_region->GetFactors(eqn_type);
-
-  std::cout << "Dem Weight is: " << P_wt["Dem"] << std::endl;  
+  std::vector<std::string>& master_factors = pseudo_region->GetMasterFactors();
+  std::map<std::string, bool> present = pseudo_region->DefinedFactors(eqn_type);
 
   double pursuit_eqn = 0;
-  // TODO: Adjust any particular factors appropriately (ie, flip democracy
-  //       index to "10-Dem"
-  for(int i = 0; i < column_names.size(); i++){
-    std::string& factor = column_names[i];
-    std::string function = P_f[factor].first;
+
+  // Iterate through master list of factors. If not present then record 0
+  // in database. If present then calculate current value based on time
+  // dynamics
+  for(int f = 0; f < master_factors.size(); f++){
+    const std::string& factor = master_factors[f];
+    bool f_defined  = present[std::string(factor)];
+    std::string relation = P_f[factor].first;
     std::vector<double> constants =  P_f[factor].second;
 
     // Record zeroes for any columns not defined in input file
-    bool f_defined = present[factor];
     if (!f_defined) {
-      d->AddVal(factor.c_str(), 0);
-      std::cout << "Column name is " <<factor.c_str() << std::endl;
+      std::cout << "NOT DEFINED: " << factor.c_str() << std::endl;
+      d->AddVal(factor.c_str(), 0.0);
     }
     else {
-      std::cout << "factor " << factor << " fn " << function << std::endl;
-      
-      double factor_curr_y = CalcYVal(function, constants,context()->time());
+      double factor_curr_y;
+      std::cout << "Defined: factor " << factor << " fn " << relation << std::endl;
+      // Determine the State's conflict score for this timestep
+      if (factor == "Conflict") {
+	Agent* me = this;
+	std::string proto = me->prototype();
+	factor_curr_y =
+	  pseudo_region->GetInteractFactor("Pursuit", factor, proto);
+	// Then check conflict value to see if it needs to change
+	// If constants is a single element and it's value is not 0, +1, -1
+	// then there should be no change
+	if ((constants.size() > 1) && (constants[1] == context()->time())){
+	  int new_val = std::round(constants[0]);
+	  std::cout << "INT new conflict value is " << new_val << std::endl;
+	  pseudo_region->ChangeConflictFactor("Pursuit", proto,
+					      relation, new_val); 
+	}
+      }
+      else {
+	factor_curr_y = CalcYVal(relation, constants,context()->time());
+      }
       pursuit_eqn += (factor_curr_y * P_wt[factor]);
       P_factors[factor] = factor_curr_y;
       std::cout << "Factor: " << factor << "  Pursuit Eqn: " << pursuit_eqn << std:: endl;
-      std::cout << "Column name is " <<factor << std::endl;
       d->AddVal(factor.c_str(), factor_curr_y);
     }
   }
