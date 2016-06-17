@@ -105,21 +105,35 @@ class StateInst
 
   #pragma cyclus var { \
     "alias": ["pursuit_factors", "factor", ["function","name", ["params","val"]]], \
-    "doc": "Pursuit Factors,  All factors must be between 0 and 10. "  \
-           " Each pursuit factor has an associated function (describing time"\
-           " dynamics) and constants. For example, if democracy index is" \
-           " linearly increasing with a y-intercept of 2 and a slope of 0.5," \
+    "doc": "Pursuit Factors,  All factors must be between 0 and 10. The "\
+           " allowed Individual Factors define the States independent " \
+	   " perspective, and are: Auth (authoritarianism), Enrich," \
+           "  Mil_Sp (military spending/GDP),"\
+           " Reactors, Sci_Net (scientific network), U_Reserve. "\
+	   " The Relational Factors describe how the States interact with " \
+	   " one another, and are: Conflict, Mil_Iso (military isolation)." \
+	   "  A subset of" \
+           " factors may be used, but no custom factors may be defined." \
+           " Each Individual factor has an associated function " \
+           " (describing time"\
+           " dynamics) and constants.  For example, if democracy index is" \
+           " linearly increasing with a y-intercept of 2 and a slope of 0.5,"\
            " then it looks like P_f[\"Dem\"]= (\"linear\", [y-int, slope])" \
-           " Available functions are linear (y-int, slope), constant (y-int), "\
+           " Available functions are linear (y-int, slope), constant (y-int),"\
            " step (y-int, y_end, t_step). For Random events, use the Step" \
            " function. If t_step is not defined, then the time"	      \
-           " is randomly defined at the beginning of the simulation.  The" \
-           " required Factors are: Dem (Democracy Index), React (# reactors).",\
+           " is randomly defined at the beginning of the simulation." \
+	   " The t=0 values for Relational factors are defined in "\
+	   " InteractRegion.  To change them during the simulation, " \
+	   " P_f[\"Conflict\"]= (\"OtherState\", [Time, Value]) " \
+	   " Then the relation between this state and OtherState changes " \
+	   " at Time to be the new value (+1 = friendly, 0 = neutral," \
+	   " -1 = enemy. If Symmetric, then the OtherState's record of " \
+           " the relationship will be correspondingly changed. If Time = -1,"\
+	     " then the timestep will be randomly chosen", \
   }
   std::map<std::string, std::pair<std::string, std::vector<double> > > P_f ;
 
-  // Defines persistent columne names in WeaponProgress table of database
-  static std::vector<std::string> column_names;
 
    }; // Toolkit::Builder
 }  // namespace mbmore
