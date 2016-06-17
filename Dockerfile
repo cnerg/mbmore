@@ -1,4 +1,10 @@
-FROM cyclus/cycamore
+FROM cyclus/cyclus:latest
+
+RUN git clone https://github.com/cyclus/cycamore.git /cycamore
+WORKDIR /cycamore
+RUN git fetch
+RUN git checkout develop
+RUN ./install.py --prefix="/usr/local"
 
 COPY . /mbmore
 WORKDIR /mbmore
