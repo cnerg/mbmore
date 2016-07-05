@@ -197,8 +197,6 @@ bool StateInst::DecidePursuit() {
   d->AddVal("AgentId", cyclus::Agent::id());
   d->AddVal("EqnType", eqn_type);
 
-  // TODO: Add in a check that total weighting equals One.
-  // TODO: MOVE RNG_SEED INTO InteractRegion so that it's defined for all facilities
   std::map <std::string, double> P_wt;
   std::map <std::string, double> P_factors;
 
@@ -228,7 +226,7 @@ bool StateInst::DecidePursuit() {
 
     // Record zeroes for any columns not defined in input file
     if (!f_defined) {
-      std::cout << "NOT DEFINED: " << factor.c_str() << std::endl;
+      std::cout << "recording UNdefined factors: " << factor.c_str() << std::endl;
       d->AddVal(factor.c_str(), 0.0);
     }
     else {
