@@ -11,8 +11,9 @@ namespace mbmore {
 
 
 namespace InteractRegionTests {
-TEST(InteractRegionTests, DeployProto) {
   /*
+  TEST(InteractRegionTests, DeployProto) {
+
   std::string config = 
     "<pursuit_weights>"
     "    <item><factor>Enrich</factor>  <weight>0.5</weight> </item>"
