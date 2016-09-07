@@ -32,6 +32,20 @@ std::map<std::string, double>
     return p_wts;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+int InteractRegion::GetNStates() {
+  int n_states = 0;
+  for (std::set<Agent*>::const_iterator inst = children().begin();
+       inst != children().end();
+       inst++) {
+    if ((*inst)->spec() == ":mbmore:StateInst") {
+      n_states++; 
+    }
+    std::cout << (*inst)->spec() << std::endl;
+  }
+  std::cout << "N states is:   " << n_states << std::endl;
+  return n_states;
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void InteractRegion::EnterNotify() {
   cyclus::Region::EnterNotify();
 
@@ -69,8 +83,9 @@ void InteractRegion::EnterNotify() {
     }
   }
 
-  //If conflict is defined, record initial conflict relations in database
-  if (p_present["Conflict"] == true){
+  // If conflict is defined, record initial conflict relations in database
+  int n_states = GetNStates();
+  if ((p_present["Conflict"] == true) && n_states > 1){
     std::string eqn_type = "Pursuit";
     for (auto const &ent1 : p_conflict_map) {
       for (auto const &ent2 : ent1.second){

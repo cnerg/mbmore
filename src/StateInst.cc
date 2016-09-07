@@ -233,19 +233,25 @@ bool StateInst::DecidePursuit() {
       double factor_curr_y;
       std::cout << "Defined: factor " << factor << " fn " << relation << std::endl;
       // Determine the State's conflict score for this timestep
-      if (factor == "Conflict") {
-	Agent* me = this;
-	std::string proto = me->prototype();
-	factor_curr_y =
-	  pseudo_region->GetInteractFactor("Pursuit", factor, proto);
-	// Then check conflict value to see if it needs to change
-	// If constants is a single element and it's value is not 0, +1, -1
-	// then there should be no change
-	if ((constants.size() > 1) && (constants[1] == context()->time())){
-	  int new_val = std::round(constants[0]);
-	  std::cout << "INT new conflict value is " << new_val << std::endl;
-	  pseudo_region->ChangeConflictFactor("Pursuit", proto,
-					      relation, new_val); 
+      int n_states = pseudo_region->GetNStates();
+      if (factor == "Conflict"){
+	if (n_states <= 1){
+	  factor_curr_y = 0;
+	}
+	else{
+	  Agent* me = this;
+	  std::string proto = me->prototype();
+	  factor_curr_y =
+	    pseudo_region->GetInteractFactor("Pursuit", factor, proto);
+	  // Then check conflict value to see if it needs to change
+	  // If constants is a single element and it's value is not 0, +1, -1
+	  // then there should be no change
+	  if ((constants.size() > 1) && (constants[1] == context()->time())){
+	    int new_val = std::round(constants[0]);
+	    std::cout << "INT new conflict value is " << new_val << std::endl;
+	    pseudo_region->ChangeConflictFactor("Pursuit", proto,
+						relation, new_val); 
+	  }
 	}
       }
       else {
