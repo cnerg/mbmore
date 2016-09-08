@@ -1,4 +1,4 @@
-# DO NOT DELETE THIS LINE:: ./:mbmore:mytest
+# DO NOT DELETE THIS LINE:: @archetype_spec@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 # taken from http://geant4.cern.ch/support/source/geant4/CMakeLists.txt
@@ -12,15 +12,8 @@ IF(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     message(FATAL_ERROR "in-source build detected")
 ENDIF()
 
-PROJECT(mbmore)
-# check for and enable c++11 support (required for cyclus)
-INCLUDE(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-IF(COMPILER_SUPPORTS_CXX11)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-ELSE()
-    MESSAGE(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++               compiler.     ")
-ENDIF()
+PROJECT(@lib_name@)
+
 # quiets fortify_source warnings when not compiling with optimizations
 # in linux distros where compilers were compiled with fortify_source enabled by
 # default (e.g. Arch linux).
@@ -105,6 +98,11 @@ MESSAGE("--    HDF5 Root: ${HDF5_ROOT}")
 MESSAGE("--    HDF5 Include directory: ${HDF5_INCLUDE_DIR}")
 MESSAGE("--    HDF5 Library directories: ${HDF5_LIBRARY_DIRS}")
 MESSAGE("--    HDF5 Libraries: ${HDF5_LIBRARIES}")
+
+# find coin and link to it
+FIND_PACKAGE( COIN REQUIRED )
+SET(STUB_INCLUDE_DIRS ${STUB_INCLUDE_DIRS} ${COIN_INCLUDE_DIR})
+set(LIBS ${LIBS} ${COIN_LIBRARIES})
 
 # include all the directories we just found
 INCLUDE_DIRECTORIES(${STUB_INCLUDE_DIRS})
