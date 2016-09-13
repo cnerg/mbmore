@@ -186,15 +186,15 @@ double RNG_Integer(double min, double max, int rng_seed) {
 	curr_y = constants[0] + constants[1]*x_val;
       }
     } else if (function == "Power" || function == "power"){
-      // If powerlaw has only one constant, then that is the power (B)
-      // Ax^B  and A is assumed to be 1.
-      double c_a = 1;
+      // If powerlaw has only one constant, then that is the power (A)
+      // Bx^A  and B is assumed to be 1.
+      double c_b = 1;
       if (constants.size() < 1) {
 	throw "incorrect number of equation parameters";
       } else if (constants.size() == 2) {
-	c_a = constants[1];
+	c_b = constants[1];
       } 
-      curr_y = c_a*(pow( x_val, constants[0]));
+      curr_y = c_b*(pow( x_val, constants[0]));
     } else if (function == "Step" || function == "step"){
       if (constants.size() < 3) {
 	throw "incorrect number of equation parameters";

@@ -32,6 +32,20 @@ std::map<std::string, double>
     return p_wts;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+int InteractRegion::GetNStates() {
+  int n_states = 0;
+  for (std::set<Agent*>::const_iterator inst = children().begin();
+       inst != children().end();
+       inst++) {
+    if ((*inst)->spec() == ":mbmore:StateInst") {
+      n_states++; 
+    }
+    std::cout << (*inst)->spec() << std::endl;
+  }
+  std::cout << "N states is:   " << n_states << std::endl;
+  return n_states;
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void InteractRegion::EnterNotify() {
   cyclus::Region::EnterNotify();
 
@@ -53,8 +67,25 @@ void InteractRegion::EnterNotify() {
   p_present = DefinedFactors("Pursuit");
   //  a_present = DefinedFactors("Acquire");
 
-  //If conflict is defined, record initial conflict relations in database
-  if (p_present["Conflict"] == true){
+  // Check weights to make sure they add to one, otherwise normalize
+  double tot_weight = 0.0;
+  std::map <std::string, double>::iterator wt_it;
+  for(wt_it = p_wts.begin(); wt_it != p_wts.end(); wt_it++) {
+    std::cout << "Adding " << wt_it->second << std::endl;
+    tot_weight+= wt_it->second;
+  }
+  if (tot_weight == 0){
+    cyclus::Warn<cyclus::VALUE_WARNING>("Weights must be defined!");
+  }
+  else if (tot_weight != 1.0) {
+    for(wt_it = p_wts.begin(); wt_it != p_wts.end(); wt_it++) {
+      wt_it->second = wt_it->second/tot_weight;
+    }
+  }
+
+  // If conflict is defined, record initial conflict relations in database
+  int n_states = GetNStates();
+  if ((p_present["Conflict"] == true) && n_states > 1){
     std::string eqn_type = "Pursuit";
     for (auto const &ent1 : p_conflict_map) {
       for (auto const &ent2 : ent1.second){
@@ -79,7 +110,6 @@ std::map<std::string, bool>
   std::cout << "number of master factors is " << n_factors << std::endl;
   //TODO: loop to get a_present also
   for(int i = 0; i < n_factors; i++) {
-    std::cout << "Defined Factors: " << column_names[i] << std::endl;
     factor_it = wts.find(column_names[i]);
     if (factor_it == wts.end()) {   // factor isn't defined in input file
       present[column_names[i]]= false;
@@ -185,7 +215,7 @@ void InteractRegion::RecordConflictFactor(std::string eqn_type,
   d->AddVal("Time", context()->time());
   d->AddVal("PrimaryAgent", this_state);
   d->AddVal("SecondaryAgent", other_state);
-  d->AddVal("Value", new_val);
+  d->AddVal("Conflict", new_val);
   d->Record();
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
