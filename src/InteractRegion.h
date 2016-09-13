@@ -43,6 +43,10 @@ class InteractRegion
   // with the child institutions
   std::map<std::string, double> GetWeights(std::string eqn_type);
 
+  // Determines # of states in the simulation. If only one state then
+  // Interactive Factors (such as conflict) are not calculated.
+  int GetNStates();
+  
   // Uses the pursuit or acquire likelihood conversion equation to determine the
   // likeliness of pursuit and acquire on a 0-1 scale for the requested timestep
   double GetLikely(std::string phase, double eqn_val);
