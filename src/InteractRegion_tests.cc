@@ -2,63 +2,12 @@
 
 #include "cyclus.h"
 
-
-#include "agent_tests.h"
-#include "context.h"
-#include "facility_tests.h"
-
 namespace mbmore {
 
 
 namespace InteractRegionTests {
   /*
-  TEST(InteractRegionTests, DeployProto) {
-
-  std::string config = 
-    "<pursuit_weights>"
-    "    <item><factor>Enrich</factor>  <weight>0.5</weight> </item>"
-    "    <item><factor>Conflict</factor><weight>0.5</weight> </item>"
-    "    </pursuit_weights>"
-    "<likely_converter>  "
-    "    <item>"
-    "      <phase>Pursuit</phase>"
-    "      <function>"
-    "   	<name>power</name>"
-    "	        <params>"
-    "	            <val>3</val>"
-    "	        </params>"
-    "      </function>"
-    "    </item>"
-    "</likely_converter>"
-    "<p_conflict_relations>"
-    "	  <item>"
-    "	    <primary_state>StateA</primary_state>"
-    "	    <pair_state>"
-    "	      <item>"
-    "		<name>StateB</name>"
-    "		<relation>1</relation>"
-    "	      </item>"
-    "	    </pair_state>"
-    "	  </item>"
-    "	  <item>"
-    "	    <primary_state>StateB</primary_state>"
-    "	    <pair_state>"
-    "	      <item>"
-    "		<name>StateA</name>"
-    "		<relation>1</relation>"
-    "	      </item>"
-    "	    </pair_state>"
-    "	  </item>"
-    "</p_conflict_relations>";
-
-  int simdur = 1;
-  cyclus::MockSim sim(cyclus::AgentSpec(":mbmore:StateInst"), config, simdur);
-
-  
-  }
-  */
-  /*
-  TEST(InteractRegionTests, DeployProto) {
+  TEST(StateInstTests, DeployProto) {
   std::string config = 
      "<declared_protos> <val>source</val> </declared_protos>"
      "<secret_protos> <val>secret_sink</val> </secret_protos>"
