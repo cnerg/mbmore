@@ -23,7 +23,7 @@ Available behavior functions are:
   
   - ``Constant`` [y0]:  a constant line with the form y = y0
   - ``Linear`` [y0, m]: line with the form y = y0 + m*x
-  - ``Power`` [A, (B=1)]: powerlaw fn of the form y = B*(x^A). B defaults to 1 if not specified.
+  - ``Power`` [(A=1), B]: powerlaw fn of the form y = A*(x^B). A defaults to 1 if not specified.
   - ``Step`` [y0, yf, (T)]: step function of the form y = y0  (x < T), y = y1 (x >= T).
 
 * *EveryXTimestep* - Returns true every X interval
