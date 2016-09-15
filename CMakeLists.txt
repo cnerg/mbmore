@@ -14,7 +14,7 @@ ENDIF()
 
 PROJECT(@lib_name@)
 
- # Vcheck for and enable c++11 support (required for cyclus)
+ # Vcheck for and enable c++11 support
 INCLUDE(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 IF(COMPILER_SUPPORTS_CXX11)
