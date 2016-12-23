@@ -1,45 +1,47 @@
-#ifndef MBMORE_SRC_BEHAVIOR_FUNCTIONS_H_
-#define MBMORE_SRC_BEHAVIOR_FUNCTIONS_H_
+#ifndef MBMORE_SRC_ENRICH_FUNCTIONS_H_
+#define MBMORE_SRC_ENRICH_FUNCTIONS_H_
 
 #include <string>
 #include <vector>
 
 namespace mbmore {
 
-// returns true every X interval (ie every 5th timestep)
-bool EveryXTimestep(int curr_time, int interval);
+  // Calculates the ideal separation energy for a single machine 
+  // as defined by the Raetz equation
+  // (referenced in Glaser, Science and Global Security 2009)
+  double CalcDelU(double v_a, double Z, double d,  double F_m, double T,
+		  double cut, double eff, double M, double dM, double x,
+		   double L_F);
 
-// randomly returns true with a frequency X
-// (ie returns true ~20 randomly selected timesteps
-// out of 100 when frequency = 5 )
-//bool EveryRandomXTimestep(int frequency);
+  // Calculates the exponent for the energy distribution using ideal gas law
+  // (component of multiple other equations)
+  double CalcCTherm(double v_a, double T, double dM);
 
-bool EveryRandomXTimestep(int frequency, int rng_seed);
+  // Calculates the V(N_x) term for enrichment eqns where N_x is the assay
+  // of isotope x
+  double CalcV(double N_in);
 
-// returns True with a defined probability
-// (ie. if probability is 0.2 then will return True on average
-// 1 in 5 calls).
-// 
-bool XLikely(double prob, int rng_seed);
+  // Calculates the separations factor given the ideal separation energy of a
+  // single machine
+  double AlphaBySwu(double del_U, double F_m, double cut, double M);
 
-// returns a randomly generated number from a
-// normal distribution defined by mean and
-// sigma (full-width-half-max)
-//double RNG_NormalDist(double mean, double sigma);
+  // Calculates the assay of the product given the assay
+  // of the feed and the theoretical separation factor of the machine
+  double NProductByAlpha(double alpha, double Nfm);
 
- 
-double RNG_NormalDist(double mean, double sigma, int rng_seed);
+  // Calculates the assay of the waste given the assay
+  // of the feed and the theoretical separation factor of the machine
+  double NWasteByAlpha(double alpha, double Nfm);
 
-// returns a randomly chosen discrete number between min and max
-// (ie. integer betweeen 1 and 5)
 
-double RNG_Integer(double min, double max, int rng_seed);
 
-// For various types of time varying curves, calculate y for some x
- double CalcYVal(std::string function, std::vector<double> constants,
-		double x_val);
- 
+  // Calculates the number of stages needed in a cascade given the separation
+  // potential of a single centrifuge and the material assays
+  std::pair<double, double>
+    StagesPerCascade(double alpha, double Nfc, double Npc, double Nwc);
 
+  
+  
 } // namespace mbmore
 
-#endif  //  MBMORE_SRC_BEHAVIOR_FUNCTIONS_H_
+#endif  //  MBMORE_SRC_ENRICH_FUNCTIONS_H_
