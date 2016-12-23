@@ -1,231 +1,109 @@
-#include "behavior_functions.h"
+#define _USE_MATH_DEFINES
+
+#include "enrich_functions.h"
 #include <ctime> // to make truly random
 #include <cstdlib>
 #include <iostream>
 #include <cmath>
 
-bool seeded;
 namespace mbmore {
-  
+
+  double D_rho = 2.2e-5; // kg/m/s
+  double R = 8.315; // J/K/mol
+ 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool EveryXTimestep(int curr_time, int interval) {
-  // true when there is no remainder, so it is the Xth timestep
-  return curr_time % interval == 0;
-}
+// TODO: RENAME VARIABLES TO BE MORE INTUITIVE
+// CONVERT N stages, N machines to integer-limited
+// annotate assumed units, Glaser paper reference, Z_P (What is it?)
+// Math Functions to Check: pi (M_PI??), exp??
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool EveryRandomXTimestep(int frequency, int rng_seed) {
-  //TODO: Doesn't work for a frequency of 1
-  if (frequency == 0) {
-    return false;
-  }
+  double CalcDelU(double v_a, double Z, double d,  double F_m, double T,
+		  double cut, double eff, double M, double dM, double x,
+		  double L_F) {
 
-  if (!seeded) {
-    if (rng_seed == -1) {
-      srand(time(0));    // seed random
-    }
-    else {
-      srand(rng_seed);   // user-defined fixed seed
-    }
-    seeded = true;
-  }
-
-  // Because this relies on integer rounding, it fails for a frequency of
-  // 1 because the midpoint rounds to zero.
-  double midpoint;
-  (frequency == 1) ? (midpoint = 1) : (midpoint = frequency / 2);
+    // L_F = 2-4, x = pressure ratio, M = 0.352 kg/mol of UF6, dM = 0.003 kg/mol diff between 235 and 238
     
-  // The interwebs say that rand is not truly random.
-  //  tRan = rand() % frequency;
-  double cur_rand = rand();
-  int tRan = 1 + (cur_rand*(1.0/(RAND_MAX+1.0))) * frequency;
-  //  int tRan = 1 + uniform_deviate_(rand()) * frequency;
-  //  std::cout << "tRan: " << tRan << " midpoint " << midpoint << std::endl;
-  
-  if (tRan == midpoint) {
-    return true;
-  } else {
-   return false;
-  }
-}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Returns true for this instance with a particular likelihood of getting a
-// True over all instances.
+    double a = d/2.0;  // outer radius
 
-  bool XLikely(double prob, int rng_seed) {
+    // withdrawl radius for heavy isotope
+    // Glaser 2009 says operationally it ranges from 0.96-0.99
+    double r_2 = 0.99 * a; 
 
-    /*
-  if (prob == 0) {
-    return false;
-  }
-    */
+    double r_12 = std::sqrt(1.0 - (2.0 * R * T*(log(x)) / M / (pow(v_a,2)))); 
+    double r_1 = r_2 * r_12; // withdrawl radius for ligher isotope
+
+    // Glaser eqn 12
+    // Vertical location of feed
+    double Z_p = Z * (1.0 - cut) * (1.0 + L_F) / (1.0 - cut + L_F);
+
+    //Glaser eqn 3
+    double C1 = (2.0 * M_PI * D_rho / (log(r_2 / r_1)));
+    double A_p = C1 *(1.0 / F_m) * (cut / ((1.0 + L_F) * (1.0 - cut + L_F)));
+    double A_w = C1 * (1.0 / F_m) * ((1.0 - cut)/(L_F * (1.0 - cut + L_F)));
+     
+    double C_therm = CalcCTherm(v_a, T, dM);
+
+    // defining terms in the Ratz equation
+    double r12_sq = pow(r_12,2);
+    double C_scale = (pow((r_2 / a), 4)) * (pow((1 - r12_sq),2));
+    double bracket1 = (1 + L_F) / cut;
+    double exp1 = exp(-1.0 * A_p * Z_p);
+    double bracket2 = L_F/(1 - cut);
+    double exp2 = exp(-1.0 * A_w * (Z - Z_p));
+
+    // Glaser eqn 10 (Ratz Equation)
+    double major_term = 0.5 * cut * (1.0 - cut) * (pow(C_therm, 2)) * C_scale *
+      pow(((bracket1 * (1 - exp1)) + (bracket2 * (1 - exp2))),2); // kg/s    
+    double del_U = F_m * major_term * eff; // kg/s
     
-  if (!seeded) {
-    if (rng_seed == -1) {
-      srand(time(0));    // seed random
-    }
-    else {
-      srand(rng_seed);   // user-defined fixed seed
-    }
-    seeded = true;
+    return del_U;
   }
 
-  double cur_rand = rand();
-  double tRan = (cur_rand/RAND_MAX);
-
-  if (tRan <= prob) {
-    return true;
-  } else {
-   return false;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-bool EveryRandomXTimestep(int frequency) {
-  bool time_seed = 0 ;
-  return EveryRandomXTimestep(frequency, time_seed);
-}
-*/
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Use Box-Muller algorithm to make a random number sampled from
-// a normal distribution
-
-double RNG_NormalDist(double mean, double sigma, int rng_seed) {
-
-  if (sigma == 0 ) {
-    return mean ;
+  double CalcCTherm(double v_a, double T, double dM) {
+    double c_therm = (dM * (pow(v_a,2)))/(2.0 * R * T);
+    return c_therm;
   }
 
-  static double n2 = 0.0;
-  static int n2_cached = 0;
-
-  double result ;
-  double x, y, r;
-  double rand1, rand2;
-
-  if (!seeded) {
-    if (rng_seed == -1) {
-      srand(time(0)); // if seeding on time
-    }
-    else {
-      srand(rng_seed);  //use fixed seed for reproducibility
-    }
-    seeded = true;
+  double CalcV(double N_in){
+    return (2.0 * N_in - 1.0) * log(N_in / (1.0 - N_in));
   }
+
+  // Avery p 18
+  // del_U should have units of moles/sec
+  double AlphaBySwu(double del_U, double F_m, double cut, double M){
+    double alpha = 1 + std::sqrt((2 * (del_U / M) * (1 - cut) / (cut * F_m)));
+    return alpha;
+  }
+
+  // per machine
+  double NProductByAlpha(double alpha, double Nfm){
+    double ratio = (1.0 - Nfm) / (alpha * Nfm);
+    return 1.0 / (ratio + 1.0);
+  }
+
+  // Avery p 59 (per machine)
+  double NWasteByAlpha(double alpha, double Nfm){
+    double A = (Nfm / (1 - Nfm)) / alpha;
+    return A / (1 + A);
+  }
+
+  // Avery ???
+  // TODO: CONVERT THIS TO INTEGER NUMBER!!
+  std::pair<double,double> StagesPerCascade(double alpha, double Nfc, double Npc, double Nwc){
+
+    using std::pair;
+
+    double epsilon = alpha - 1.0;
+    double enrich_inner = (Npc / (1.0 - Npc)) * ((1.0 - Nfc) / Nfc);
+    double strip_inner =  (Nfc / (1.0 - Nfc)) * ((1.0 - Nwc) / Nwc);
+
+    double enrich_stages = (1.0 / epsilon) * log(enrich_inner);
+    double strip_stages = (1.0 / epsilon) * log(strip_inner);
+    std::pair<double, double> stages = std::make_pair(enrich_stages, strip_stages);
+    return stages;
+
+  }   
+
   
-  do {
-    rand1 = rand();
-    rand2 = rand();
-    x = 2.0*rand1/RAND_MAX - 1;
-    y = 2.0*rand2/RAND_MAX - 1;
-    r = x*x + y*y;
-    //    std::cout << rand1/RAND_MAX << "  " << rand2/RAND_MAX  << std::endl;
-  } while (r == 0.0 || r > 1.0);
-  
-  double d = std::sqrt(-2.0*log(r)/r);
-  double n1 = x*d;
-  n2 = y*d;
-  
-  /*
-  if (!n2_cached) {
-    n2_cached = 1;
-    return n1*sigma + mean;
-  }
-  else {
-    n2_cached = 0 ;
-    return n2*sigma + mean;
-  }
-  */
-  //  std::cout << "NormalDist: " << n1*sigma + mean  << std::endl;
-  return n1*sigma + mean;
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Randomly choose a discrete number between min and max
-// (ie. integer betweeen 1 and 5)
-
-double RNG_Integer(double min, double max, int rng_seed) {
-
-  if (!seeded) {
-    if (rng_seed == -1) {
-      srand(time(0)); // if seeding on time
-    }
-    else {
-      srand(rng_seed);  //use fixed seed for reproducibility
-    }
-    seeded = true;
-  }
-
-  int tRan = min + (rand()*(1.0/(RAND_MAX+1.0))) * max;
-
-  return tRan;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// For various types of x_val varying curves, calculate y for some x
-// Constants = [y_int, (slope or y_final), (t_change)]
-  double CalcYVal(std::string function, std::vector<double> constants,
-		  double x_val) {
-
-    double curr_y;
-    
-    if (function == "Constant" || function == "constant"){
-      if (constants.size() < 1) {
-	throw "incorrect number of equation parameters";
-      } else {
-	curr_y = constants[0];
-      }
-    } else if (function == "Linear" || function == "linear"){
-      if (constants.size() < 2) {
-	throw "incorrect number of equation parameters";
-      } else {
-	curr_y = constants[0] + constants[1]*x_val;
-      }
-    } else if (function == "Power" || function == "power"){
-      // If powerlaw has only one constant, then that is the power (A)
-      // Bx^A  and B is assumed to be 1.
-      double c_b = 1;
-      if (constants.size() < 1) {
-	throw "incorrect number of equation parameters";
-      } else if (constants.size() == 2) {
-	c_b = constants[1];
-      } 
-      curr_y = c_b*(pow( x_val, constants[0]));
-    } else if (function == "Step" || function == "step"){
-      if (constants.size() < 3) {
-	throw "incorrect number of equation parameters";
-      } else {
-	if (x_val < constants[2]){
-	  curr_y = constants[0];
-	}
-	else {
-	  curr_y = constants[1];
-	}
-      }
-    } else {
-      throw "Function choices are constant, linear, step, power";
-    }
-  
-  return curr_y;
-}
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-double RNG_NormalDist(double mean, double sigma) {
-  bool time_seed = 0;
-  return RNG_NormalDist(mean, sigma, time_seed);
-}
-*/
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-// Internal function to make a better random number
-double uniform_deviate_ ( int seed ){
-  return seed * ( 1.0 / ( RAND_MAX + 1.0 ) );
-}
-*/
-
-
 } // namespace mbmore
