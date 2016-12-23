@@ -7,7 +7,6 @@ USE_CYCLUS("mbmore" "RandomEnrich")
 USE_CYCLUS("mbmore" "RandomSink")
 USE_CYCLUS("mbmore" "StateInst")
 USE_CYCLUS("mbmore" "InteractRegion")
-USE_CYCLUS("mbmore" "CascadeEnrich")
 
 INSTALL_CYCLUS_MODULE("mbmore" "./")
 
