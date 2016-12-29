@@ -90,7 +90,7 @@ namespace mbmore {
 
   // Avery ???
   // TODO: CONVERT THIS TO INTEGER NUMBER!!
-  std::pair<double,double> StagesPerCascade(double alpha, double Nfc, double Npc, double Nwc){
+  std::pair<double, double> StagesPerCascade(double alpha, double Nfc, double Npc, double Nwc){
 
     using std::pair;
 
@@ -103,7 +103,50 @@ namespace mbmore {
     std::pair<double, double> stages = std::make_pair(enrich_stages, strip_stages);
     return stages;
 
-  }   
+  }
 
+  double NpcFromNstages(double alpha, double Nfc, double enrich_stages){
+    double A = (Nfc / (1 - Nfc)) * exp(enrich_stages * (alpha - 1.0));
+    double Npc = A / (1 + A);
+    return Npc;
+  }
+  
+  double NwcFromNstages(double alpha, double Nfc, double strip_stages){
+    return 1/(1 + ((1 - Nfc) / Nfc) * exp(strip_stages * (alpha - 1.0)));
+  }
+
+  double MachinesPerEnrStage(double alpha, double del_U, double Fs){
+    return Fs / (2.0 * del_U / (pow((alpha - 1),2)));
+  }
+
+  double MachinesPerStripStage(double alpha, double del_U, double Fs){
+    return Fs / (2.0 * del_U / (pow((alpha - 1.0), 2)));
+  }
+
+  // F_stage = incoming flow (in Avery denoted with L_r)
+  // Avery p. 60
+  double WastePerStripStage(double alpha, double Nfs, double Nws, double Fs){
+    return Fs * (alpha - 1.0) * Nfs * (1 - Nfs) / (2 * (Nfs - Nws));
+  }
+
+  double DeltaUCascade(double Npc, double Nwc, double Fc, double Pc){
+    double Vpc = CalcV(Npc);
+    double Vwc = CalcV(Nwc);
+    return Pc * Vpc + (Fc - Pc) * Vwc;
+  }
+  
+  double MachinesPerCascade(double del_U_machine, double Npc, double Nwc,
+			    double Fc, double Pc){
+    // Avery p 62
+    double U_cascade = DeltaUCascade(Npc, Nwc, Fc, Pc);
+    return U_cascade / del_U_machine;
+  }
+
+  double DelUByCascadeConfig(double Npc, double Nwc, double Pc, double Wc,
+			     double n_cf){
+    double U_cascade = DeltaUCascade(Npc, Nwc, Pc, Wc);
+    return U_cascade / n_cf;
+  }
+  
   
 } // namespace mbmore
