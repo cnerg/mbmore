@@ -49,6 +49,25 @@ class CascadeEnrich : public cyclus::Facility {
   ///  @param time is the time to perform the tock
   virtual void Tock();
 
+  /*
+  // TODO: Turn into optional state variables
+  static const double v_a = 485; // m/s
+  static const double height = 0.5; // meters
+  static const double diameter = 0.15; // meters
+  static const double feed = 739/(30.4*24*60*60) ; // kg/month to kg/sec
+  static const double temp = 320.0 ; //Kelvin
+
+  // Not physical constants but fixed assumptions for a cascade separating
+  // out U235 from U238 in UF6 gas
+  static const double M = 0.352; // kg/mol UF6
+  static const double dM = 0.003; // kg/mol U238 - U235
+  static const double x = 1000;  // Pressure ratio (Glaser)
+
+  static const double flow_internal = 2.0 ;  // can vary from 2-4
+  static const double eff = 1.0;  // typical efficiencies <0.6
+  static const double cut = 0.5;  // target for ideal cascade
+  */
+  
  private:
   #pragma cyclus var { \
     "tooltip": "feed recipe",						\
@@ -57,11 +76,31 @@ class CascadeEnrich : public cyclus::Facility {
     "uitype": "recipe" \
   }
   std::string feed_recipe;
+
+  #pragma cyclus var {							\
+    "default": 0, "tooltip": "initial uranium reserves (kg)",		\
+    "uilabel": "Initial Feed Inventory",				\
+    "doc": "amount of natural uranium stored at the enrichment "	\
+    "facility at the beginning of the simulation (kg)"			\
+  }
+  double initial_feed;
+
+  #pragma cyclus var {							\
+    "default": 1e299, "tooltip": "max inventory of feed material (kg)", \
+    "uilabel": "Maximum Feed Inventory",                                \
+    "doc": "maximum total inventory of natural uranium in "		\
+           "the enrichment facility (kg)"     \
+  }
+  double max_feed_inventory;
+
   
-   friend class CascadeEnrichTest;
+  #pragma cyclus var { 'capacity': 'max_feed_inventory' }
+  cyclus::toolkit::ResBuf<cyclus::Material> inventory;  // natural u
+  
+  friend class CascadeEnrichTest;
   // ---
 };
  
 }  // namespace mbmore
 
-#endif // MBMORE_SRC_ENRICHMENT_FACILITY_H_
+#endif // MBMORE_SRC_CASCADE_ENRICH_H_
