@@ -49,6 +49,7 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::Tick() {
+
   /*
   double delU = CalcDelU(v_a, height, diameter, feed, temp, cut, eff,
 			 M, dM, x, flow_internal);

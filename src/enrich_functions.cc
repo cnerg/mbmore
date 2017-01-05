@@ -9,7 +9,7 @@
 namespace mbmore {
 
   double D_rho = 2.2e-5; // kg/m/s
-  double gas_const = 8.315; // J/K/mol
+  double gas_const = 8.314; // J/K/mol
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TODO:
@@ -21,6 +21,7 @@ namespace mbmore {
 		  double temp, double cut, double eff, double M, double dM,
 		  double x, double flow_internal) {
 
+    
     // flow_internal = 2-4, x = pressure ratio, M = 0.352 kg/mol of UF6,
     // dM = 0.003 kg/mol diff between 235 and 238
     
@@ -115,7 +116,7 @@ namespace mbmore {
 
   }
 
-  double ProductFromNstages(double alpha, double feed_assay,
+  double ProductAssayFromNStages(double alpha, double feed_assay,
 			    double enrich_stages){
     double A = (feed_assay / (1 - feed_assay)) *
       exp(enrich_stages * (alpha - 1.0));
@@ -123,7 +124,8 @@ namespace mbmore {
     return product_assay;
   }
   
-  double WasteFromNstages(double alpha, double feed_assay, double strip_stages){
+  double WasteAssayFromNStages(double alpha, double feed_assay,
+			       double strip_stages){
     return 1/(1 + ((1 - feed_assay) / feed_assay) *
 	      exp(strip_stages * (alpha - 1.0)));
   }
@@ -136,12 +138,17 @@ namespace mbmore {
     return stage_feed / (2.0 * del_U / (pow((alpha - 1.0), 2)));
   }
 
-  // Waste flow for a stage given its assays
-  // (In Avery feed_assay is denoted with L_r)
-  // Avery p. 60
+
+  double ProductPerEnrStage(double alpha, double feed_assay,
+			    double product_assay, double stage_feed){
+    return stage_feed * (alpha - 1.0) * feed_assay * (1 - feed_assay) /
+      (2 * (product_assay - feed_assay));
+  }
+  
   double WastePerStripStage(double alpha, double feed_assay, double waste_assay,
 			    double stage_feed){
-    return stage_feed * (alpha - 1.0) * feed_assay * (1 - feed_assay) / (2 * (feed_assay - waste_assay));
+    return stage_feed * (alpha - 1.0) * feed_assay * (1 - feed_assay) /
+      (2 * (feed_assay - waste_assay));
   }
 
   double DeltaUCascade(double product_assay, double waste_assay,
