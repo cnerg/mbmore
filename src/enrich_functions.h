@@ -40,12 +40,12 @@ namespace mbmore {
 		     double Nwc);
 
   // Calculates the product assay after N enriching stages
-  double ProductFromNstages(double alpha, double feed_assay,
+  double ProductAssayFromNStages(double alpha, double feed_assay,
 			    double enrich_stages);
 
   // Calculates the assay of the waste after N stripping stages
-  double WasteFromNstages(double alpha, double feed_assay, double strip_stages);
-
+  double WasteAssayFromNStages(double alpha, double feed_assay,
+			       double strip_stages);
 
   // Number of machines in the enriching stage given the feed flow (stage_feed)
   // flows do not have required units so long as they are consistent
@@ -61,6 +61,12 @@ namespace mbmore {
 
 
   // Flow of Waste (in same units and feed flow) in each stripping stage
+  // F_stage = incoming flow (in Avery denoted with L_r)
+  // Avery p. 60
+  double ProductPerEnrStage(double alpha, double feed_assay,
+			     double product_assay, double stage_feed);
+
+    // Flow of Waste (in same units and feed flow) in each stripping stage
   // F_stage = incoming flow (in Avery denoted with L_r)
   // Avery p. 60
   double WastePerStripStage(double alpha, double feed_assay, double waste_assay,
