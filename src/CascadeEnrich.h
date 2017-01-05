@@ -51,23 +51,24 @@ class CascadeEnrich : public cyclus::Facility {
 
   /*
   // TODO: Turn into optional state variables
-  static const double v_a = 485; // m/s
-  static const double height = 0.5; // meters
-  static const double diameter = 0.15; // meters
-  static const double feed = 739/(30.4*24*60*60) ; // kg/month to kg/sec
-  static const double temp = 320.0 ; //Kelvin
+  const double v_a = 485; // m/s
+  const double height = 0.5; // meters
+  const double diameter = 0.15; // meters
+  const double feed = 15*60*60/((1e3)*60*60*1000.0) ; // g/hr to kg/sec
+  const double temp = 320.0 ; //Kelvin
 
   // Not physical constants but fixed assumptions for a cascade separating
   // out U235 from U238 in UF6 gas
-  static const double M = 0.352; // kg/mol UF6
-  static const double dM = 0.003; // kg/mol U238 - U235
-  static const double x = 1000;  // Pressure ratio (Glaser)
+  const double M = 0.352; // kg/mol UF6
+  const double dM = 0.003; // kg/mol U238 - U235
+  const double x = 1000;  // Pressure ratio (Glaser)
 
-  static const double flow_internal = 2.0 ;  // can vary from 2-4
-  static const double eff = 1.0;  // typical efficiencies <0.6
-  static const double cut = 0.5;  // target for ideal cascade
-  */
-  
+  const double flow_internal = 2.0 ;  // can vary from 2-4
+  const double eff = 1.0;  // typical efficiencies <0.6
+  const double cut = 0.5;  // target for ideal cascade
+  */  
+
+
  private:
   #pragma cyclus var { \
     "tooltip": "feed recipe",						\
