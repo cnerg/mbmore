@@ -130,14 +130,9 @@ namespace mbmore {
 	      exp(strip_stages * (alpha - 1.0)));
   }
 
-  double MachinesPerEnrStage(double alpha, double del_U, double stage_feed){
-    return stage_feed / (2.0 * del_U / (pow((alpha - 1),2)));
-  }
-
-  double MachinesPerStripStage(double alpha, double del_U, double stage_feed){
+  double MachinesPerStage(double alpha, double del_U, double stage_feed){
     return stage_feed / (2.0 * del_U / (pow((alpha - 1.0), 2)));
   }
-
 
   double ProductPerEnrStage(double alpha, double feed_assay,
 			    double product_assay, double stage_feed){
