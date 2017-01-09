@@ -22,19 +22,23 @@ namespace mbmore {
   double CalcV(double assay);
 
   // Calculates the separations factor given the ideal separation energy of a
-  // single machine
+  // single machine (del_U has units of moles/sec)
+  // Avery p 18
   double AlphaBySwu(double del_U, double feed, double cut, double M);
 
   // Calculates the assay of the product given the assay
   // of the feed and the theoretical separation factor of the machine
+  // ???
   double NProductByAlpha(double alpha, double feed_assay);
 
   // Calculates the assay of the waste given the assay
   // of the feed and the theoretical separation factor of the machine
+  // Avery p 59 (per machine)
   double NWasteByAlpha(double alpha, double feed_assay);
 
   // Calculates the number of stages needed in a cascade given the separation
   // potential of a single centrifuge and the material assays
+  // ???
   std::pair<double, double>
     StagesPerCascade(double alpha, double feed_assay, double product_assay,
 		     double Nwc);
@@ -67,11 +71,13 @@ namespace mbmore {
 			    double stage_feed);
 
   // Separation potential of the cascade
+  // ???
   double DeltaUCascade(double product_assay, double waste_assay,
 		       double feed_flow, double Pc);
 
   // Number of machines in the cascade given the target feed rate and target
   // assays and flow rates
+  // ???
   double MachinesPerCascade(double del_U_machine, double product_assay,
 			    double waste_assay, double feed_flow,
 			    double product_flow);
@@ -79,6 +85,7 @@ namespace mbmore {
   // Effective separation potential of a single machine when cascade is not
   // being used in optimal configuration, as defined by the non-optimal
   // assays and flow rates of the cascade
+  // ????
   double DelUByCascadeConfig(double product_assay, double waste_assay,
 			     double product_flow, double waste_flow,
 			     double feed_assay);
