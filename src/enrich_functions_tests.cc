@@ -70,6 +70,7 @@ TEST(Enrich_Functions_Test, TestCascade) {
   std::pair<double, double> n_stages = StagesPerCascade(alpha, feed_assay,
 							product_assay,
 							waste_assay);
+
   double pycode_n_enrich_stage = 7.159;
   double pycode_n_strip_stage = 8.669;
   EXPECT_NEAR(n_stages.first, pycode_n_enrich_stage, tol_num);
@@ -88,7 +89,7 @@ TEST(Enrich_Functions_Test, TestCascade) {
 						 n_stage_waste);
 
   double pycode_mod_product_assay = 0.605435;
-  double pycode_mod_waste_assay = 0.025225;
+  double pycode_mod_waste_assay = 0.031445;
   EXPECT_NEAR(mod_product_assay, pycode_mod_product_assay, tol_assay);
   EXPECT_NEAR(mod_waste_assay, pycode_mod_waste_assay, tol_assay);
   
@@ -98,30 +99,34 @@ TEST(Enrich_Functions_Test, TestCascade) {
   // based on the design params for the cascade
   TEST(Enrich_Functions_Test, TestStages) {
     double product_assay_s = NProductByAlpha(alpha, feed_assay);
-    double n_mach = MachinesPerEnrStage(alpha, delU, feed_c);
+    double n_mach_e = MachinesPerStage(alpha, delU, feed_c);
     double product_s = ProductPerEnrStage(alpha, feed_assay,
 					product_assay_s, feed_c);
 
+    double enrich_waste = feed_c - product_s;
+    double enrich_waste_assay = (feed_c * feed_assay - product_s *
+				 product_assay_s)/enrich_waste;
+
     double pycode_product_assay_s = 0.008696;
-    double pycode_n_mach = 53.287;
+    double pycode_n_mach_e = 53.287;
     double pycode_product_s = 0.0001409;
 
-    EXPECT_NEAR(n_mach, pycode_n_mach, tol_num);
+    EXPECT_NEAR(n_mach_e, pycode_n_mach_e, tol_num);
     EXPECT_NEAR(product_assay_s, pycode_product_assay_s, tol_assay);
     EXPECT_NEAR(product_s, pycode_product_s, tol_qty);
 
-    n_mach = MachinesPerStripStage(alpha, delU, feed_c);
-    double waste_assay_s = NWasteByAlpha(alpha, feed_assay);
-    double waste_s = WastePerStripStage(alpha, feed_assay,
-					  waste_assay_s, feed_c);
+    double n_mach_w = MachinesPerStage(alpha, delU, enrich_waste);
+    double strip_waste_assay = NWasteByAlpha(alpha, enrich_waste_assay);
+    double strip_waste = WastePerStripStage(alpha, enrich_waste_assay,
+					    strip_waste_assay, enrich_waste);
 
-    pycode_n_mach = 13.316;
-    double pycode_waste_assay_s = 0.00549852;
-    double pycode_waste_s = 4.30768172327e-05;
+    double pycode_n_mach_w = 26.6007;
+    double pycode_waste_assay_s = 0.00448653;
+    double pycode_waste_s = 8.60660553717e-05;
 
-    EXPECT_NEAR(n_mach, pycode_n_mach, tol_num);
-    EXPECT_NEAR(waste_assay_s, pycode_waste_assay_s, tol_assay);
-    EXPECT_NEAR(waste_s, pycode_waste_s, tol_qty);
+    EXPECT_NEAR(n_mach_w, pycode_n_mach_w, tol_num);
+    EXPECT_NEAR(strip_waste_assay, pycode_waste_assay_s, tol_assay);
+    EXPECT_NEAR(strip_waste, pycode_waste_s, tol_qty);
     
   }
 
