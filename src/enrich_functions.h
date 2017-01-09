@@ -47,19 +47,13 @@ namespace mbmore {
   double WasteAssayFromNStages(double alpha, double feed_assay,
 			       double strip_stages);
 
-  // Number of machines in the enriching stage given the feed flow (stage_feed)
+  // Number of machines in a stage (either enrich or strip)
+  // given the feed flow (stage_feed)
   // flows do not have required units so long as they are consistent
   // Feed flow of a single machine (in Avery denoted with L)
   // Avery p. 62
-  double MachinesPerEnrStage(double alpha, double del_U, double stage_feed);
+  double MachinesPerStage(double alpha, double del_U, double stage_feed);
   
-  // Number of machines in the stripping stage given the feed flow (stage_feed)
-  // flows do not have required units so long as they are consistent
-  // Feed flow of a single machine (in Avery denoted with L)
-  // Avery p. 62
-  double MachinesPerStripStage(double alpha, double del_U, double stage_feed);
-
-
   // Flow of Waste (in same units and feed flow) in each stripping stage
   // F_stage = incoming flow (in Avery denoted with L_r)
   // Avery p. 60
