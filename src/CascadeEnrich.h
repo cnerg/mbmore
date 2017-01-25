@@ -15,7 +15,36 @@ class CascadeEnrich : public cyclus::Facility {
   "The CascadeEnrich facility based on the Cycamore Enrich facility. " \
  "timesteps (see README for full implementation documentation ",\
 }
-  
+  /*
+
+Conceptual Design:
+Build phase: Design cascade
+A: Cascade defined by initial machine parameters and target enrichment:
+1) Machine SWU, alpha: height, diameter, efficiency (fixed for sim)
+                       cut, velocity, max machine feed (may change later)
+2) Machine Assays: alpha, feed assay
+3) Stages/Cascade: alpha, feed assay, product assay (per stage) AND waste assay
+               OR: # machines for Enrich/Strip (feed, SWU, alpha)
+4) Matl/Stage: feed, alpha, stage feed and product assay
+
+
+Tick Phase: Given Cascade Feed, calculate Product, Waste, and SWU
+** Machine feed = Cascade Feed/(Machines/Stage0) **
+** Machine SWU (1) from machine feed **
+** Total SWU = #machines * Machine SWU **
+** Iterate through Matl/Stage (4) to determine total Product, Waste **
+
+Tick Phase: At Critical Timestep, change parameters:
+A) Change (1) max SWU of machine: 
+      - velocity, temperature, cut,  feed assay
+
+B) Change cascade feed assay
+      - new max enrichment(Assay_from_NStages)
+
+TODO: Rewrite MachinesPerCascade so that # machines is input and Product is output
+
+   */
+
  public:
   // --- Module Members ---
   ///    Constructor for the CascadeEnrich class
