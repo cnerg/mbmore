@@ -78,13 +78,32 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   ///  @param time is the time to perform the tock
   virtual void Tock();
 
-  /*
+  int NEnrichStages(double alpha, double delU, double feed,
+		       double feed_assay);
+
+  int NStripStages(double alpha, double delU, double feed,
+		       double feed_assay);
+
+  // used at each timestep to calculate product based on feed, defined during
+  // build phase using initial machine and target cascade parameters.
+  double design_delU;
+  double design_alpha;
+  int n_enrich_stages;
+  int n_strip_stages;
+
+
+  
   // TODO: Turn into optional state variables
   const double v_a = 485; // m/s
   const double height = 0.5; // meters
   const double diameter = 0.15; // meters
-  const double feed = 15*60*60/((1e3)*60*60*1000.0) ; // g/hr to kg/sec
+  const double machine_feed = 15*60*60/((1e3)*60*60*1000.0) ; // g/hr to kg/sec
   const double temp = 320.0 ; //Kelvin
+
+  // TODO: Turn into Required state variables
+  const double cascade_feed = 739/(30.4*24*60*60) ; // g/hr to kg/sec
+  const double design_feed_assay = 0.0071;
+  const double design_product_assay = 0.0071;
 
   // Not physical constants but fixed assumptions for a cascade separating
   // out U235 from U238 in UF6 gas
@@ -95,7 +114,7 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   const double flow_internal = 2.0 ;  // can vary from 2-4
   const double eff = 1.0;  // typical efficiencies <0.6
   const double cut = 0.5;  // target for ideal cascade
-  */  
+
 
 
  private:

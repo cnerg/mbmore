@@ -78,12 +78,12 @@ namespace mbmore {
   }
 
   // per machine
-  double NProductByAlpha(double alpha, double feed_assay){
+  double ProductAssayByAlpha(double alpha, double feed_assay){
     double ratio = (1.0 - feed_assay) / (alpha * feed_assay);
     return 1.0 / (ratio + 1.0);
   }
 
-  double NWasteByAlpha(double alpha, double feed_assay){
+  double WasteAssayByAlpha(double alpha, double feed_assay){
     double A = (feed_assay / (1 - feed_assay)) / alpha;
     return A / (1 + A);
   }
