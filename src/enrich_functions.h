@@ -29,12 +29,12 @@ namespace mbmore {
   // Calculates the assay of the product given the assay
   // of the feed and the theoretical separation factor of the machine
   // ???
-  double NProductByAlpha(double alpha, double feed_assay);
+  double ProductAssayByAlpha(double alpha, double feed_assay);
 
   // Calculates the assay of the waste given the assay
   // of the feed and the theoretical separation factor of the machine
   // Avery p 59 (per machine)
-  double NWasteByAlpha(double alpha, double feed_assay);
+  double WasteAssayByAlpha(double alpha, double feed_assay);
 
   // Calculates the number of stages needed in a cascade given the separation
   // potential of a single centrifuge and the material assays
