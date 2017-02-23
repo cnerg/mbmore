@@ -88,6 +88,11 @@ namespace mbmore {
     return A / (1 + A);
   }
 
+  // This equation can only be used in the limit where the separation factor
+  // (alpha) is very close to one, which is not true for modern gas centrifuges
+  // DO NOT USE THIS EQUATION!!!
+  // Avery p.59
+  /*
   std::pair<double, double> StagesPerCascade(double alpha, double feed_assay,
 					     double product_assay,
 					     double waste_assay){
@@ -106,6 +111,7 @@ namespace mbmore {
     return stages;
 
   }
+  */
 
   double ProductAssayFromNStages(double alpha, double feed_assay,
 			    double enrich_stages){
@@ -131,12 +137,17 @@ namespace mbmore {
       (2 * (product_assay - feed_assay));
   }
   
+  // 14-Feb-2017
+  // THIS EQN PRODUCES THE WRONG RESULT FOR SOME REASON.
+  // DONT KNOW WHAT THE PROBLEM IS THOUGH
+  /*
   double WastePerStripStage(double alpha, double feed_assay, double waste_assay,
 			    double stage_feed){
     return stage_feed * (alpha - 1.0) * feed_assay * (1 - feed_assay) /
       (2 * (feed_assay - waste_assay));
   }
-
+  */
+  
   double DeltaUCascade(double product_assay, double waste_assay,
 		       double feed_flow, double product_flow){
     double Vpc = CalcV(product_assay);
