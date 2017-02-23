@@ -52,11 +52,13 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
 							design_delU,
 							cascade_feed,
 							design_feed_assay);
+  // TODO: FIX THIS FN
+  /*
   n_strip_stages = CascadeEnrich::NStripStages(design_alpha,
 						   design_delU,
 						   cascade_feed,
 						   design_feed_assay);
-
+  */
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << "CascadeEnrich "
 				    << " entering the simuluation: ";
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << str();
@@ -103,7 +105,9 @@ void CascadeEnrich::Tock() {
 
  }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- int CascadeEnrich::NStripStages(double alpha, double delU, double enr_feed,
+/*
+TODO: FIX THIS FN BY REPLACEING WASTEPERSTRIPSTAGE
+  int CascadeEnrich::NStripStages(double alpha, double delU, double enr_feed,
 				     double feed_assay){
 
    bool integer_stages = true;
@@ -126,8 +130,8 @@ void CascadeEnrich::Tock() {
      double n_mach = MachinesPerStage(alpha, delU, stage_feed);
      if (((int) n_mach) <= 1){ integer_stages = false; }
      waste_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
-     stage_waste = WastePerStripStage(alpha, stage_feed_assay, waste_assay,
-					stage_feed);
+     //     stage_waste = WastePerStripStage(alpha, stage_feed_assay, waste_assay,
+     //					stage_feed);
      stage_feed_assay = waste_assay;
      stage_feed = stage_waste; 
      n_stage_strip += 1;
@@ -140,7 +144,7 @@ void CascadeEnrich::Tock() {
    
 
  }
-  
+*/
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 extern "C" cyclus::Agent* ConstructCascadeEnrich(cyclus::Context* ctx) {
   return new CascadeEnrich(ctx);
