@@ -113,6 +113,39 @@ namespace mbmore {
   }
   */
 
+  std::pair<double, double> FindNStages(double alpha, double feed_assay,
+					     double product_assay,
+					     double waste_assay){
+    using std::pair;
+
+    int ideal_enrich_stage = 0;
+    int ideal_strip_stage = 0;
+    double Nfs = feed_assay;
+    double Nps = feed_assay;
+    double Nws = feed_assay;  // This will be set to waste of first enrich stage
+    
+    while (Nps < product_assay){
+      Nps = ProductAssayByAlpha(alpha, Nfs);
+      if (ideal_enrich_stage == 0){
+	Nws = WasteAssayByAlpha(alpha, Nfs);
+      }
+      ideal_enrich_stage +=1;
+      Nfs = Nps;
+    }
+    
+    Nfs = Nws;
+    while (Nws > waste_assay){
+      Nws = WasteAssayByAlpha(alpha, Nfs);
+      ideal_strip_stage += 1;
+      Nfs = Nws;
+    }
+    
+    std::pair<double, double> stages = std::make_pair(ideal_enrich_stage,
+						      ideal_strip_stage);
+    return stages;
+    
+  }
+  
   double ProductAssayFromNStages(double alpha, double feed_assay,
 			    double enrich_stages){
     double A = (feed_assay / (1 - feed_assay)) *

@@ -82,8 +82,7 @@ TEST(Enrich_Functions_Test, TestSWU) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Ideal cascade design, and then using away from ideal design
-// TODO: REWRITE THIS TEST AFTER REPLACEING STAGESPERCASCADE
-/*
+
 TEST(Enrich_Functions_Test, TestCascade) {
   double n_machines = MachinesPerCascade(delU, product_assay,
 					 waste_assay, feed_c, product_c);
@@ -91,9 +90,9 @@ TEST(Enrich_Functions_Test, TestCascade) {
   double pycode_n_mach = 13458.399;
   EXPECT_NEAR(n_machines, pycode_n_mach, tol_num);
 
-  std::pair<double, double> n_stages = StagesPerCascade(alpha, feed_assay,
-							product_assay,
-							waste_assay);
+  std::pair<double, double> n_stages = FindNStages(alpha, feed_assay,
+						   product_assay,
+						   waste_assay);
 
   double pycode_n_enrich_stage = 7.159;
   double pycode_n_strip_stage = 8.669;
@@ -119,7 +118,6 @@ TEST(Enrich_Functions_Test, TestCascade) {
   EXPECT_NEAR(mod_waste_assay, pycode_mod_waste_assay, tol_assay);
   }
 
-*/
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Determine the output of the first enrich/strip stage of a cascade
   // based on the design params for the cascade

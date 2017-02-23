@@ -28,7 +28,7 @@ namespace mbmore {
 
   // Calculates the assay of the product given the assay
   // of the feed and the theoretical separation factor of the machine
-  // ???
+  // Avery p 57
   double ProductAssayByAlpha(double alpha, double feed_assay);
 
   // Calculates the assay of the waste given the assay
@@ -38,9 +38,8 @@ namespace mbmore {
 
   // Calculates the number of stages needed in a cascade given the separation
   // potential of a single centrifuge and the material assays
-  // ???
   std::pair<double, double>
-    StagesPerCascade(double alpha, double feed_assay, double product_assay,
+    FindNStages(double alpha, double feed_assay, double product_assay,
 		     double Nwc);
 
   // Calculates the product assay after N enriching stages
@@ -77,7 +76,7 @@ namespace mbmore {
 
   // Number of machines in the cascade given the target feed rate and target
   // assays and flow rates
-  // ???
+  // Avery 62
   double MachinesPerCascade(double del_U_machine, double product_assay,
 			    double waste_assay, double feed_flow,
 			    double product_flow);
