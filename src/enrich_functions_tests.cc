@@ -44,6 +44,21 @@ namespace mbmore {
     const double tol_num = 1e-2;
    
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Find product assay from separation factor alpha
+TEST(Enrich_Functions_Test, TestAssay) {
+
+  double cur_alpha = 1.4;
+  double cur_f_assay = 0.007;
+
+  double cpp_assay = ProductAssayByAlpha(cur_alpha, cur_f_assay);
+  
+  double pycode_assay = 0.0097726;
+  double tol = 1e-6;
+  
+  EXPECT_NEAR(cpp_assay, pycode_assay, tol);
+
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Calculate ideal SWU params of single machine (separation potential delU
 // and separation factor alpha)
 TEST(Enrich_Functions_Test, TestSWU) {
@@ -98,7 +113,7 @@ TEST(Enrich_Functions_Test, TestCascade) {
   // Determine the output of the first enrich/strip stage of a cascade
   // based on the design params for the cascade
   TEST(Enrich_Functions_Test, TestStages) {
-    double product_assay_s = NProductByAlpha(alpha, feed_assay);
+    double product_assay_s = ProductAssayByAlpha(alpha, feed_assay);
     double n_mach_e = MachinesPerStage(alpha, delU, feed_c);
     double product_s = ProductPerEnrStage(alpha, feed_assay,
 					product_assay_s, feed_c);
@@ -116,7 +131,7 @@ TEST(Enrich_Functions_Test, TestCascade) {
     EXPECT_NEAR(product_s, pycode_product_s, tol_qty);
 
     double n_mach_w = MachinesPerStage(alpha, delU, enrich_waste);
-    double strip_waste_assay = NWasteByAlpha(alpha, enrich_waste_assay);
+    double strip_waste_assay = WasteAssayByAlpha(alpha, enrich_waste_assay);
     double strip_waste = WastePerStripStage(alpha, enrich_waste_assay,
 					    strip_waste_assay, enrich_waste);
 

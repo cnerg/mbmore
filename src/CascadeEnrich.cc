@@ -95,7 +95,7 @@ void CascadeEnrich::Tock() {
      stage_feed_assay = product_assay;
      stage_feed = stage_product; 
      n_stage_enr += 1; 
-     if (n_stage_enr == 15){ integer_stage = false;} // just a catch until I  make sure while loop is working
+     if (n_stage_enr == 15){ integer_stages = false;} // just a catch until I  make sure while loop is working
 
    }
 
@@ -132,7 +132,7 @@ void CascadeEnrich::Tock() {
      stage_feed = stage_waste; 
      n_stage_strip += 1;
      
-     if (n_stage_strip == 15){ integer_stage = false;} // just a cath until I  make sure while loop is working
+     if (n_stage_strip == 15){ integer_stages = false;} // just a cath until I  make sure while loop is working
 
    }
 
