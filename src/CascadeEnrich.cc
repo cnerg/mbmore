@@ -18,6 +18,10 @@ namespace mbmore {
 CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
     : cyclus::Facility(ctx),
   feed_recipe(""),
+  desired_swu(),
+  feed_assay(),
+  product_assay(),
+  waste_assay(),
   initial_feed(0){}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -48,17 +52,12 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
   design_alpha = AlphaBySwu(design_delU, machine_feed, cut, M);
 
   // Design ideal cascade based on target feed flow and product assay
-  n_enrich_stages = CascadeEnrich::NEnrichStages(design_alpha,
-							design_delU,
-							cascade_feed,
-							design_feed_assay);
-  // TODO: FIX THIS FN
-  /*
-  n_strip_stages = CascadeEnrich::NStripStages(design_alpha,
-						   design_delU,
-						   cascade_feed,
-						   design_feed_assay);
-  */
+  std::pair<double, double> n_stages =
+    CascadeEnrich::FindNStages(design_alpha, feed_assay,
+			       product_assay, waste_assay);
+
+
+  
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << "CascadeEnrich "
 				    << " entering the simuluation: ";
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << str();
