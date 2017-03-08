@@ -161,8 +161,8 @@ void StateInst::AdjustMatlPrefs(
       // and you're a type of Sink, then adjust preferences
       std::string full_name = you->spec();
       std::string archetype = full_name.substr(full_name.rfind(':'));
-      if ((you->parent() == me) &&
-	  ((archetype == "Sink") || (archetype == "RandomSink"))){
+      if ((you->parent()->id() == me->id()) &&
+	  ((archetype == ":Sink") || (archetype == ":RandomSink"))){
 	for (mit = pmit->second.begin(); mit != pmit->second.end(); ++mit) {
 	  if (acquired == 1){
 	    mit->second += 1; 
