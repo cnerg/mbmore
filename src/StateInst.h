@@ -49,7 +49,7 @@ class StateInst
 
   // Do calculation of pursuit equation and convert to a Y/N on whether to
   // start pursuing a weapon at each timestep.
-  bool DecidePursuit();
+  bool WeaponDecision(std::string eqn_type);
 
   virtual void Tick();
 

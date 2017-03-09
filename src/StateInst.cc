@@ -115,16 +115,9 @@ void StateInst::Tock() {
   // Has a secret sink already been deployed?
   // TODO:: How to force SecretEnrich to trade Only with SecretSink??
 
-  if (pursuing == 1) {
-    // TODO: calc AE
-    bool calc_acquire = 0;
-    if (calc_acquire == 1) {
-      // Makes Sink bid for HEU in AdjustMatlPrefs
-      std::cout << "t = " <<context()->time() << ",  Acquired" << std::endl;
-    }
-  }
-  else {
-    bool pursuit_decision = DecidePursuit();
+  if (pursuing == 0) {
+    std::string eqn_type = "Pursuit";
+    bool pursuit_decision = WeaponDecision(eqn_type);
     if (pursuit_decision == 1) {
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
 					  << " is deploying a HEUSink at:" 
@@ -133,7 +126,19 @@ void StateInst::Tock() {
       pursuing = 1;
     }
   }
-   
+  else if ((pursuing == 1) && (acquired == 0)) {
+    std::string eqn_type = "Acquire";
+    bool acquire_decision = WeaponDecision(eqn_type);
+
+    if (acquire_decision == 1) {
+      acquired = 1;
+      std::cout << "Weapon Acquired" << context()->time() << "."<< std::endl;
+      // Makes Sink bid for HEU in AdjustMatlPrefs
+      LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
+					  << " is producing weapons at: " 
+					  << context()->time() << ".";
+    }
+  }
     
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -156,14 +161,14 @@ void StateInst::AdjustMatlPrefs(
       // and you're a type of Sink, then adjust preferences
       std::string full_name = you->spec();
       std::string archetype = full_name.substr(full_name.rfind(':'));
-      if ((you->parent() == me) &&
-	  ((archetype == "Sink") || (archetype == "RandomSink"))){
+      if ((you->parent()->id() == me->id()) &&
+	  ((archetype == ":Sink") || (archetype == ":RandomSink"))){
 	for (mit = pmit->second.begin(); mit != pmit->second.end(); ++mit) {
 	  if (acquired == 1){
 	    mit->second += 1; 
 	  }
 	  else {
-	    mit->second = 0;
+	    mit->second = -1;
 	  }
 	}
       }
@@ -186,11 +191,10 @@ void StateInst::DeploySecret() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // At each timestep where pursuit has not yet occurred, calculate whether to
 // pursue at this time step.
-bool StateInst::DecidePursuit() {
+  bool StateInst::WeaponDecision(std::string eqn_type) {
   using cyclus::Context;
   using cyclus::Agent;
   using cyclus::Recorder;
-  std::string eqn_type = "Pursuit";
   
   cyclus::Datum *d = context()->NewDatum("WeaponProgress");
   d->AddVal("Time", context()->time());
@@ -209,9 +213,13 @@ bool StateInst::DecidePursuit() {
   // All defined factors should be recorded with their actual value
   P_wt = pseudo_region->GetWeights(eqn_type);
 
+  // Even if state is already pursuing and working toward acquire, the success
+  // rate is determined by the value of the pursuit factors, so score must be
+  // calculated
+  
   // Any factors not defined for sim should have a value of zero in the table
   std::vector<std::string>& master_factors = pseudo_region->GetMasterFactors();
-  std::map<std::string, bool> present = pseudo_region->DefinedFactors(eqn_type);
+  std::map<std::string, bool> present = pseudo_region->DefinedFactors("Pursuit");
 
   double pursuit_eqn = 0;
 
@@ -264,18 +272,19 @@ bool StateInst::DecidePursuit() {
     }
   }
   //Convert pursuit eqn result to a Y/N decision
-  double P_likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn/10);
+  double likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn/10);
+  bool decision = XLikely(likely, rng_seed);
   
-  bool decision = XLikely(P_likely, rng_seed);
   std::cout << "Decision is " << decision << std::endl;
   d->AddVal("EqnVal", pursuit_eqn);
-  d->AddVal("Likelihood", P_likely);
+  d->AddVal("Likelihood", likely);
   d->AddVal("Decision", decision);
   d->Record();
   
   return decision;  
 }
   
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::WriteProducerInformation(
   cyclus::toolkit::CommodityProducer* producer) {
