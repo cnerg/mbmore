@@ -142,14 +142,28 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determine the likelihood value for the equation at the current time,
 // (where the current value of the equation is normalized to be between 0-1)
-double InteractRegion::GetLikely(std::string phase, double eqn_val) {
+  double InteractRegion::GetLikely(std::string phase, double eqn_val) {
 
   std::pair<std::string, std::vector<double> > likely_pair =
     likely_rescale[phase];
   std::string function = likely_pair.first;
   std::vector<double> constants = likely_pair.second;
-  
-  double phase_likely = CalcYVal(function, constants, eqn_val);
+
+  double phase_likely;
+  if (phase == "Pursuit"){
+    phase_likely = CalcYVal(function, constants, eqn_val);
+  }
+  else {
+    // for acquire, determine the avg time (N_years) to weapon based on score,
+    // then convert to a likelihood per timestep 1/(N_years * years2months)
+    // TODO: CHANGE HARDCODING TO CHECK FOR ACTUAL TIMESTEP DURATION
+    double avg_time = CalcYVal(function, constants, eqn_val);
+    phase_likely = 1.0/(12.0*avg_time);
+  }
+
+  if ((phase_likely < 0) || (phase_likely > 1)){
+    cyclus::Warn<cyclus::VALUE_WARNING>("likelihood of weapon decision isnt between 0-1! Something went wrong!");
+  }
   //  std::cout << "phase " << phase << " fn " << function << "likely " << phase_likely << std::endl;
   return phase_likely;
   
