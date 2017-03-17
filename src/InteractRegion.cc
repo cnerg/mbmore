@@ -204,6 +204,7 @@ double InteractRegion::GetInteractFactor(std::string eqn_type,
 // then the change in conflict value is mutual between the two states. Otherwise
 // only the state whose change was initiated is affected, such that the two
 // states may have different perspectives on their relationship.
+// TODO:  INPUT SHOULD BE INCREMENT VALUE, not "NEW VALUE"
 void InteractRegion::ChangeConflictFactor(std::string eqn_type,
 					  std::string this_state,
 					  std::string other_state, int new_val){

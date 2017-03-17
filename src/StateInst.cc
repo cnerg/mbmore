@@ -115,6 +115,7 @@ void StateInst::Tock() {
   // Has a secret sink already been deployed?
   // TODO:: How to force SecretEnrich to trade Only with SecretSink??
 
+  // Pursuit (if detected) and acquire each change the conflict map
   if (pursuing == 0) {
     std::string eqn_type = "Pursuit";
     bool pursuit_decision = WeaponDecision(eqn_type);
@@ -124,6 +125,10 @@ void StateInst::Tock() {
 					  << context()->time() << ".";
       DeploySecret();
       pursuing = 1;
+      // TODO: ADD IN A "PURSUIT DETECTED Test (like WeaponDecision)
+      // If yes then call Increment Conflict, which should loop over all states,
+      // identify what the current state-pair status is, decide the appropriate
+      // increment based on the pairing, and then call ChangeConflictFactor
     }
   }
   else if ((pursuing == 1) && (acquired == 0)) {
@@ -137,9 +142,10 @@ void StateInst::Tock() {
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
 					  << " is producing weapons at: " 
 					  << context()->time() << ".";
+      // TODO: Call Increment Conflict, as above
+
     }
   }
-    
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // State inst disallows any trading from SecretSink or SecretEnrich when
@@ -251,9 +257,11 @@ void StateInst::DeploySecret() {
 	  std::string proto = me->prototype();
 	  factor_curr_y =
 	    pseudo_region->GetInteractFactor("Pursuit", factor, proto);
-	  // Then check conflict value to see if it needs to change
-	  // If constants is a single element and it's value is not 0, +1, -1
-	  // then there should be no change
+	  // Then check conflict value to see if it needs to change. If
+	  //constants is a single element then it doesn't have a time-based
+	  // change. This change is not propogated until the NEXT timestep
+	  // TODO:  FIGURE OUT WHAT CURRENT VALUE IS AND MAKE THE PASSED
+	  // VAL IN CHANGECONFLICT be the increment
 	  if ((constants.size() > 1) && (constants[1] == context()->time())){
 	    int new_val = std::round(constants[0]);
 	    std::cout << "INT new conflict value is " << new_val << std::endl;
