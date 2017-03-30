@@ -156,7 +156,8 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
   else {
     // for acquire, determine the avg time (N_years) to weapon based on score,
     // then convert to a likelihood per timestep 1/(N_years * years2months)
-    // TODO: CHANGE HARDCODING TO CHECK FOR ACTUAL TIMESTEP DURATION
+    // TODO: CHANGE HARDCODING TO CHECK FOR ARBITRARY TIMESTEP DURATION
+    //       (currently assumes timestep is one month)
     double avg_time = CalcYVal(function, constants, eqn_val);
     phase_likely = 1.0/(12.0*avg_time);
   }
@@ -173,6 +174,8 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
 // timestep. Begin with the map of relations to all other states, sum these
 // values and normalize. Then convert result to a 0-10 scale (0 == alliance,
 // 5 == neutral, 10 == conflict)
+// TODO: **Change conflict so that it calculates whether states have weapons**
+  
 double InteractRegion::GetInteractFactor(std::string eqn_type,
 					 std::string factor,
 					 std::string prototype) {
@@ -184,7 +187,33 @@ double InteractRegion::GetInteractFactor(std::string eqn_type,
   std::map<std::string, int> relations = relations_map[prototype];
   std::map<std::string, int>::iterator map_it;
   int net_relation = 0;
+
+  std::string my_status;
+  std::string your_status;
+
+  /*
+  // This section tries to figure out if states are pursuing/acquired based
+// on whether anything has been deployed. But instead let's try having an 
+// explicit map that tracks status.
+  Agent* me = this;  
+  const std::set<Agent*>& my_kids = cyclus::Agent::children();
+  // TODO: DO I HAVE A SINK?
+  for (std::set<Agent*>::const_iterator my_kids = children().begin();
+       my_kids != children().end();
+       my_kids++) {
+    std::string child_name = (*my_kids)->spec();
+    std::string child_archetype = child_name.substr(child_name.rfind(':'));
+    if (child_archetype == ":RandomSink"){
+      my_status = "pursuing";
+    }
+    // TODO: AM I TRADING HEU ALSO?
+  }
+  */
+
+  // TODO: MAKE CONFLICT STATUS + WEAPON STATUS DETERMINE FACTOR VALUE
+  // TODO: NEW FACTOR VALUE IS ALREADY 0-10 SCALE, no need for scaling.
   for(map_it = relations.begin(); map_it != relations.end(); map_it++) {
+    //    int f_score = FindConflictValue(map_it->second, me_status, you_status);
     net_relation += map_it->second;
   }
 
@@ -217,6 +246,23 @@ void InteractRegion::ChangeConflictFactor(std::string eqn_type,
     }
   }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Change the weapon status for a state.
+// 0 = not pursuing, 2 = pursuing, 3 = acquired
+// (Reserved but not implemented: -1 = gave up weapons program, 1 = exploring)
+void InteractRegion::UpdateWeaponStatus(std::string proto,
+					int new_weapon_status){
+
+  // add new key value pair. If key already exists then just update value
+  std::pair<std::map<std::string, int>::iterator, bool> ret;
+  ret = sim_weapon_status.insert(std::pair<std::string, int>
+				 (proto, new_weapon_status));
+  if (ret.second ==false){
+    sim_weapon_status[proto] = new_weapon_status;
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Record conflict factors for each pair at start of simulation and
 // whenever they are changed 

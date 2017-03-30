@@ -62,6 +62,10 @@ class InteractRegion
   // Returns the master list of all factors to be recorded in database
   std::vector<std::string>& GetMasterFactors();
 
+  // Tracks weapons status of each state (0 = not pursuing, 2 = pursuing,
+  // 3 = acquired) by updating the sim_weapon_status map
+  virtual void UpdateWeaponStatus(std::string proto, int new_weapon_status);
+
   // Determines Conflict score for each state based on its net
   // relationships with other states
   double GetInteractFactor(std::string eqn_type, std::string factor,
@@ -130,6 +134,9 @@ static std::vector<std::string> column_names;
 // Defines which of the master factor list are being used based on weights
 std::map<std::string, bool> p_present;
 std::map<std::string, bool> a_present;
+
+// Tracks the weapons status of each state
+std::map<std::string, int> sim_weapon_status;
 
  
 }; //cyclus::Region

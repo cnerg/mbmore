@@ -63,8 +63,10 @@ class StateInst
   void WriteProducerInformation(cyclus::toolkit::CommodityProducer*
                                 producer);
 
-  bool pursuing = 0;
-  bool acquired = 0;
+
+  // Obsolete
+  //  bool pursuing = 0;
+  //  bool acquired = 0;
 
  protected:
   /// register a child
@@ -95,7 +97,15 @@ class StateInst
   }
   std::vector<std::string> secret_protos;
 
+
   #pragma cyclus var { \
+    "default": 0,\
+    "tooltip": "Starting status of state",\
+    "doc": "Status of state at start of simulation, " \
+           "not pursuing (0), pursuing (2), acquired (3), gave up pursuit (-1)"}
+  int weapon_status;
+
+#pragma cyclus var {				\
     "default": 0,\
     "tooltip": "Seed for RNG" ,				    \
     "doc": "seed on current system time if set to -1," \
