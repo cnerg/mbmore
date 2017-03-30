@@ -12,7 +12,6 @@ StateInst::StateInst(cyclus::Context* ctx)
     //    kind("State"){
   cyclus::Warn<cyclus::EXPERIMENTAL_WARNING>("the StateInst agent is experimental.");
 }
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 StateInst::~StateInst() {}
 
@@ -29,7 +28,8 @@ void StateInst::DecomNotify(Agent* a) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::EnterNotify() {
   cyclus::Institution::EnterNotify();
-  
+
+
   //TODO: IS THIS NECESSARY???
   using cyclus::toolkit::CommodityProducer;
   std::vector<std::string>::iterator vit;
@@ -72,11 +72,33 @@ void StateInst::Unregister_(Agent* a) {
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::Tick() {
-  // At the beginning of the simulation, calculate the time points for
-  // any randomly occuring changes to the factors
 
+  // Things to do only at beginning of Simulation
   if (context()->time() == 0){
 
+    // Make sure weapon status definition is allowed
+    if ((weapon_status < 0) || (weapon_status > 3) || (weapon_status == 1)){
+      throw cyclus::ValueError(
+			       "ERROR: Only 0, 2, 3 allowed for Weapon Status");
+    }
+    
+    //Record initial weapon status
+    Agent* me = this;
+    std::string proto = me->prototype();
+
+    InteractRegion* pseudo_region =
+      dynamic_cast<InteractRegion*>(this->parent());
+    pseudo_region->UpdateWeaponStatus(proto, weapon_status);
+
+    // If starting status is 'pursuing' or 'acquired', create the secret sink
+    // at simulation start
+    if ((weapon_status == 2) || (weapon_status == 3)){
+      DeploySecret();
+      std::cout << "Enter Notify deploying initial secret sink for prototype " << proto << " at time " << context()->time() <<std::endl;
+      
+    }
+
+    // Calcualte the time points for any random changes to the factors
     std::map<std::string,
 	     std::pair<std::string, std::vector<double> > >::iterator eqn_it;
     for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
@@ -112,38 +134,41 @@ void StateInst::Tick() {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::Tock() {
-  // Has a secret sink already been deployed?
   // TODO:: How to force SecretEnrich to trade Only with SecretSink??
 
+  InteractRegion* pseudo_region =
+    dynamic_cast<InteractRegion*>(this->parent());
+  Agent* me = this;
+  std::string proto = me->prototype();
+  
+  std::cout << "for prototype " << proto << " weapon status is " << weapon_status << std::endl;
+
   // Pursuit (if detected) and acquire each change the conflict map
-  if (pursuing == 0) {
+  if (weapon_status == 0) {
     std::string eqn_type = "Pursuit";
     bool pursuit_decision = WeaponDecision(eqn_type);
     if (pursuit_decision == 1) {
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
 					  << " is deploying a HEUSink at:" 
 					  << context()->time() << ".";
+      std::cout << " secret deplpy for weapon status zero " << weapon_status << std::endl;
       DeploySecret();
-      pursuing = 1;
-      // TODO: ADD IN A "PURSUIT DETECTED Test (like WeaponDecision)
-      // If yes then call Increment Conflict, which should loop over all states,
-      // identify what the current state-pair status is, decide the appropriate
-      // increment based on the pairing, and then call ChangeConflictFactor
+      weapon_status = 2;
+      pseudo_region->UpdateWeaponStatus(proto, weapon_status);
     }
   }
-  else if ((pursuing == 1) && (acquired == 0)) {
+  // If state is pursuing but hasn't yet acquired
+  else if (weapon_status == 2) {
     std::string eqn_type = "Acquire";
     bool acquire_decision = WeaponDecision(eqn_type);
-
+    // State now successfully acquires
     if (acquire_decision == 1) {
-      acquired = 1;
+      weapon_status = 3;
+      pseudo_region->UpdateWeaponStatus(proto, weapon_status);
       std::cout << "Weapon Acquired" << context()->time() << "."<< std::endl;
-      // Makes Sink bid for HEU in AdjustMatlPrefs
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
 					  << " is producing weapons at: " 
 					  << context()->time() << ".";
-      // TODO: Call Increment Conflict, as above
-
     }
   }
 }
@@ -170,7 +195,7 @@ void StateInst::AdjustMatlPrefs(
       if ((you->parent()->id() == me->id()) &&
 	  ((archetype == ":Sink") || (archetype == ":RandomSink"))){
 	for (mit = pmit->second.begin(); mit != pmit->second.end(); ++mit) {
-	  if (acquired == 1){
+	  if (weapon_status == 3){
 	    mit->second += 1; 
 	  }
 	  else {
@@ -262,6 +287,9 @@ void StateInst::DeploySecret() {
 	  // change. This change is not propogated until the NEXT timestep
 	  // TODO:  FIGURE OUT WHAT CURRENT VALUE IS AND MAKE THE PASSED
 	  // VAL IN CHANGECONFLICT be the increment
+	  // TODO: WHAT IS NEW DEFN OF CONFLICT VALUE??
+	  // TODO: SWITCH ODER TO FIND ANY CHANGES FIRST AND THEN CALCULATE
+	  // FACTOR VALUE?
 	  if ((constants.size() > 1) && (constants[1] == context()->time())){
 	    int new_val = std::round(constants[0]);
 	    std::cout << "INT new conflict value is " << new_val << std::endl;
