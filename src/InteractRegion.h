@@ -67,25 +67,35 @@ class InteractRegion
   virtual void UpdateWeaponStatus(std::string proto, int new_weapon_status);
 
   // Determines Conflict score for each state based on its net
-  // relationships with other states
-  double GetInteractFactor(std::string eqn_type, std::string factor,
-			   std::string prototype);
+  // relationships with other states and both states' weapon status
+  double GetConflictScore(std::string eqn_type, std::string prototype);
 
-  // Changes conflict value from initial value to final value at the specified
-  // time
-  virtual void ChangeConflictFactor(std::string eqn_type,
+  // Builds a string to use as key for map that defines the conflict score
+  // for a pair states based on their ally/neutral/enemy relationship
+  std::string BuildRelationString(int statusA, int statusB, int relation);
+
+  // Changes conflict relationship from initial value to final value at the
+  // specified time
+  virtual void ChangeConflictReln(std::string eqn_type,
 				    std::string this_state,
 				    std::string other_state, int new_val);
 
   // Records conflict value at beginning of simulation and any time the conflict
   // relation changes
-  virtual void RecordConflictFactor(std::string eqn_type,
+  virtual void RecordConflictReln(std::string eqn_type,
 				    std::string this_state,
 				    std::string other_state, int new_val);
+
+
+  // Initialize the map that defines how state relationships map to conflict
+  // score
+  virtual void BuildScoreMatrix();
 
   /// every agent should be able to print a verbose description
   virtual std::string str();
 
+
+  
  private:
 
 #pragma cyclus var {				\
@@ -138,6 +148,11 @@ std::map<std::string, bool> a_present;
 // Tracks the weapons status of each state
 std::map<std::string, int> sim_weapon_status;
 
+// Defines conflict scores given weapon status of 2 states and their
+// relationship (ally, neut, enemy)
+std::map<std::string, int> score_matrix;
+
+  
  
 }; //cyclus::Region
 

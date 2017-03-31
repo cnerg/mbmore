@@ -30,7 +30,7 @@ void StateInst::EnterNotify() {
   cyclus::Institution::EnterNotify();
 
 
-  //TODO: IS THIS NECESSARY???
+  //TODO: IS THIS NECESSARY?
   using cyclus::toolkit::CommodityProducer;
   std::vector<std::string>::iterator vit;
   for (vit = declared_protos.begin(); vit != declared_protos.end(); ++vit) {
@@ -94,8 +94,6 @@ void StateInst::Tick() {
     // at simulation start
     if ((weapon_status == 2) || (weapon_status == 3)){
       DeploySecret();
-      std::cout << "Enter Notify deploying initial secret sink for prototype " << proto << " at time " << context()->time() <<std::endl;
-      
     }
 
     // Calcualte the time points for any random changes to the factors
@@ -141,8 +139,6 @@ void StateInst::Tock() {
   Agent* me = this;
   std::string proto = me->prototype();
   
-  std::cout << "for prototype " << proto << " weapon status is " << weapon_status << std::endl;
-
   // Pursuit (if detected) and acquire each change the conflict map
   if (weapon_status == 0) {
     std::string eqn_type = "Pursuit";
@@ -151,7 +147,6 @@ void StateInst::Tock() {
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
 					  << " is deploying a HEUSink at:" 
 					  << context()->time() << ".";
-      std::cout << " secret deplpy for weapon status zero " << weapon_status << std::endl;
       DeploySecret();
       weapon_status = 2;
       pseudo_region->UpdateWeaponStatus(proto, weapon_status);
@@ -216,7 +211,6 @@ void StateInst::DeploySecret() {
     context()->SchedBuild(this, s_proto);  //builds on next timestep
     BuildNotify(this);
   }
-  std::cout << "SECRET DEPLOY!!!! at " << context()->time() << std::endl;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -260,17 +254,18 @@ void StateInst::DeploySecret() {
   for(int f = 0; f < master_factors.size(); f++){
     const std::string& factor = master_factors[f];
     bool f_defined  = present[std::string(factor)];
+    // for most factors 'relation' defines the function for time dynamics of
+    // the factor. But for Conflict, 'relation' is the pair state in the
+    // relationship
     std::string relation = P_f[factor].first;
     std::vector<double> constants =  P_f[factor].second;
 
     // Record zeroes for any columns not defined in input file
     if (!f_defined) {
-      std::cout << "recording UNdefined factors: " << factor.c_str() << std::endl;
       d->AddVal(factor.c_str(), 0.0);
     }
     else {
       double factor_curr_y;
-      std::cout << "Defined: factor " << factor << " fn " << relation << std::endl;
       // Determine the State's conflict score for this timestep
       int n_states = pseudo_region->GetNStates();
       if (factor == "Conflict"){
@@ -281,20 +276,17 @@ void StateInst::DeploySecret() {
 	  Agent* me = this;
 	  std::string proto = me->prototype();
 	  factor_curr_y =
-	    pseudo_region->GetInteractFactor("Pursuit", factor, proto);
+	    pseudo_region->GetConflictScore("Pursuit", proto);
 	  // Then check conflict value to see if it needs to change. If
 	  //constants is a single element then it doesn't have a time-based
 	  // change. This change is not propogated until the NEXT timestep
-	  // TODO:  FIGURE OUT WHAT CURRENT VALUE IS AND MAKE THE PASSED
-	  // VAL IN CHANGECONFLICT be the increment
-	  // TODO: WHAT IS NEW DEFN OF CONFLICT VALUE??
-	  // TODO: SWITCH ODER TO FIND ANY CHANGES FIRST AND THEN CALCULATE
-	  // FACTOR VALUE?
+	  // This is done last because changing conflict for one state will
+	  // also affect another state whose score for this timestep may have
+	  // already been calculated.
 	  if ((constants.size() > 1) && (constants[1] == context()->time())){
 	    int new_val = std::round(constants[0]);
-	    std::cout << "INT new conflict value is " << new_val << std::endl;
-	    pseudo_region->ChangeConflictFactor("Pursuit", proto,
-						relation, new_val); 
+	    pseudo_region->ChangeConflictReln("Pursuit", proto,
+					      relation, new_val); 
 	  }
 	}
       }
@@ -303,7 +295,6 @@ void StateInst::DeploySecret() {
       }
       pursuit_eqn += (factor_curr_y * P_wt[factor]);
       P_factors[factor] = factor_curr_y;
-      std::cout << "Factor: " << factor << "  Pursuit Eqn: " << pursuit_eqn << std:: endl;
       d->AddVal(factor.c_str(), factor_curr_y);
     }
   }
