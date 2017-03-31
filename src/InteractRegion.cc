@@ -40,15 +40,16 @@ int InteractRegion::GetNStates() {
     if ((*inst)->spec() == ":mbmore:StateInst") {
       n_states++; 
     }
-    std::cout << (*inst)->spec() << std::endl;
   }
-  std::cout << "N states is:   " << n_states << std::endl;
   return n_states;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void InteractRegion::EnterNotify() {
   cyclus::Region::EnterNotify();
 
+  // Create conflict score map
+  BuildScoreMatrix();
+  
   // Define Master List of column names for the database only once.
   std::string master_factors [] = { "Auth", "Conflict", "Enrich",
 				    "Mil_Iso","Mil_Sp","Reactors",
@@ -71,7 +72,6 @@ void InteractRegion::EnterNotify() {
   double tot_weight = 0.0;
   std::map <std::string, double>::iterator wt_it;
   for(wt_it = p_wts.begin(); wt_it != p_wts.end(); wt_it++) {
-    std::cout << "Adding " << wt_it->second << std::endl;
     tot_weight+= wt_it->second;
   }
   if (tot_weight == 0){
@@ -89,7 +89,7 @@ void InteractRegion::EnterNotify() {
     std::string eqn_type = "Pursuit";
     for (auto const &ent1 : p_conflict_map) {
       for (auto const &ent2 : ent1.second){
-	RecordConflictFactor(eqn_type, ent1.first, ent2.first, ent2.second);
+	RecordConflictReln(eqn_type, ent1.first, ent2.first, ent2.second);
       }
     }
   }
@@ -107,8 +107,6 @@ std::map<std::string, bool>
   std::map<std::string, bool> present;
   std::map<std::string,double>::iterator factor_it;
   int n_factors = column_names.size();
-  std::cout << "number of master factors is " << n_factors << std::endl;
-  //TODO: loop to get a_present also
   for(int i = 0; i < n_factors; i++) {
     factor_it = wts.find(column_names[i]);
     if (factor_it == wts.end()) {   // factor isn't defined in input file
@@ -165,7 +163,6 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
   if ((phase_likely < 0) || (phase_likely > 1)){
     cyclus::Warn<cyclus::VALUE_WARNING>("likelihood of weapon decision isnt between 0-1! Something went wrong!");
   }
-  //  std::cout << "phase " << phase << " fn " << function << "likely " << phase_likely << std::endl;
   return phase_likely;
   
 }
@@ -174,75 +171,92 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
 // timestep. Begin with the map of relations to all other states, sum these
 // values and normalize. Then convert result to a 0-10 scale (0 == alliance,
 // 5 == neutral, 10 == conflict)
-// TODO: **Change conflict so that it calculates whether states have weapons**
   
-double InteractRegion::GetInteractFactor(std::string eqn_type,
-					 std::string factor,
+double InteractRegion::GetConflictScore(std::string eqn_type,
 					 std::string prototype) {
     
   std::map<std::string, std::map<std::string, int> > relations_map ;
-  if ((eqn_type == "Pursuit") && (factor == "Conflict")){
-    relations_map = p_conflict_map;
-  }
-  std::map<std::string, int> relations = relations_map[prototype];
+  // Use only pursuit map for now
+  relations_map = p_conflict_map;
+  int gross_score = 0;
+
+  std::map<std::string, int> relationships = relations_map[prototype];
   std::map<std::string, int>::iterator map_it;
-  int net_relation = 0;
+ 
+  for(map_it = relationships.begin(); map_it != relationships.end(); map_it++) {
+    std::string other_state = map_it->first;
+    // allies, neutral, or enemies
+    int this_relation = map_it->second;
 
-  std::string my_status;
-  std::string your_status;
+    // what is each state's NW status?
+    int my_weapon_status = sim_weapon_status[prototype];
+    int other_weapon_status = sim_weapon_status[other_state];
 
-  /*
-  // This section tries to figure out if states are pursuing/acquired based
-// on whether anything has been deployed. But instead let's try having an 
-// explicit map that tracks status.
-  Agent* me = this;  
-  const std::set<Agent*>& my_kids = cyclus::Agent::children();
-  // TODO: DO I HAVE A SINK?
-  for (std::set<Agent*>::const_iterator my_kids = children().begin();
-       my_kids != children().end();
-       my_kids++) {
-    std::string child_name = (*my_kids)->spec();
-    std::string child_archetype = child_name.substr(child_name.rfind(':'));
-    if (child_archetype == ":RandomSink"){
-      my_status = "pursuing";
+    std::string relation_string;
+    // order smallest number first (0_2 instead of 2_0)
+    if (my_weapon_status > other_weapon_status){
+      relation_string = BuildRelationString(other_weapon_status,
+					    my_weapon_status,
+					    this_relation);
     }
-    // TODO: AM I TRADING HEU ALSO?
+    else {
+      relation_string = BuildRelationString(my_weapon_status,
+					    other_weapon_status,
+					    this_relation);
+    }
+    gross_score += score_matrix[relation_string];
   }
-  */
-
-  // TODO: MAKE CONFLICT STATUS + WEAPON STATUS DETERMINE FACTOR VALUE
-  // TODO: NEW FACTOR VALUE IS ALREADY 0-10 SCALE, no need for scaling.
-  for(map_it = relations.begin(); map_it != relations.end(); map_it++) {
-    //    int f_score = FindConflictValue(map_it->second, me_status, you_status);
-    net_relation += map_it->second;
-  }
-
-  double fractional_val = static_cast<double>(net_relation)/relations.size();
-  double scaled_val;
-  if (fractional_val <= 0.0) {
-    scaled_val = fractional_val*(-5.0) + 5.0;
-  }
-  else {
-    scaled_val = 5.0 - fractional_val*5.0;
-  }
-  //  std::cout << "raw conflict: " << fractional_val << "  scaled conflict:" << scaled_val << std::endl;
-  return scaled_val;
+      
+  // Take all conflict relationships for a single state and average them
+  // together to get final conflict score
+  // Example: if A-B = 2, A-C = 6, A-D = 10, then total conflict for A = 6
+    double avg_score = static_cast<double>(gross_score)/relationships.size();
+    return avg_score;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Make a string that contains the weapons status of states A and state B, as
+// well as their relationship as statusA_statusB_relationship
+// String is used as key for map of conflict scores
+// Status 0 - Non Weapon State, 2 - Pursuing, 3 - Acquired
+  std::string InteractRegion::BuildRelationString(int statusA,
+						  int statusB,
+						  int relation){
+
+    std::string relation_string;
+    std::string full_string;
+    if (relation == 1){
+      relation_string = "ally_";
+    }
+    else if (relation == 0){
+      relation_string = "neut_";
+    }
+    else {
+      relation_string = "enemy_";
+    }
+
+    full_string.append(relation_string);
+    full_string.append(std::to_string(statusA));
+    full_string.append("_");
+    full_string.append(std::to_string(statusB));
+
+    return full_string;
+  }
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Change the Conflict value for a state. If the simulation is symmetric,
 // then the change in conflict value is mutual between the two states. Otherwise
 // only the state whose change was initiated is affected, such that the two
 // states may have different perspectives on their relationship.
-// TODO:  INPUT SHOULD BE INCREMENT VALUE, not "NEW VALUE"
-void InteractRegion::ChangeConflictFactor(std::string eqn_type,
+void InteractRegion::ChangeConflictReln(std::string eqn_type,
 					  std::string this_state,
 					  std::string other_state, int new_val){
   if (eqn_type == "Pursuit"){
     p_conflict_map[this_state][other_state] = new_val;
-    RecordConflictFactor(eqn_type, this_state, other_state, new_val);
+    RecordConflictReln(eqn_type, this_state, other_state, new_val);
     if (symmetric == 1){
       p_conflict_map[other_state][this_state] = new_val;
-      RecordConflictFactor(eqn_type, other_state, this_state, new_val);
+      RecordConflictReln(eqn_type, other_state, this_state, new_val);
     }
   }
 }
@@ -266,9 +280,9 @@ void InteractRegion::UpdateWeaponStatus(std::string proto,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Record conflict factors for each pair at start of simulation and
 // whenever they are changed 
-void InteractRegion::RecordConflictFactor(std::string eqn_type,
-					  std::string this_state,
-					  std::string other_state, int new_val){
+void InteractRegion::RecordConflictReln(std::string eqn_type,
+					std::string this_state,
+					std::string other_state, int new_val){
   using cyclus::Context;
   using cyclus::Recorder;
 
@@ -280,7 +294,35 @@ void InteractRegion::RecordConflictFactor(std::string eqn_type,
   d->Record();
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string InteractRegion::str() {
+// Build Score Matrix
+  void InteractRegion::BuildScoreMatrix(){
+    score_matrix.insert(std::pair<std::string, int>("ally_0_0", 2));
+    score_matrix.insert(std::pair<std::string, int>("neut_0_0", 2));
+    score_matrix.insert(std::pair<std::string, int>("enemy_0_0", 6));
+    
+    score_matrix.insert(std::pair<std::string, int>("ally_0_2", 3));
+    score_matrix.insert(std::pair<std::string, int>("neut_0_2", 4));
+    score_matrix.insert(std::pair<std::string, int>("enemy_0_2", 8));
+    
+    score_matrix.insert(std::pair<std::string, int>("ally_0_3", 1));
+    score_matrix.insert(std::pair<std::string, int>("neut_0_3", 4));
+    score_matrix.insert(std::pair<std::string, int>("enemy_0_3", 6));
+    
+    score_matrix.insert(std::pair<std::string, int>("ally_2_2", 3));
+    score_matrix.insert(std::pair<std::string, int>("neut_2_2", 4));
+    score_matrix.insert(std::pair<std::string, int>("enemy_2_2", 9));
+    
+    score_matrix.insert(std::pair<std::string, int>("ally_2_3", 3));
+    score_matrix.insert(std::pair<std::string, int>("neut_2_3", 5));
+    score_matrix.insert(std::pair<std::string, int>("enemy_2_3", 10));
+    
+    score_matrix.insert(std::pair<std::string, int>("ally_3_3", 1));
+    score_matrix.insert(std::pair<std::string, int>("neut_3_3", 3));
+    score_matrix.insert(std::pair<std::string, int>("enemy_3_3", 5));
+  }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  std::string InteractRegion::str() {
   std::string s = cyclus::Agent::str();
 
   s += " has insts: ";
