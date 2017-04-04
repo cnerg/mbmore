@@ -53,10 +53,12 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
 
   // Design ideal cascade based on target feed flow and product assay
   std::pair<double, double> n_stages =
-    CascadeEnrich::FindNStages(design_alpha, feed_assay,
-			       product_assay, waste_assay);
+    FindNStages(design_alpha, feed_assay, product_assay, waste_assay);
 
+  // Determine the steady-state feed flows for this cascade design
+  //feed_flows = calc_feed_flows(ideal_enrich_stage, ideal_strip_stage, curr_feed, cut)
 
+  
   
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << "CascadeEnrich "
 				    << " entering the simuluation: ";
@@ -73,11 +75,7 @@ void CascadeEnrich::Tick() {
 void CascadeEnrich::Tock() {
 
 }
-
-
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  int CascadeEnrich::NEnrichStages(double alpha, double delU, double feed,
 				     double feed_assay){
 

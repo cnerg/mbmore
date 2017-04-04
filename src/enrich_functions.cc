@@ -113,31 +113,36 @@ namespace mbmore {
   }
   */
 
-  std::pair<double, double> FindNStages(double alpha, double feed_assay,
+ // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ // Determine number of stages required to reach ideal cascade product assay
+// (requires integer number of stages, so output may exceed target assay)
+
+std::pair<double, double> FindNStages(double alpha, double feed_assay,
 					     double product_assay,
 					     double waste_assay){
     using std::pair;
 
     int ideal_enrich_stage = 0;
     int ideal_strip_stage = 0;
-    double Nfs = feed_assay;
-    double Nps = feed_assay;
-    double Nws = feed_assay;  // This will be set to waste of first enrich stage
-    
-    while (Nps < product_assay){
-      Nps = ProductAssayByAlpha(alpha, Nfs);
+    double stage_feed_assay = feed_assay;
+    double stage_product_assay = feed_assay;
+    double stage_waste_assay = feed_assay;  //start w/waste of 1st enrich stage
+
+    // Calculate number of enriching stages
+    while (stage_product_assay < product_assay){
+      stage_product_assay = ProductAssayByAlpha(alpha, stage_feed_assay);
       if (ideal_enrich_stage == 0){
-	Nws = WasteAssayByAlpha(alpha, Nfs);
+	stage_waste_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
       }
       ideal_enrich_stage +=1;
-      Nfs = Nps;
+      stage_feed_assay = stage_product_assay;
     }
-    
-    Nfs = Nws;
-    while (Nws > waste_assay){
-      Nws = WasteAssayByAlpha(alpha, Nfs);
+    // Calculate number of stripping stages
+    stage_feed_assay = stage_waste_assay;
+    while (stage_waste_assay > waste_assay){
+      stage_waste_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
       ideal_strip_stage += 1;
-      Nfs = Nws;
+      stage_feed_assay = stage_waste_assay;
     }
     
     std::pair<double, double> stages = std::make_pair(ideal_enrich_stage,
