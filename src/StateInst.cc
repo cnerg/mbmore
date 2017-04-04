@@ -12,7 +12,6 @@ StateInst::StateInst(cyclus::Context* ctx)
     //    kind("State"){
   cyclus::Warn<cyclus::EXPERIMENTAL_WARNING>("the StateInst agent is experimental.");
 }
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 StateInst::~StateInst() {}
 
@@ -29,8 +28,9 @@ void StateInst::DecomNotify(Agent* a) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::EnterNotify() {
   cyclus::Institution::EnterNotify();
-  
-  //TODO: IS THIS NECESSARY???
+
+
+  //TODO: IS THIS NECESSARY?
   using cyclus::toolkit::CommodityProducer;
   std::vector<std::string>::iterator vit;
   for (vit = declared_protos.begin(); vit != declared_protos.end(); ++vit) {
@@ -72,11 +72,31 @@ void StateInst::Unregister_(Agent* a) {
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::Tick() {
-  // At the beginning of the simulation, calculate the time points for
-  // any randomly occuring changes to the factors
 
+  // Things to do only at beginning of Simulation
   if (context()->time() == 0){
 
+    // Make sure weapon status definition is allowed
+    if ((weapon_status < 0) || (weapon_status > 3) || (weapon_status == 1)){
+      throw cyclus::ValueError(
+			       "ERROR: Only 0, 2, 3 allowed for Weapon Status");
+    }
+    
+    //Record initial weapon status
+    Agent* me = this;
+    std::string proto = me->prototype();
+
+    InteractRegion* pseudo_region =
+      dynamic_cast<InteractRegion*>(this->parent());
+    pseudo_region->UpdateWeaponStatus(proto, weapon_status);
+
+    // If starting status is 'pursuing' or 'acquired', create the secret sink
+    // at simulation start
+    if ((weapon_status == 2) || (weapon_status == 3)){
+      DeploySecret();
+    }
+
+    // Calcualte the time points for any random changes to the factors
     std::map<std::string,
 	     std::pair<std::string, std::vector<double> > >::iterator eqn_it;
     for(eqn_it = P_f.begin(); eqn_it != P_f.end(); eqn_it++) {
@@ -112,29 +132,40 @@ void StateInst::Tick() {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::Tock() {
-  // Has a secret sink already been deployed?
   // TODO:: How to force SecretEnrich to trade Only with SecretSink??
 
-  if (pursuing == 1) {
-    // TODO: calc AE
-    bool calc_acquire = 0;
-    if (calc_acquire == 1) {
-      // Makes Sink bid for HEU in AdjustMatlPrefs
-      std::cout << "t = " <<context()->time() << ",  Acquired" << std::endl;
-    }
-  }
-  else {
-    bool pursuit_decision = DecidePursuit();
+  InteractRegion* pseudo_region =
+    dynamic_cast<InteractRegion*>(this->parent());
+  Agent* me = this;
+  std::string proto = me->prototype();
+  
+  // Pursuit (if detected) and acquire each change the conflict map
+  if (weapon_status == 0) {
+    std::string eqn_type = "Pursuit";
+    bool pursuit_decision = WeaponDecision(eqn_type);
     if (pursuit_decision == 1) {
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
 					  << " is deploying a HEUSink at:" 
 					  << context()->time() << ".";
       DeploySecret();
-      pursuing = 1;
+      weapon_status = 2;
+      pseudo_region->UpdateWeaponStatus(proto, weapon_status);
     }
   }
-   
-    
+  // If state is pursuing but hasn't yet acquired
+  else if (weapon_status == 2) {
+    std::string eqn_type = "Acquire";
+    bool acquire_decision = WeaponDecision(eqn_type);
+    // State now successfully acquires
+    if (acquire_decision == 1) {
+      weapon_status = 3;
+      pseudo_region->UpdateWeaponStatus(proto, weapon_status);
+      std::cout << "Weapon Acquired" << context()->time() << "."<< std::endl;
+      LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
+					  << " is producing weapons at: " 
+					  << context()->time() << ".";
+    }
+  }
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // State inst disallows any trading from SecretSink or SecretEnrich when
@@ -156,14 +187,14 @@ void StateInst::AdjustMatlPrefs(
       // and you're a type of Sink, then adjust preferences
       std::string full_name = you->spec();
       std::string archetype = full_name.substr(full_name.rfind(':'));
-      if ((you->parent() == me) &&
-	  ((archetype == "Sink") || (archetype == "RandomSink"))){
+      if ((you->parent()->id() == me->id()) &&
+	  ((archetype == ":Sink") || (archetype == ":RandomSink"))){
 	for (mit = pmit->second.begin(); mit != pmit->second.end(); ++mit) {
-	  if (acquired == 1){
+	  if (weapon_status == 3){
 	    mit->second += 1; 
 	  }
 	  else {
-	    mit->second = 0;
+	    mit->second = -1;
 	  }
 	}
       }
@@ -180,17 +211,15 @@ void StateInst::DeploySecret() {
     context()->SchedBuild(this, s_proto);  //builds on next timestep
     BuildNotify(this);
   }
-  std::cout << "SECRET DEPLOY!!!! at " << context()->time() << std::endl;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // At each timestep where pursuit has not yet occurred, calculate whether to
 // pursue at this time step.
-bool StateInst::DecidePursuit() {
+  bool StateInst::WeaponDecision(std::string eqn_type) {
   using cyclus::Context;
   using cyclus::Agent;
   using cyclus::Recorder;
-  std::string eqn_type = "Pursuit";
   
   cyclus::Datum *d = context()->NewDatum("WeaponProgress");
   d->AddVal("Time", context()->time());
@@ -209,9 +238,13 @@ bool StateInst::DecidePursuit() {
   // All defined factors should be recorded with their actual value
   P_wt = pseudo_region->GetWeights(eqn_type);
 
+  // Even if state is already pursuing and working toward acquire, the success
+  // rate is determined by the value of the pursuit factors, so score must be
+  // calculated
+  
   // Any factors not defined for sim should have a value of zero in the table
   std::vector<std::string>& master_factors = pseudo_region->GetMasterFactors();
-  std::map<std::string, bool> present = pseudo_region->DefinedFactors(eqn_type);
+  std::map<std::string, bool> present = pseudo_region->DefinedFactors("Pursuit");
 
   double pursuit_eqn = 0;
 
@@ -221,17 +254,18 @@ bool StateInst::DecidePursuit() {
   for(int f = 0; f < master_factors.size(); f++){
     const std::string& factor = master_factors[f];
     bool f_defined  = present[std::string(factor)];
+    // for most factors 'relation' defines the function for time dynamics of
+    // the factor. But for Conflict, 'relation' is the pair state in the
+    // relationship
     std::string relation = P_f[factor].first;
     std::vector<double> constants =  P_f[factor].second;
 
     // Record zeroes for any columns not defined in input file
     if (!f_defined) {
-      std::cout << "recording UNdefined factors: " << factor.c_str() << std::endl;
       d->AddVal(factor.c_str(), 0.0);
     }
     else {
       double factor_curr_y;
-      std::cout << "Defined: factor " << factor << " fn " << relation << std::endl;
       // Determine the State's conflict score for this timestep
       int n_states = pseudo_region->GetNStates();
       if (factor == "Conflict"){
@@ -242,15 +276,17 @@ bool StateInst::DecidePursuit() {
 	  Agent* me = this;
 	  std::string proto = me->prototype();
 	  factor_curr_y =
-	    pseudo_region->GetInteractFactor("Pursuit", factor, proto);
-	  // Then check conflict value to see if it needs to change
-	  // If constants is a single element and it's value is not 0, +1, -1
-	  // then there should be no change
+	    pseudo_region->GetConflictScore("Pursuit", proto);
+	  // Then check conflict value to see if it needs to change. If
+	  //constants is a single element then it doesn't have a time-based
+	  // change. This change is not propogated until the NEXT timestep
+	  // This is done last because changing conflict for one state will
+	  // also affect another state whose score for this timestep may have
+	  // already been calculated.
 	  if ((constants.size() > 1) && (constants[1] == context()->time())){
 	    int new_val = std::round(constants[0]);
-	    std::cout << "INT new conflict value is " << new_val << std::endl;
-	    pseudo_region->ChangeConflictFactor("Pursuit", proto,
-						relation, new_val); 
+	    pseudo_region->ChangeConflictReln("Pursuit", proto,
+					      relation, new_val); 
 	  }
 	}
       }
@@ -259,23 +295,23 @@ bool StateInst::DecidePursuit() {
       }
       pursuit_eqn += (factor_curr_y * P_wt[factor]);
       P_factors[factor] = factor_curr_y;
-      std::cout << "Factor: " << factor << "  Pursuit Eqn: " << pursuit_eqn << std:: endl;
       d->AddVal(factor.c_str(), factor_curr_y);
     }
   }
   //Convert pursuit eqn result to a Y/N decision
-  double P_likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn/10);
+  double likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn/10);
+  bool decision = XLikely(likely, rng_seed);
   
-  bool decision = XLikely(P_likely, rng_seed);
   std::cout << "Decision is " << decision << std::endl;
   d->AddVal("EqnVal", pursuit_eqn);
-  d->AddVal("Likelihood", P_likely);
+  d->AddVal("Likelihood", likely);
   d->AddVal("Decision", decision);
   d->Record();
   
   return decision;  
 }
   
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StateInst::WriteProducerInformation(
   cyclus::toolkit::CommodityProducer* producer) {
