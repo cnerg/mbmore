@@ -10,13 +10,14 @@ namespace mbmore {
 
   double D_rho = 2.2e-5; // kg/m/s
   double gas_const = 8.314; // J/K/mol
+  double M_238 = 0.238; //kg/mol
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TODO:
 // annotate assumed units, Glaser paper reference
 
   double CalcDelU(double v_a, double height, double diameter,  double feed,
-		  double temp, double cut, double eff, double M, double dM,
+		  double temp, double cut, double eff, double M_238, double dM,
 		  double x, double flow_internal) {
 
     // Inputs that are effectively constants:
@@ -39,6 +40,8 @@ namespace mbmore {
       (1.0 - cut + flow_internal);
 
     //Glaser eqn 3
+    // To make consistent with Glaser results:
+    //    double C1 = (2.0 * M_PI * (D_rho*M_238/M_mol) / (log(r_2 / r_1)));
     double C1 = (2.0 * M_PI * D_rho / (log(r_2 / r_1)));
     double A_p = C1 *(1.0 / feed) *
       (cut / ((1.0 + flow_internal) * (1.0 - cut + flow_internal)));
@@ -79,8 +82,11 @@ namespace mbmore {
 
   // per machine
   double ProductAssayByAlpha(double alpha, double feed_assay){
-    double ratio = (1.0 - feed_assay) / (alpha * feed_assay);
-    return 1.0 / (ratio + 1.0);
+    // Possibly incorrect is commented out ? 
+    //    double ratio = (1.0 - feed_assay) / (alpha * feed_assay);
+    //    return 1.0 / (ratio + 1.0);
+    double ratio = alpha * feed_assay/(1.0 - feed_assay);
+    return ratio / (1 + ratio);
   }
 
   double WasteAssayByAlpha(double alpha, double feed_assay){
