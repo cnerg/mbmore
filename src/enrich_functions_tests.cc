@@ -93,20 +93,22 @@ TEST(Enrich_Functions_Test, TestCascade) {
   std::pair<double, double> n_stages = FindNStages(alpha, feed_assay,
 						   product_assay,
 						   waste_assay);
+  int pycode_n_enrich_stage = 8;
+  int pycode_n_strip_stage = 9;
 
-  double pycode_n_enrich_stage = 7.159;
-  double pycode_n_strip_stage = 8.669;
-  EXPECT_NEAR(n_stages.first, pycode_n_enrich_stage, tol_num);
-  EXPECT_NEAR(n_stages.second, pycode_n_strip_stage, tol_num);
-
-  
   // Now test assays when cascade is modified away from ideal design
   // (cascade optimized for natural uranium feed, now use 20% enriched
   double feed_assay_mod = 0.20;
 
-  int n_stage_enrich = (int) n_stages.first + 1;  // Round up to next integer
-  int n_stage_waste = (int) n_stages.second + 1;  // Round up to next integer
+  //  int n_stage_enrich = (int) n_stages.first + 1;  // Round up to next integer
+  //  int n_stage_waste = (int) n_stages.second + 1;  // Round up to next integer
+  int n_stage_enrich = n_stages.first;
+  int n_stage_waste = n_stages.second;
 
+  EXPECT_EQ(n_stage_enrich, pycode_n_enrich_stage);
+  EXPECT_EQ(n_stage_waste, pycode_n_strip_stage);
+
+  std::cout << "alpha " << alpha << " feed " << feed_assay_mod << " nstage " << n_stage_enrich << " unrounded stages " << n_stages.first << std::endl;
   double mod_product_assay = ProductAssayFromNStages(alpha, feed_assay_mod,
 						     n_stage_enrich);
   double mod_waste_assay = WasteAssayFromNStages(alpha, feed_assay_mod,
