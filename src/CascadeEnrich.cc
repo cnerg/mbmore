@@ -18,10 +18,10 @@ namespace mbmore {
 CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
     : cyclus::Facility(ctx),
   feed_recipe(""),
-  desired_swu(),
-  feed_assay(),
-  product_assay(),
-  waste_assay(),
+  //  desired_swu(),  // not needed at this time
+  design_feed_assay(),
+  design_product_assay(),
+  design_waste_assay(),
   initial_feed(0){}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -47,16 +47,21 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
   }
 
   // Calculate ideal machine performance
-  design_delU = CalcDelU(v_a, height, diameter, machine_feed, temp,
+  double design_delU = CalcDelU(v_a, height, diameter, machine_feed, temp,
 				cut, eff, M, dM, x, flow_internal);
-  design_alpha = AlphaBySwu(design_delU, machine_feed, cut, M);
+  double design_alpha = AlphaBySwu(design_delU, machine_feed, cut, M);
 
   // Design ideal cascade based on target feed flow and product assay
   std::pair<double, double> n_stages =
-    FindNStages(design_alpha, feed_assay, product_assay, waste_assay);
+    FindNStages(design_alpha, design_feed_assay, design_product_assay,
+		design_waste_assay);
+
+  // set as internal state variables
+  n_enrich_stages = n_stages.first;
+  n_strip_stages = n_stages.second;
 
   // Determine the steady-state feed flows for this cascade design
-  //feed_flows = calc_feed_flows(ideal_enrich_stage, ideal_strip_stage, curr_feed, cut)
+  //  std::vector<double> feed_flows = CalcFeedFlows(n_stages, initial_feed, cut);
 
   
   
@@ -76,7 +81,9 @@ void CascadeEnrich::Tock() {
 
 }
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- int CascadeEnrich::NEnrichStages(double alpha, double delU, double feed,
+  // THESE HAVE BEEN REPLACED BY FindNStages
+  /*
+  int CascadeEnrich::NEnrichStages(double alpha, double delU, double feed,
 				     double feed_assay){
 
    double stage_feed_assay = feed_assay;
@@ -102,7 +109,6 @@ void CascadeEnrich::Tock() {
 
  }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
 TODO: FIX THIS FN BY REPLACEING WASTEPERSTRIPSTAGE
   int CascadeEnrich::NStripStages(double alpha, double delU, double enr_feed,
 				     double feed_assay){

@@ -102,8 +102,8 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
 
   // TODO: Turn into Required state variables
   const double cascade_feed = 739/(30.4*24*60*60) ; // g/hr to kg/sec
-  const double design_feed_assay = 0.0071;
-  const double design_product_assay = 0.0071;
+  //  const double design_feed_assay = 0.0071;
+  //  const double design_product_assay = 0.0071;
 
   // Not physical constants but fixed assumptions for a cascade separating
   // out U235 from U238 in UF6 gas
@@ -134,6 +134,31 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   }
   double initial_feed;
 
+
+  // TODO: USE FEED RECIPE TO DETERMINE FEED ASSAY!!!
+#pragma cyclus var {							\
+    "default": 0.0071, "tooltip": "initial uranium reserves (kg)",		\
+    "uilabel": "Initial feed assay",				\
+    "doc": "desired fraction of U235 in feed material (should be consistent "\
+           "with feed recipe" \
+  }
+  double design_feed_assay;
+
+  #pragma cyclus var {							\
+    "default": 0.035, "tooltip": "Initial target product assay",	\
+    "uilabel": "Target product assay",				\
+    "doc": "desired fraction of U235 in product"\
+  }
+  double design_product_assay;
+
+  #pragma cyclus var {							\
+    "default": 0.003, "tooltip": "Initial target waste assay",	\
+    "uilabel": "Target waste assay",				\
+    "doc": "desired fraction of U235 in waste"\
+  }
+  double design_waste_assay;
+
+  
   #pragma cyclus var {							\
     "default": 1e299, "tooltip": "max inventory of feed material (kg)", \
     "uilabel": "Maximum Feed Inventory",                                \
