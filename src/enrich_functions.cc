@@ -17,7 +17,7 @@ namespace mbmore {
 // annotate assumed units, Glaser paper reference
 
   double CalcDelU(double v_a, double height, double diameter,  double feed,
-		  double temp, double cut, double eff, double M_238, double dM,
+		  double temp, double cut, double eff, double M_mol, double dM,
 		  double x, double flow_internal) {
 
     // Inputs that are effectively constants:
@@ -30,7 +30,7 @@ namespace mbmore {
     // Glaser 2009 says operationally it ranges from 0.96-0.99
     double r_2 = 0.99 * a; 
 
-    double r_12 = std::sqrt(1.0 - (2.0 * gas_const * temp*(log(x)) / M /
+    double r_12 = std::sqrt(1.0 - (2.0 * gas_const * temp*(log(x)) / M_mol /
 				   (pow(v_a, 2)))); 
     double r_1 = r_2 * r_12; // withdrawl radius for ligher isotope
 
@@ -215,5 +215,40 @@ std::pair<double, double> FindNStages(double alpha, double feed_assay,
     return U_cascade / feed_assay;
   }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Calculate steady-state flow rates into each stage
+/*  std::vector<double> CalcFeedFlows(std::pair<double, double> n_stages,
+				    double cascade_feed, double cut){
+
+    int n_enrich = n_stages.first;
+    int n_strip = n_stages.second;
+    int n_stages = n_stages.first + n_stages.second;
+
+    std::vector <double> eqn_answers;
+    for (int ind = 0; ind < n_stages; ind++){
+      int i = ind - n_strip;
+      int position = n_stages_strip + i;
+
+      eqn = np.zeros(n_stages)
+
+	  eqn[position] = -1
+        if (position != 0):
+            eqn[position - 1] = cut
+        if (position != n_stages - 1):
+            eqn[position + 1] = (1-cut)
+        if (position == 0):
+            eqn_array = eqn
+        else:
+            eqn_array = np.vstack((eqn_array,eqn))
+        if (i == 0):
+            eqn_answers[position] = -1*cascade_feed
+
+    return np.linalg.solve(eqn_array, eqn_answers)
+
+
+    
+  }
+*/
   
 } // namespace mbmore
