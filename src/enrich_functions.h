@@ -38,7 +38,7 @@ namespace mbmore {
 
   // Calculates the number of stages needed in a cascade given the separation
   // potential of a single centrifuge and the material assays
-  std::pair<double, double>
+  std::pair<int, int>
     FindNStages(double alpha, double feed_assay, double product_assay,
 		     double Nwc);
 

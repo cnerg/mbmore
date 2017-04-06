@@ -57,8 +57,10 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
 		design_waste_assay);
 
   // set as internal state variables
-  n_enrich_stages = n_stages.first;
-  n_strip_stages = n_stages.second;
+  // int truncates but we need # of stages to assure target values,
+  // so if the number is 5.1 we need 6. 
+  n_enrich_stages = int(n_stages.first) + 1;
+  n_strip_stages = int(n_stages.second) + 1;
 
   // Determine the steady-state feed flows for this cascade design
   //  std::vector<double> feed_flows = CalcFeedFlows(n_stages, initial_feed, cut);
