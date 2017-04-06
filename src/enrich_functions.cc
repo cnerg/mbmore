@@ -217,38 +217,105 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Calculate steady-state flow rates into each stage
-/*  std::vector<double> CalcFeedFlows(std::pair<double, double> n_stages,
+// Calculate steady-state flow rates into each cascade stage
+// Linear system of equations in form AX = B, where A is nxn square matrix
+// of linear equations for the flow rates of each stage and B are the external
+// feeds for the stage. External feed is zero for all stages accept cascade
+// feed stage (F_0) stages start with last strip stage [-2, -1, 0, 1, 2]
+//
+//  std::vector<double> CalcFeedFlows(std::pair<double, double> n_stages,
+  std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
 				    double cascade_feed, double cut){
-
+    /*
     int n_enrich = n_stages.first;
     int n_strip = n_stages.second;
     int n_stages = n_stages.first + n_stages.second;
+    */
 
-    std::vector <double> eqn_answers;
-    for (int ind = 0; ind < n_stages; ind++){
-      int i = ind - n_strip;
-      int position = n_stages_strip + i;
+    int n_enrich = 3;
+    int n_strip = 2;
+    int n_stages = 5;
+    std::vector<std::vector<double>> flow_eqns;
+    std::vector<double> extern_feed;
+    //    std::vector<double> flow_solns;
 
-      eqn = np.zeros(n_stages)
+    std::cout << "Matrix: " << std::endl;
+    for (int i = 0; i < n_stages; i++){
+      extern_feed.push_back(0);
+      //      flow_solns.push_back(0);
+      std::vector<double> matrix_builder;
+      for (int j = 0;  j < n_stages; j++){
+	matrix_builder.push_back(0);
+      }
+      for (auto p = matrix_builder.begin(); p != matrix_builder.end(); ++p){
+	std::cout << *p << ' ';
+      }
+      std::cout << std::endl;
+      flow_eqns.push_back(matrix_builder);
+    }
 
-	  eqn[position] = -1
-        if (position != 0):
-            eqn[position - 1] = cut
-        if (position != n_stages - 1):
-            eqn[position + 1] = (1-cut)
-        if (position == 0):
-            eqn_array = eqn
-        else:
-            eqn_array = np.vstack((eqn_array,eqn))
-        if (i == 0):
-            eqn_answers[position] = -1*cascade_feed
+     
+    // build matrix of equations in this pattern
+    // [[ -1, 1-cut,    0,     0,      0]       [[0]
+    //  [cut,    -1, 1-cut,    0,      0]        [0]       
+    //  [  0,   cut,    -1, 1-cut,     0]  * X = [-1*cascade_feed]
+    //  [  0,     0,   cut,    -1, 1-cut]        [0]
+    //  [  0,     0,     0,   cut,    -1]]       [0]]
+    //
+    for (int row_idx = 0; row_idx < n_stages; row_idx++){
+      int i = row_idx - n_strip;
+      int col_idx = n_strip + i;
+      flow_eqns[row_idx][col_idx] = -1;
+      if (col_idx != 0){
+	flow_eqns[row_idx][col_idx - 1] = cut ;
+      }
+      if (col_idx != n_stages - 1){
+	flow_eqns[row_idx][col_idx + 1] = (1-cut);
+      }
+      if (i == 0){
+	extern_feed[row_idx] = -1*cascade_feed;
+      }
+    }
+      //      return np.linalg.solve(eqn_array, eqn_answers)
+      
+   std::cout << "Feed vector" << std::endl;
+    for (auto p = extern_feed.begin(); p != extern_feed.end(); ++p){
+      std::cout << *p << ' ' << std::endl;
+    }
 
-    return np.linalg.solve(eqn_array, eqn_answers)
+    //double a[MAX][MAX];  -- flow_eqns
+    //    double b[1][MAX]; -- RHS (extern_feed), and THEN the result
+    //int n=5;  -- n_stages
+    int nrhs = 1; // 1 column solution
+    int lda = n_stages;  // must be >= MAX(1,N)
+    int ldb = n_stages;       // must be >= MAX(1,N)
+    int ipiv[n_stages];
+    int info;
 
 
-    
+    std::vector<double> flow_solns = extern_feed;
+
+   // Solve the linear system
+    dgesv_(&n_stages, &nrhs, &flow_eqns[0][0], 
+	   &lda, ipiv, &flow_solns[0][0], &ldb, &info);
+
+   
+   // Check for success
+   if(info == 0)
+   {
+      // Write the answer
+      std::cout << "The answer is\n";
+      for(int i = 0; i < n_stages; i++)
+        std::cout << "b[" << i << "]\t" << flow_solns[0][i] << "\n";
+   }
+   else
+   {
+      // Write an error message
+      std::cerr << "dgesv returned error " << info << "\n";
+   }
+   
+   return flow_solns;
   }
-*/
+
   
 } // namespace mbmore

@@ -63,8 +63,8 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
   n_strip_stages = int(n_stages.second) + 1;
 
   // Determine the steady-state feed flows for this cascade design
+  // returns an array pointer
   //  std::vector<double> feed_flows = CalcFeedFlows(n_stages, initial_feed, cut);
-
   
   
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << "CascadeEnrich "
