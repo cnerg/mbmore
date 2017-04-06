@@ -123,7 +123,7 @@ namespace mbmore {
  // Determine number of stages required to reach ideal cascade product assay
 // (requires integer number of stages, so output may exceed target assay)
 
-std::pair<double, double> FindNStages(double alpha, double feed_assay,
+std::pair<int, int> FindNStages(double alpha, double feed_assay,
 					     double product_assay,
 					     double waste_assay){
     using std::pair;
@@ -151,8 +151,8 @@ std::pair<double, double> FindNStages(double alpha, double feed_assay,
       stage_feed_assay = stage_waste_assay;
     }
     
-    std::pair<double, double> stages = std::make_pair(ideal_enrich_stage,
-						      ideal_strip_stage);
+    std::pair<int, int> stages = std::make_pair(ideal_enrich_stage,
+						ideal_strip_stage);
     return stages;
     
   }
