@@ -162,14 +162,14 @@ TEST(Enrich_Functions_Test, TestCascade) {
 // tests the steady state flow rates for a cascade
 //
 TEST(Enrich_Functions_Test, TestFlowRates) {
-}
     std::pair<double, double> n_stages = FindNStages(alpha, feed_assay,
 						     product_assay,
 						     waste_assay);
-    
-    std::vector<double> feed_flows = CalcFeedFlows(n_stages, feed_c, cut);
 
-    
+    std::cout << "feed_c " << feed_c << " cut " << cut << std::endl;
+    double** feed_flows = CalcFeedFlows(n_stages, feed_c, cut);
+
+}
     
     
   } // namespace enrichfunctiontests
