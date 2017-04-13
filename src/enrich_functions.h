@@ -6,6 +6,13 @@
 
 namespace mbmore {
 
+// LAPACK solver for system of linear equations
+extern "C" {
+     void dgesv_(int *n, int *nrhs,  double *a,  int  *lda,  
+           int *ipivot, double *b, int *ldb, int *info) ;
+}
+
+  
   // Calculates the ideal separation energy for a single machine 
   // as defined by the Raetz equation
   // (referenced in Glaser, Science and Global Security 2009)
@@ -91,8 +98,9 @@ namespace mbmore {
 
   // Solves system of linear eqns to determine steady state flow rates
   // in each stage of cascade
-  std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
-			double cascade_feed, double cut);
+  //  std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
+  double** CalcFeedFlows(std::pair<double, double> n_st,
+			 double cascade_feed, double cut);
 
   
 } // namespace mbmore
