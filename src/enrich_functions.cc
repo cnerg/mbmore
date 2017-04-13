@@ -5,13 +5,15 @@
 #include <cstdlib>
 #include <iostream>
 #include <cmath>
+#include <iterator>
 
 namespace mbmore {
 
   double D_rho = 2.2e-5; // kg/m/s
   double gas_const = 8.314; // J/K/mol
   double M_238 = 0.238; //kg/mol
- 
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TODO:
 // annotate assumed units, Glaser paper reference
@@ -223,18 +225,36 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 // feeds for the stage. External feed is zero for all stages accept cascade
 // feed stage (F_0) stages start with last strip stage [-2, -1, 0, 1, 2]
 //
-//  std::vector<double> CalcFeedFlows(std::pair<double, double> n_stages,
-  std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
-				    double cascade_feed, double cut){
-    /*
-    int n_enrich = n_stages.first;
-    int n_strip = n_stages.second;
-    int n_stages = n_stages.first + n_stages.second;
-    */
+double** CalcFeedFlows(std::pair<double, double> n_st,
+			 double cascade_feed, double cut){
+  /*
+  int n_enrich = n_st.first;
+    int n_strip = n_st.second;
+    int n_stages = n_st.first + n_st.second;
+    std::cout << "enrich # " << n_enrich << " strip # " << n_strip << std::endl; 
+  */
 
     int n_enrich = 3;
     int n_strip = 2;
     int n_stages = 5;
+
+
+    //LAPACK takes the external flow feeds as B, and then returns a modified version
+    // of the same array now representing the solution flow rates.
+ 
+     // Build Array with pointers
+    double** flow_eqns = new double*[n_stages];
+								      //    double** flows = new double*[n_stages];
+    double** flows = new double*[1];
+    for (int i = 0; i < n_stages; ++i){
+      flow_eqns[i] = new double[n_stages];
+      //  flows[i] = new double[1];
+      flows[i] = new double[n_stages];
+    }
+ 
+    
+    /*
+    // Build array a vector
     std::vector<std::vector<double>> flow_eqns;
     std::vector<double> extern_feed;
     //    std::vector<double> flow_solns;
@@ -253,7 +273,7 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
       std::cout << std::endl;
       flow_eqns.push_back(matrix_builder);
     }
-
+    */
      
     // build matrix of equations in this pattern
     // [[ -1, 1-cut,    0,     0,      0]       [[0]
@@ -262,27 +282,43 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
     //  [  0,     0,   cut,    -1, 1-cut]        [0]
     //  [  0,     0,     0,   cut,    -1]]       [0]]
     //
+
+
     for (int row_idx = 0; row_idx < n_stages; row_idx++){
+      // fill the array with zeros, then update individual elements as nonzero
+      flows[0][row_idx] = 0;
+      for (int fill_idx = 0; fill_idx < n_stages; fill_idx++){
+	flow_eqns[fill_idx][row_idx] = 0;
+      }
       int i = row_idx - n_strip;
       int col_idx = n_strip + i;
-      flow_eqns[row_idx][col_idx] = -1;
+      flow_eqns[col_idx][row_idx] = -1;
       if (col_idx != 0){
-	flow_eqns[row_idx][col_idx - 1] = cut ;
+	flow_eqns[col_idx - 1][row_idx] = cut ;
       }
       if (col_idx != n_stages - 1){
-	flow_eqns[row_idx][col_idx + 1] = (1-cut);
+	flow_eqns[col_idx + 1][row_idx] = (1-cut);
       }
+      // Add the external feed for the cascade
       if (i == 0){
-	extern_feed[row_idx] = -1*cascade_feed;
+	flows[0][row_idx] = -1*cascade_feed;
       }
+      std::cout << "Row " << row_idx << std::endl;
+      for (int j = 0; j < n_stages; j++){
+	std::cout << "  " << flow_eqns[j][row_idx] << "  " ;
+      }
+      std::cout << std::endl;
     }
       //      return np.linalg.solve(eqn_array, eqn_answers)
-      
+
+    /*
    std::cout << "Feed vector" << std::endl;
     for (auto p = extern_feed.begin(); p != extern_feed.end(); ++p){
       std::cout << *p << ' ' << std::endl;
     }
+    */
 
+    
     //double a[MAX][MAX];  -- flow_eqns
     //    double b[1][MAX]; -- RHS (extern_feed), and THEN the result
     //int n=5;  -- n_stages
@@ -292,12 +328,9 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
     int ipiv[n_stages];
     int info;
 
-
-    std::vector<double> flow_solns = extern_feed;
-
    // Solve the linear system
     dgesv_(&n_stages, &nrhs, &flow_eqns[0][0], 
-	   &lda, ipiv, &flow_solns[0][0], &ldb, &info);
+	   &lda, ipiv, &flows[0][0], &ldb, &info);
 
    
    // Check for success
@@ -306,15 +339,22 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
       // Write the answer
       std::cout << "The answer is\n";
       for(int i = 0; i < n_stages; i++)
-        std::cout << "b[" << i << "]\t" << flow_solns[0][i] << "\n";
+        std::cout << "b[" << i << "]\t" << flows[0][i] << "\n";
    }
    else
    {
       // Write an error message
       std::cerr << "dgesv returned error " << info << "\n";
    }
-   
-   return flow_solns;
+
+   /*
+   std::vector<std::vector<double>> fs_vec = {
+     std::vector<double>(std::begin(flow_solns[0]), std::end(flow_solns[0])),
+     std::vector<double>(std::begin(flow_solns[1]), std::end(flow_solns[1]))
+   };
+   */
+ //  std::vector<double> fs_vec(flow_solns, n_stages);
+   return flows;
   }
 
   
