@@ -167,7 +167,8 @@ TEST(Enrich_Functions_Test, TestFlowRates) {
 						     waste_assay);
 
     std::cout << "feed_c " << feed_c << " cut " << cut << std::endl;
-    double** feed_flows = CalcFeedFlows(n_stages, feed_c, cut);
+    CalcFeedFlows(n_stages, feed_c, cut);
+							  //    double** feed_flows = CalcFeedFlows(n_stages, feed_c, cut);
 
 }
     
