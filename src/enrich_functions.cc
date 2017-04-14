@@ -225,7 +225,8 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 // feeds for the stage. External feed is zero for all stages accept cascade
 // feed stage (F_0) stages start with last strip stage [-2, -1, 0, 1, 2]
 //
-double** CalcFeedFlows(std::pair<double, double> n_st,
+//double** CalcFeedFlows(std::pair<double, double> n_st,
+void CalcFeedFlows(std::pair<double, double> n_st,
 			 double cascade_feed, double cut){
   /*
   int n_enrich = n_st.first;
@@ -234,23 +235,25 @@ double** CalcFeedFlows(std::pair<double, double> n_st,
     std::cout << "enrich # " << n_enrich << " strip # " << n_strip << std::endl; 
   */
 
-    int n_enrich = 3;
-    int n_strip = 2;
-    int n_stages = 5;
+    int n_enrich = 8;
+    int n_strip = 9;
+    int n_stages = n_enrich+n_strip;
 
 
     //LAPACK takes the external flow feeds as B, and then returns a modified version
     // of the same array now representing the solution flow rates.
  
      // Build Array with pointers
-    double** flow_eqns = new double*[n_stages];
+    //*    double** flow_eqns = new double*[n_stages];
+    double flow_eqns[n_stages][n_stages];
 								      //    double** flows = new double*[n_stages];
-    double** flows = new double*[1];
-    for (int i = 0; i < n_stages; ++i){
-      flow_eqns[i] = new double[n_stages];
-      //  flows[i] = new double[1];
-      flows[i] = new double[n_stages];
-    }
+    double flows[1][n_stages];
+    //*    double** flows = new double*[1];
+
+    //    for (int i = 0; i < n_stages; ++i){
+    //      flow_eqns[i] =  double[n_stages];
+    //      //  flows[i] = new double[1];
+    //    }
  
     
     /*
@@ -304,8 +307,9 @@ double** CalcFeedFlows(std::pair<double, double> n_st,
 	flows[0][row_idx] = -1*cascade_feed;
       }
       std::cout << "Row " << row_idx << std::endl;
+      std::cout << "  " << flows[0][row_idx] << "  " ;
       for (int j = 0; j < n_stages; j++){
-	std::cout << "  " << flow_eqns[j][row_idx] << "  " ;
+	//	std::cout << "  " << flow_eqns[j][row_idx] << "  " ;
       }
       std::cout << std::endl;
     }
@@ -354,7 +358,7 @@ double** CalcFeedFlows(std::pair<double, double> n_st,
    };
    */
  //  std::vector<double> fs_vec(flow_solns, n_stages);
-   return flows;
+   //   return flows;
   }
 
   
