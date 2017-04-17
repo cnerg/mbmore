@@ -162,16 +162,23 @@ TEST(Enrich_Functions_Test, TestCascade) {
 // tests the steady state flow rates for a cascade
 //
 TEST(Enrich_Functions_Test, TestFlowRates) {
-    std::pair<double, double> n_stages = FindNStages(alpha, feed_assay,
-						     product_assay,
-						     waste_assay);
+  double cur_alpha = 1.4;
+  double fa = 0.10;
+  double pa = 0.20;
+  double wa = 0.05;
+  std::pair<double, double> n_stages = FindNStages(cur_alpha, fa, pa, wa);
 
-    std::cout << "feed_c " << feed_c << " cut " << cut << std::endl;
-    CalcFeedFlows(n_stages, feed_c, cut);
-							  //    double** feed_flows = CalcFeedFlows(n_stages, feed_c, cut);
+  std::vector<double> outflows = CalcFeedFlows(n_stages, feed_c, cut);
 
+  std::vector<double> pycode_flows = {0.00028136,  0.00056271,  0.00084407,
+				      0.00056271,  0.00028136};
+
+  for (int i = 0; i < pycode_flows.size(); i++){
+    EXPECT_NEAR(outflows[i], pycode_flows[i], tol_num);
+  }
+  
 }
-    
-    
+  
+  
   } // namespace enrichfunctiontests
 } // namespace mbmore
