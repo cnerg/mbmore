@@ -98,9 +98,6 @@ extern "C" {
 
   // Solves system of linear eqns to determine steady state flow rates
   // in each stage of cascade
-  //  std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
-  //  double** CalcFeedFlows(std::pair<double, double> n_st,
-  //  void CalcFeedFlows(std::pair<double, double> n_st,
   std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
 				    double cascade_feed, double cut);
 
