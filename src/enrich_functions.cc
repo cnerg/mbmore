@@ -228,26 +228,31 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 //double** CalcFeedFlows(std::pair<double, double> n_st,
 void CalcFeedFlows(std::pair<double, double> n_st,
 			 double cascade_feed, double cut){
-  /*
-  int n_enrich = n_st.first;
-    int n_strip = n_st.second;
-    int n_stages = n_st.first + n_st.second;
-    std::cout << "enrich # " << n_enrich << " strip # " << n_strip << std::endl; 
-  */
 
+  // This is the Max # of stages in cascade. It cannot be passed in due to
+  // how memory is allocated and so must be hardcoded. It's been chosen
+  // to be much larger than it should ever need to be
+  int max_stages = 100;
+  
+  int n_enrich = n_st.first;
+  int n_strip = n_st.second;
+  int n_stages = n_st.first + n_st.second;
+  std::cout << "enrich # " << n_enrich << " strip # " << n_strip << std::endl; 
+
+								    /*
     int n_enrich = 8;
     int n_strip = 9;
     int n_stages = n_enrich+n_strip;
-
+								    */
 
     //LAPACK takes the external flow feeds as B, and then returns a modified version
     // of the same array now representing the solution flow rates.
  
      // Build Array with pointers
     //*    double** flow_eqns = new double*[n_stages];
-    double flow_eqns[n_stages][n_stages];
+    double flow_eqns[max_stages][max_stages];
 								      //    double** flows = new double*[n_stages];
-    double flows[1][n_stages];
+    double flows[1][max_stages];
     //*    double** flows = new double*[1];
 
     //    for (int i = 0; i < n_stages; ++i){
@@ -287,31 +292,36 @@ void CalcFeedFlows(std::pair<double, double> n_st,
     //
 
 
-    for (int row_idx = 0; row_idx < n_stages; row_idx++){
+    for (int row_idx = 0; row_idx < max_stages; row_idx++){
       // fill the array with zeros, then update individual elements as nonzero
       flows[0][row_idx] = 0;
-      for (int fill_idx = 0; fill_idx < n_stages; fill_idx++){
+      for (int fill_idx = 0; fill_idx < max_stages; fill_idx++){
 	flow_eqns[fill_idx][row_idx] = 0;
       }
-      int i = row_idx - n_strip;
-      int col_idx = n_strip + i;
-      flow_eqns[col_idx][row_idx] = -1;
-      if (col_idx != 0){
-	flow_eqns[col_idx - 1][row_idx] = cut ;
+      // Required do to the artificial 'Max Stages' defn. Only calculate
+      // non-zero matrix elements where stages really exist.
+      if (row_idx < n_stages){
+	int i = row_idx - n_strip;
+	int col_idx = n_strip + i;
+	flow_eqns[col_idx][row_idx] = -1;
+	if (col_idx != 0){
+	  flow_eqns[col_idx - 1][row_idx] = cut ;
+	}
+	if (col_idx != n_stages - 1){
+	  flow_eqns[col_idx + 1][row_idx] = (1-cut);
+	}
+	// Add the external feed for the cascade
+	if (i == 0){
+	  flows[0][row_idx] = -1*cascade_feed;
+	}
+      
+	std::cout << "Row " << row_idx << std::endl;
+	std::cout << "  " << flows[0][row_idx] << "  " ;
+	for (int j = 0; j < n_stages; j++){
+	  //	std::cout << "  " << flow_eqns[j][row_idx] << "  " ;
+	}
+	std::cout << std::endl;
       }
-      if (col_idx != n_stages - 1){
-	flow_eqns[col_idx + 1][row_idx] = (1-cut);
-      }
-      // Add the external feed for the cascade
-      if (i == 0){
-	flows[0][row_idx] = -1*cascade_feed;
-      }
-      std::cout << "Row " << row_idx << std::endl;
-      std::cout << "  " << flows[0][row_idx] << "  " ;
-      for (int j = 0; j < n_stages; j++){
-	//	std::cout << "  " << flow_eqns[j][row_idx] << "  " ;
-      }
-      std::cout << std::endl;
     }
       //      return np.linalg.solve(eqn_array, eqn_answers)
 
@@ -327,9 +337,9 @@ void CalcFeedFlows(std::pair<double, double> n_st,
     //    double b[1][MAX]; -- RHS (extern_feed), and THEN the result
     //int n=5;  -- n_stages
     int nrhs = 1; // 1 column solution
-    int lda = n_stages;  // must be >= MAX(1,N)
-    int ldb = n_stages;       // must be >= MAX(1,N)
-    int ipiv[n_stages];
+    int lda = max_stages;  // must be >= MAX(1,N)
+    int ldb = max_stages;       // must be >= MAX(1,N)
+    int ipiv[max_stages];
     int info;
 
    // Solve the linear system
