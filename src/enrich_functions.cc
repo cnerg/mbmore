@@ -225,8 +225,6 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 // feeds for the stage. External feed is zero for all stages accept cascade
 // feed stage (F_0) stages start with last strip stage [-2, -1, 0, 1, 2]
 //
-//double** CalcFeedFlows(std::pair<double, double> n_st,
-//  void CalcFeedFlows(std::pair<double, double> n_st,
   std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
 				    double cascade_feed, double cut){
     
@@ -238,46 +236,14 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
     int n_enrich = n_st.first;
     int n_strip = n_st.second;
     int n_stages = n_st.first + n_st.second;
-    //    std::cout << "enrich # " << n_enrich << " strip # " << n_strip << std::endl; 
-    
+     
     //LAPACK takes the external flow feeds as B, and then returns a modified
     // version of the same array now representing the solution flow rates.
  
     // Build Array with pointers
-    //*    double** flow_eqns = new double*[n_stages];
     double flow_eqns[max_stages][max_stages];
-    //    double** flows = new double*[n_stages];
     double flows[1][max_stages];
-    //*    double** flows = new double*[1];
-
-    //    for (int i = 0; i < n_stages; ++i){
-    //      flow_eqns[i] =  double[n_stages];
-    //      //  flows[i] = new double[1];
-    //    }
- 
-    
-    /*
-    // Build array a vector
-    std::vector<std::vector<double>> flow_eqns;
-    std::vector<double> extern_feed;
-    //    std::vector<double> flow_solns;
-
-    std::cout << "Matrix: " << std::endl;
-    for (int i = 0; i < n_stages; i++){
-      extern_feed.push_back(0);
-      //      flow_solns.push_back(0);
-      std::vector<double> matrix_builder;
-      for (int j = 0;  j < n_stages; j++){
-	matrix_builder.push_back(0);
-      }
-      for (auto p = matrix_builder.begin(); p != matrix_builder.end(); ++p){
-	std::cout << *p << ' ';
-      }
-      std::cout << std::endl;
-      flow_eqns.push_back(matrix_builder);
-    }
-    */
-     
+      
     // build matrix of equations in this pattern
     // [[ -1, 1-cut,    0,     0,      0]       [[0]
     //  [cut,    -1, 1-cut,    0,      0]        [0]       
@@ -285,8 +251,6 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
     //  [  0,     0,   cut,    -1, 1-cut]        [0]
     //  [  0,     0,     0,   cut,    -1]]       [0]]
     //
-
-    
     for (int row_idx = 0; row_idx < max_stages; row_idx++){
       // fill the array with zeros, then update individual elements as nonzero
       flows[0][row_idx] = 0;
@@ -309,33 +273,13 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 	if (i == 0){
 	  flows[0][row_idx] = -1*cascade_feed;
 	}
-	
-	std::cout << "Row " << row_idx << std::endl;
-	std::cout << "  " << flows[0][row_idx] << "  " ;
-	for (int j = 0; j < n_stages; j++){
-	  //	std::cout << "  " << flow_eqns[j][row_idx] << "  " ;
-	}
-	std::cout << std::endl;
       }
     }
     
-    //      return np.linalg.solve(eqn_array, eqn_answers)
-    
-    /*
-      std::cout << "Feed vector" << std::endl;
-      for (auto p = extern_feed.begin(); p != extern_feed.end(); ++p){
-      std::cout << *p << ' ' << std::endl;
-      }
-    */
-    
-    
-    //double a[MAX][MAX];  -- flow_eqns
-    //    double b[1][MAX]; -- RHS (extern_feed), and THEN the result
-    //int n=5;  -- n_stages
-    
+    // LAPACK solver variables
     int nrhs = 1; // 1 column solution
     int lda = max_stages;  // must be >= MAX(1,N)
-    int ldb = max_stages;       // must be >= MAX(1,N)
+    int ldb = max_stages;  // must be >= MAX(1,N)
     int ipiv[max_stages];
     int info;
     
@@ -345,16 +289,8 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
     
     
     // Check for success
-    if(info == 0){
-      // Write the answer
-      std::cout << "The answer is\n";
-      for(int i = 0; i < n_stages; i++){
-        std::cout << "b[" << i << "]\t" << flows[0][i] << "\n";
-      }
-    }
-    else {
-      // Write an error message
-      std::cerr << "dgesv returned error " << info << "\n";
+    if(info != 0){
+      std::cerr << "LAPACK linear solver dgesv returned error " << info << "\n";
     }
 
     std::vector<double> final_flows;
