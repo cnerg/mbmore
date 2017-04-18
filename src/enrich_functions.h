@@ -106,9 +106,11 @@ extern "C" {
   std::vector<std::pair<int, double>> CalcStageFeatures(double feed_assay,
 						    double alpha, double del_U,
 						    double cut,
-							double machine_tol,
 						    std::pair<int, int> n_st,
 						    std::vector<double> feed_flow);
+
+  // Determine total number of machines in the cascade from machines per stage
+  int FindTotalMachines(std::vector<std::pair<int, double>> stage_info);
 
   
   

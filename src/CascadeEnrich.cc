@@ -13,16 +13,18 @@
 
 
 namespace mbmore {
+  double secpermon = 60*60*24*(365.25/12);
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
     : cyclus::Facility(ctx),
   feed_recipe(""),
-  //  desired_swu(),  // not needed at this time
+  max_centrifuges(),
   design_feed_assay(),
   design_product_assay(),
   design_waste_assay(),
-  initial_feed(0){}
+  design_feed(0){}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CascadeEnrich::~CascadeEnrich() {}
@@ -38,13 +40,6 @@ std::string CascadeEnrich::str() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::Build(cyclus::Agent* parent) {
   using cyclus::Material;
-  
-  Facility::Build(parent);
-  if (initial_feed > 0) {
-    inventory.Push(
-      Material::Create(
-        this, initial_feed, context()->GetRecipe(feed_recipe)));
-  }
 
   // Calculate ideal machine performance
   double design_delU = CalcDelU(v_a, height, diameter, machine_feed, temp,
@@ -62,11 +57,24 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
   n_enrich_stages = int(n_stages.first) + 1;
   n_strip_stages = int(n_stages.second) + 1;
 
-  // Determine the steady-state feed flows for this cascade design
-  // returns an array pointer
-  //  std::vector<double> feed_flows = CalcFeedFlows(n_stages, initial_feed, cut);
-  
-  
+
+  std::pair<int,double> cascade_info = DesignCascade(design_feed,
+						     design_alpha,
+						     design_delU,
+						     cut, n_stages);
+
+  max_feed_inventory = cascade_info.second;
+  // Number of machines times swu per machine
+  //TOD CONVERT SWU TO PER MONTH INSTEAD OF KG/SEC
+  swu_capacity = cascade_info.first * design_delU * secpermonth;
+      
+  Facility::Build(parent);
+  if (initial_feed > 0) {
+    inventory.Push(
+      Material::Create(
+        this, initial_feed, context()->GetRecipe(feed_recipe)));
+  }
+
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << "CascadeEnrich "
 				    << " entering the simuluation: ";
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << str();
@@ -82,74 +90,71 @@ void CascadeEnrich::Tick() {
 void CascadeEnrich::Tock() {
 
 }
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // THESE HAVE BEEN REPLACED BY FindNStages
-  /*
-  int CascadeEnrich::NEnrichStages(double alpha, double delU, double feed,
-				     double feed_assay){
-
-   double stage_feed_assay = feed_assay;
-   double stage_feed = feed;
-   bool integer_stages = true;
-   int n_stage_enr = 0;
-   double product_assay, stage_product;
-   
-   while (integer_stages == true){
-     double n_mach = MachinesPerStage(alpha, delU, stage_feed);
-     if (((int) n_mach) <= 1){ integer_stages = false; }
-     product_assay = ProductAssayByAlpha(alpha, stage_feed_assay);
-     stage_product = ProductPerEnrStage(alpha, stage_feed_assay, product_assay,
-					stage_feed);
-     stage_feed_assay = product_assay;
-     stage_feed = stage_product; 
-     n_stage_enr += 1; 
-     if (n_stage_enr == 15){ integer_stages = false;} // just a catch until I  make sure while loop is working
-
-   }
-
-   return n_stage_enr;
-
- }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TODO: FIX THIS FN BY REPLACEING WASTEPERSTRIPSTAGE
-  int CascadeEnrich::NStripStages(double alpha, double delU, double enr_feed,
-				     double feed_assay){
+  std::pair<int,double> CascadeEnrich::DesignCascade(double design_feed,
+						     double design_alpha,
+						     double design_delU,
+						     double cut,
+						     double n_stages){
 
-   bool integer_stages = true;
-   int n_stage_strip = 0;
-   double waste_assay, stage_waste;
+  // Determine the ideal steady-state feed flows for this cascade design given
+  // the maximum potential design feed rate
+  std::vector<double> feed_flows = CalcFeedFlows(n_stages, design_feed, cut);
 
-   // the waste from first enrichment stage is the feed for the stripping stages
-   double enr_product_assay = ProductAssayByAlpha(alpha, feed_assay);
-   double enr_product = ProductPerEnrStage(alpha, feed_assay, enr_product_assay,
-					   enr_feed);
+  std::vector<std::pair<int, double>> stage_info =
+    CalcStageFeatures(design_feed, design_alpha, design_delU, cut,
+		      n_stages, feed_flows);
+  
+  // Do design parameters require more centrifuges than what is available?
+  int machines_needed = FindCascadeMachines(stage_info);
 
-   double enr_waste = enr_feed - enr_product;
-   double enr_waste_assay = (enr_feed*feed_assay -
-			     enr_product*enr_product_assay) / enr_waste;
-   
-   double stage_feed_assay = enr_waste_assay;
-   double stage_feed = enr_waste;
-   
-   while (integer_stages == true){
-     double n_mach = MachinesPerStage(alpha, delU, stage_feed);
-     if (((int) n_mach) <= 1){ integer_stages = false; }
-     waste_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
-     //     stage_waste = WastePerStripStage(alpha, stage_feed_assay, waste_assay,
-     //					stage_feed);
-     stage_feed_assay = waste_assay;
-     stage_feed = stage_waste; 
-     n_stage_strip += 1;
-     
-     if (n_stage_strip == 15){ integer_stages = false;} // just a cath until I  make sure while loop is working
+  if (machines_needed > max_centrifuges){
+    double curr_feed = design_feed;
+    double step_size = 0.95;
+    int max_tries = 1000;
+    bool optimum_number = false;
+    int ntries = 0;
+    double optimal_feed;
+    
+    while ((optimum_number == false) && (ntries < max_tries)){
+      ntries += 1;
+      double last_feed = curr_feed;
+      curr_feed *=step;
+      feed_flows = CalcFeedFlows(n_stages, curr_feed, cut);
+      stage_info = CalcStageFeatures(curr_feed, design_alpha, design_delU,
+				     cut, n_stages, flow_flows);
+      machines_needed = FindCascadeMachines(stage_info);
+      std::pair<int, double> last_stage = stage_info.back();
+      
+      // If cannot converge on a cascade with allowable number of centrifuges
+      if (ntries >= max_tries){
+	throw cyclus::ValueError(
+				 "Could not design a cascade using the max allowed machines");
+      }
+      // If the last stage of the cascade has zero centrifuges then there are
+      // not enough to achieve the target enrichment
+      else if (last_stage.first < 1){
+	throw cyclus::ValueError(
+				 "Not enough available centrifuges to achieve target enrichment level");
+      }
+      // If optimal design is finally found
+      else if (machines_needed <= max_centrifuges){
+	optimal_feed = last_feed;
+	optimal_number = true;
+      }
+    }
+    feed_flows = CalcFeedFlows(n_stages, optimal_feed, cut);
+    stage_info = CalcStageFeatures(optimal_feed, design_alpha, design_delU, cut,
+				   n_stages, feed_flows);
+    machines_needed = FindCascadeMachines(stage_info);
+    
+  }
+  std::pair<int, double> cascade_info = std::make_pair(machines_needed,
+						       optimal_feed);
+  return cascade_info;
+  }
 
-   }
 
-   return n_stage_strip;
-   
-
- }
-*/
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 extern "C" cyclus::Agent* ConstructCascadeEnrich(cyclus::Context* ctx) {
   return new CascadeEnrich(ctx);
