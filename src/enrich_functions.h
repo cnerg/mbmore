@@ -101,6 +101,16 @@ extern "C" {
   std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
 				    double cascade_feed, double cut);
 
+  // Determines the number of machines and product in each stage based
+  // on the steady-state flows defined for the cascade.
+  std::vector<std::pair<int, double>> CalcStageFeatures(double feed_assay,
+						    double alpha, double del_U,
+						    double cut,
+							double machine_tol,
+						    std::pair<int, int> n_st,
+						    std::vector<double> feed_flow);
+
+  
   
 } // namespace mbmore
 
