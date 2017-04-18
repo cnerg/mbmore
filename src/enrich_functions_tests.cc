@@ -34,11 +34,11 @@ namespace mbmore {
     const double feed_c = 739 / (30.4 * 24 * 60 * 60); // kg/month -> kg/sec
     const double product_c = 77 / (30.4 * 24 * 60 * 60); // kg/month -> kg/sec
 
+    //del U=1.35806e-07 alpha=1.22681
     double delU = CalcDelU(v_a, height, diameter, feed_m, temp, cut, eff,
 			   M, dM, x, flow_internal);
     
-    double alpha = AlphaBySwu(delU, feed_m, cut, M);
-
+    double alpha = AlphaBySwu(delU, feed_m, cut, M);    
     const double tol_assay = 1e-5;
     const double tol_qty = 1e-6;
     const double tol_num = 1e-2;
@@ -161,21 +161,33 @@ TEST(Enrich_Functions_Test, TestCascade) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // tests the steady state flow rates for a cascade
 //
-TEST(Enrich_Functions_Test, TestFlowRates) {
-  double cur_alpha = 1.4;
+TEST(Enrich_Functions_Test, TestCascadeDesign) {
   double fa = 0.10;
   double pa = 0.20;
   double wa = 0.05;
-  std::pair<double, double> n_stages = FindNStages(cur_alpha, fa, pa, wa);
-
-  std::vector<double> outflows = CalcFeedFlows(n_stages, feed_c, cut);
 
   std::vector<double> pycode_flows = {0.00028136,  0.00056271,  0.00084407,
+				      0.00112543,  0.00084407,
 				      0.00056271,  0.00028136};
+  std::vector<int> pycode_machines={54, 107, 160, 214, 160, 107, 54};
+
+  std::pair<double, double> n_stages = FindNStages(alpha, fa, pa, wa);
+  std::vector<double> flows = CalcFeedFlows(n_stages, feed_c, cut);
+ 
+  // if # Machines for the stage is within tol_num of an integer
+  // then round down. Otherwise round up to the next integer machine to
+  // preserve steady-state flow calculations.
+  std::vector<std::pair<int, double>> stage_info =
+    CalcStageFeatures(fa, alpha, delU, cut, tol_num, n_stages, flows);
 
   for (int i = 0; i < pycode_flows.size(); i++){
-    EXPECT_NEAR(outflows[i], pycode_flows[i], tol_num);
+    EXPECT_NEAR(flows[i], pycode_flows[i], tol_num);
+    int nmach = stage_info[i].first;
+    EXPECT_EQ(nmach, pycode_machines[i]);
   }
+
+  
+  
   
 }
   

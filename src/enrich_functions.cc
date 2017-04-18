@@ -224,6 +224,7 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 // of linear equations for the flow rates of each stage and B are the external
 // feeds for the stage. External feed is zero for all stages accept cascade
 // feed stage (F_0) stages start with last strip stage [-2, -1, 0, 1, 2]
+//  http://www.physics.utah.edu/~detar/phys6720/handouts/lapack.html
 //
   std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
 				    double cascade_feed, double cut){
@@ -300,6 +301,76 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
     return final_flows;
     
   }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Determine number of machines in each stage of the cascade, and total
+// output flow from each stage
+
+std::vector<std::pair<int,double>> CalcStageFeatures(double feed_assay,
+						     double alpha, double del_U,
+						     double cut,
+						     double machine_tol,
+						     std::pair<int, int> n_st,
+						     std::vector<double> feed_flow){
+
+  int n_enrich = n_st.first;
+  int n_strip = n_st.second;
+  int n_stages = n_st.first + n_st.second;
+
+  std::vector<std::pair<int,double>> stage_info;
+   
+  //  int n_centrifuge = 0;
+  double stage_feed_assay = feed_assay;
+  double strip_feed_assay;
+
+  for (int i = 0; i < n_enrich; i++){
+    int curr_stage = i + n_strip;
+    double stage_feed = feed_flow[curr_stage];
+    double n_mach_exact = MachinesPerStage(alpha, del_U, stage_feed);
+    // unless the ideal number of machines is Very close to an integer value,
+    // round up to next integer to preserve steady-state flow balance
+    int n_mach = (int)n_mach_exact;
+    if (std::abs(n_mach_exact - n_mach) > machine_tol){
+      n_mach = int(n_mach_exact) + 1;
+    }
+    double stage_product = stage_feed * cut;
+    std::pair<int, double> curr_info = std::make_pair(n_mach, stage_product);
+    stage_info.push_back(curr_info);
+
+    // waste assay from first enriching stage becomes feed assay for first
+    // stripping stage
+    if (i == 0){
+      strip_feed_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
+    }
+    // reset feed assay for next stage to product assay from this stage
+    stage_feed_assay = ProductAssayByAlpha(alpha, stage_feed_assay);
+
+  }
+
+  stage_feed_assay = strip_feed_assay;
+  for (int i = n_strip - 1; i >= 0; --i) {
+
+    int curr_stage = i - n_strip;
+    
+    double stage_feed = feed_flow[i];
+    double n_mach_exact = MachinesPerStage(alpha, del_U, stage_feed);
+    // unless the ideal number of machines is Very close to an integer value,
+    // round up to next integer to preserve steady-state flow balance
+    int n_mach = (int)n_mach_exact;
+    if (std::abs(n_mach_exact - n_mach) > machine_tol){
+      n_mach = int(n_mach_exact) + 1;
+    }
+    double stage_product = stage_feed * cut;
+    std::pair<int, double> curr_info = std::make_pair(n_mach, stage_product);
+    stage_info.insert(stage_info.begin(), curr_info);
+
+    // reset feed assay for next stage to waste assay from this stage
+    stage_feed_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
+  }
+  
+  return stage_info;
+}
+
+
 
   
 } // namespace mbmore
