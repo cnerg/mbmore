@@ -178,7 +178,7 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   // then round down. Otherwise round up to the next integer machine to
   // preserve steady-state flow calculations.
   std::vector<std::pair<int, double>> stage_info =
-    CalcStageFeatures(fa, alpha, delU, cut, tol_num, n_stages, flows);
+    CalcStageFeatures(fa, alpha, delU, cut, n_stages, flows);
 
   for (int i = 0; i < pycode_flows.size(); i++){
     EXPECT_NEAR(flows[i], pycode_flows[i], tol_num);

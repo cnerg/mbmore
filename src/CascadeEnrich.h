@@ -84,12 +84,25 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   int NStripStages(double alpha, double delU, double feed,
 		       double feed_assay);
 
-  // used at each timestep to calculate product based on feed, defined during
-  // build phase using initial machine and target cascade parameters.
+  std::pair<int,double> DesignCascade( double design_feed, double design_alpha,
+				       double design_delU, double cut,
+				       double n_stages);
+    
+
+  // These state variables are constrained by the design input params at
+  // the start of the simulation:
+  
+  // Set by max feed for an individual machine
   double design_delU;
   double design_alpha;
+
+  // Set by design assays (feed, product, waste)
   int n_enrich_stages;
   int n_strip_stages;
+
+  // Set by maximum allowable centrifuges
+  double max_feed_inventory;
+  double swu_capacity;
 
 
   
@@ -115,8 +128,7 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   const double eff = 1.0;  // typical efficiencies <0.6
   const double cut = 0.5;  // target for ideal cascade
 
-
-
+  
  private:
   #pragma cyclus var { \
     "tooltip": "feed recipe",						\
@@ -126,13 +138,28 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   }
   std::string feed_recipe;
 
-  #pragma cyclus var {							\
-    "default": 0, "tooltip": "initial uranium reserves (kg)",		\
+#pragma cyclus var {							\
+  "default": 0, "tooltip": "initial uranium reserves (kg)",		\
     "uilabel": "Initial Feed Inventory",				\
     "doc": "amount of natural uranium stored at the enrichment "	\
     "facility at the beginning of the simulation (kg)"			\
   }
   double initial_feed;
+
+ #pragma cyclus var {							\
+    "default": 1e299, "tooltip": "Desired feed capacity (kg)", \
+    "uilabel": "Design Maximum Feed Capacity",                          \
+    "doc": "maximum total capacity to process natural uranium per timestep "\
+           "in the enrichment facility (kg)"     \
+  }
+  double design_feed;
+
+#pragma cyclus var {							\
+  "default": 0, "tooltip": "number of centrifuges available ",\
+  "uilabel": "Number of Centrifuges",					\
+    "doc": "number of centrifuges available to make the cascade" \
+  }
+  int max_centrifuges;
 
 
   // TODO: USE FEED RECIPE TO DETERMINE FEED ASSAY!!!
@@ -158,7 +185,7 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   }
   double design_waste_assay;
 
-  
+  //TODO: REMOVE THIS BECAUSE IT IS OVER_WRITTEN BASED ON SWU CONSTRAINT
   #pragma cyclus var {							\
     "default": 1e299, "tooltip": "max inventory of feed material (kg)", \
     "uilabel": "Maximum Feed Inventory",                                \
