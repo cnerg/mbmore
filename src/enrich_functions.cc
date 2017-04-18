@@ -308,10 +308,11 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 std::vector<std::pair<int,double>> CalcStageFeatures(double feed_assay,
 						     double alpha, double del_U,
 						     double cut,
-						     double machine_tol,
 						     std::pair<int, int> n_st,
 						     std::vector<double> feed_flow){
 
+  double machine_tol = 0.01;
+  
   int n_enrich = n_st.first;
   int n_strip = n_st.second;
   int n_stages = n_st.first + n_st.second;
@@ -369,7 +370,17 @@ std::vector<std::pair<int,double>> CalcStageFeatures(double feed_assay,
   
   return stage_info;
 }
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Determine total number of machines in the cascade from machines per stage
+  int FindTotalMachines(std::vector<std::pair<int, double>> stage_info){
+    int machines_needed = 0;
+    std::vector<std::pair<int, double>>::const_iterator it;
+    for (it = stage_info.begin(); it != stage_info.end(); it++){
+      machines_needed += it->first;
+    }					      
+    return machines_needed;
+  }
+ 
 
 
   
