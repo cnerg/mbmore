@@ -235,6 +235,15 @@ double InteractRegion::GetConflictScore(std::string eqn_type,
       relation_string = "enemy_";
     }
 
+    // Any weapons status that is not 0 (never pursued), 2 (pursue), 3 (acquire)
+    // is redefined as never pursued
+    if ((statusA != 0) && (statusA != 2) && (statusA !=3)){
+      statusA = 0;
+    }
+    if ((statusB != 0) && (statusB != 2) && (statusB !=3)){
+      statusB = 0;
+    }
+    
     full_string.append(relation_string);
     full_string.append(std::to_string(statusA));
     full_string.append("_");
