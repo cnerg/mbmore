@@ -42,7 +42,6 @@ A) Change (1) max SWU of machine:
 B) Change cascade feed assay
       - new max enrichment(Assay_from_NStages)
 
-
    */
 
  public:
@@ -84,7 +83,6 @@ B) Change cascade feed assay
   int NStripStages(double alpha, double delU, double feed,
 		       double feed_assay);
 
-    
 
   // These state variables are constrained by the design input params at
   // the start of the simulation:
@@ -143,6 +141,7 @@ B) Change cascade feed assay
   }
   double initial_feed;
 
+
   /* Redundant, only need initial feed
  #pragma cyclus var {							\
     "default": 1e299, "tooltip": "Desired feed capacity (kg)", \
@@ -152,6 +151,7 @@ B) Change cascade feed assay
   }
   double design_feed;
   */
+
 #pragma cyclus var {							\
   "default": 0, "tooltip": "number of centrifuges available ",\
   "uilabel": "Number of Centrifuges",					\
@@ -193,7 +193,6 @@ B) Change cascade feed assay
            "the enrichment facility (kg)"     \
   }
   double max_feed_inventory;
-
 
 #pragma cyclus var {						       \
     "default": 1e299,						       \

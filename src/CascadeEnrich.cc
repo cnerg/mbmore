@@ -15,7 +15,6 @@
 namespace mbmore {
   double secpermonth = 60*60*24*(365.25/12);
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
     : cyclus::Facility(ctx),
@@ -33,8 +32,6 @@ CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
   product_commod(""),
   tails_commod(""),
   order_prefs(true) {}
-
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CascadeEnrich::~CascadeEnrich() {}
 
