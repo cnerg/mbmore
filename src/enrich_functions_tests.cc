@@ -179,12 +179,13 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   // preserve steady-state flow calculations.
   std::vector<std::pair<int, double>> stage_info =
     CalcStageFeatures(fa, alpha, delU, cut, n_stages, flows);
-  
+
   for (int i = 0; i < pycode_flows.size(); i++){
     EXPECT_NEAR(flows[i], pycode_flows[i], tol_num);
     int nmach = stage_info[i].first;
     EXPECT_EQ(nmach, pycode_machines[i]);
   }
+
   
   // not enough machines
   int max_centrifuges = 80;
