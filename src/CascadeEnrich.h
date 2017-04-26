@@ -16,17 +16,18 @@ class CascadeEnrich : public cyclus::Facility {
  "timesteps (see README for full implementation documentation ",\
 }
   /*
+Working with cycamore Develop build:  3ada148442de636d
+cyclus master commit b54c91516c6
 
 Conceptual Design:
-Build phase: Design cascade
-A: Cascade defined by initial machine parameters and target enrichment:
-1) Machine SWU, alpha: height, diameter, efficiency (fixed for sim)
+x Build phase: Design cascade
+x A: Cascade defined by initial machine parameters and target enrichment:
+x 1) Machine SWU, alpha: height, diameter, efficiency (fixed for sim)
                        cut, velocity, max machine feed (may change later)
-2) Machine Assays: alpha, feed assay
-3) Stages/Cascade: alpha, feed assay, product assay (per stage) AND waste assay
+x 2) Machine Assays: alpha, feed assay
+x 3) Stages/Cascade: alpha, feed assay, product assay (per stage) AND waste assay
                OR: # machines for Enrich/Strip (feed, SWU, alpha)
-4) Matl/Stage: feed, alpha, stage feed and product assay
-
+x 4) Matl/Stage: feed, alpha, stage feed and product assay
 
 Tick Phase: Given Cascade Feed, calculate Product, Waste, and SWU
 ** Machine feed = Cascade Feed/(Machines/Stage0) **
@@ -41,7 +42,6 @@ A) Change (1) max SWU of machine:
 B) Change cascade feed assay
       - new max enrichment(Assay_from_NStages)
 
-TODO: Rewrite MachinesPerCascade so that # machines is input and Product is output
 
    */
 
@@ -84,9 +84,6 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   int NStripStages(double alpha, double delU, double feed,
 		       double feed_assay);
 
-  std::pair<int,double> DesignCascade( double design_feed, double design_alpha,
-				       double design_delU, double cut,
-				       double n_stages);
     
 
   // These state variables are constrained by the design input params at
@@ -146,6 +143,7 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   }
   double initial_feed;
 
+  /* Redundant, only need initial feed
  #pragma cyclus var {							\
     "default": 1e299, "tooltip": "Desired feed capacity (kg)", \
     "uilabel": "Design Maximum Feed Capacity",                          \
@@ -153,7 +151,7 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
            "in the enrichment facility (kg)"     \
   }
   double design_feed;
-
+  */
 #pragma cyclus var {							\
   "default": 0, "tooltip": "number of centrifuges available ",\
   "uilabel": "Number of Centrifuges",					\
@@ -186,7 +184,9 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   double design_waste_assay;
 
   //TODO: REMOVE THIS BECAUSE IT IS OVER_WRITTEN BASED ON SWU CONSTRAINT
-  #pragma cyclus var {							\
+  // THAT COME OUT OF CASCADE DESIGN
+  /*
+#pragma cyclus var {							\
     "default": 1e299, "tooltip": "max inventory of feed material (kg)", \
     "uilabel": "Maximum Feed Inventory",                                \
     "doc": "maximum total inventory of natural uranium in "		\
@@ -194,6 +194,90 @@ TODO: Rewrite MachinesPerCascade so that # machines is input and Product is outp
   }
   double max_feed_inventory;
 
+
+#pragma cyclus var {						       \
+    "default": 1e299,						       \
+    "tooltip": "SWU capacity (kgSWU/month)",			       \
+    "uilabel": "SWU Capacity",                                         \
+    "uitype": "range",                                                  \
+    "range": [0.0, 1e299],                                               \
+    "doc": "separative work unit (SWU) capacity of enrichment "		\
+           "facility (kgSWU/timestep) "                                     \
+  }
+  double swu_capacity;
+
+  */
+  
+  // FROM LEGACY EF, MAY NEED TO BE REMOVED LATER
+   #pragma cyclus var {							\
+    "default": 0.003, "tooltip": "tails assay",				\
+    "uilabel": "Tails Assay",                               \
+    "doc": "tails assay from the enrichment process",       \
+  }
+  double tails_assay;
+
+#pragma cyclus var {		       \
+    "default": 1,		       \
+    "userlevel": 10,							\
+    "tooltip": "Rank Material Requests by U235 Content",		\
+    "uilabel": "Prefer feed with higher U235 content", \
+    "doc": "turn on preference ordering for input material "		\
+           "so that EF chooses higher U235 content first" \
+  }
+  bool order_prefs;
+
+
+#pragma cyclus var {						\
+    "default": 1.0,						\
+    "tooltip": "maximum allowed enrichment fraction",		\
+    "doc": "maximum allowed weight fraction of U235 in product", \
+    "uilabel": "Maximum Allowed Enrichment", \
+    "schema": '<optional>'				     	   \
+        '          <element name="max_enrich">'			   \
+        '              <data type="double">'			   \
+        '                  <param name="minInclusive">0</param>'   \
+        '                  <param name="maxInclusive">1</param>'   \
+        '              </data>'					   \
+        '          </element>'					   \
+        '      </optional>'					   \
+  }
+  double max_enrich;
+
+#pragma cyclus var {							\
+    "tooltip": "feed commodity",					\
+    "doc": "feed commodity that the enrichment facility accepts",	\
+    "uilabel": "Feed Commodity",                                    \
+    "uitype": "incommodity" \
+  }
+  std::string feed_commod;
+
+#pragma cyclus var {							\
+    "tooltip": "product commodity",					\
+    "doc": "product commodity that the enrichment facility generates",	 \
+    "uilabel": "Product Commodity",                                     \
+    "uitype": "outcommodity" \
+  }
+  std::string product_commod;
+  
+  #pragma cyclus var {							\
+    "tooltip": "tails commodity",					\
+    "doc": "tails commodity supplied by enrichment facility",		\
+    "uilabel": "Tails Commodity",                                   \
+    "uitype": "outcommodity" \
+  }
+  std::string tails_commod;
+
+  double current_swu_capacity;
+  
+ #pragma cyclus var {}
+  cyclus::toolkit::ResBuf<cyclus::Material> tails;  // depleted u
+
+  // used to total intra-timestep swu and natu usage for meeting requests -
+  // these help enable time series generation.
+  double intra_timestep_swu_;
+  double intra_timestep_feed_;
+  
+  // END LEGACY
   
   #pragma cyclus var { 'capacity': 'max_feed_inventory' }
   cyclus::toolkit::ResBuf<cyclus::Material> inventory;  // natural u
