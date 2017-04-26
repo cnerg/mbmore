@@ -98,7 +98,7 @@ extern "C" {
 
   // Solves system of linear eqns to determine steady state flow rates
   // in each stage of cascade
-  std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
+  std::vector<double> CalcFeedFlows(std::pair<int, int> n_st,
 				    double cascade_feed, double cut);
 
   // Determines the number of machines and product in each stage based
@@ -112,7 +112,11 @@ extern "C" {
   // Determine total number of machines in the cascade from machines per stage
   int FindTotalMachines(std::vector<std::pair<int, double>> stage_info);
 
-  
+  std::pair<int,double> DesignCascade( double design_feed, double design_alpha,
+				       double design_delU, double cut,
+				       int max_centrifuges,
+				       std::pair<int,int> n_stages);
+
   
 } // namespace mbmore
 

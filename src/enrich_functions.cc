@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cmath>
 #include <iterator>
+#include "cyclus.h"
 
 namespace mbmore {
 
@@ -226,7 +227,7 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 // feed stage (F_0) stages start with last strip stage [-2, -1, 0, 1, 2]
 //  http://www.physics.utah.edu/~detar/phys6720/handouts/lapack.html
 //
-  std::vector<double> CalcFeedFlows(std::pair<double, double> n_st,
+  std::vector<double> CalcFeedFlows(std::pair<int, int> n_st,
 				    double cascade_feed, double cut){
     
     // This is the Max # of stages in cascade. It cannot be passed in due to
@@ -381,6 +382,95 @@ std::vector<std::pair<int,double>> CalcStageFeatures(double feed_assay,
     return machines_needed;
   }
  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  std::pair<int,double> DesignCascade(double design_feed,
+				      double design_alpha,
+				      double design_delU,
+				      double cut,
+				      int max_centrifuges,
+				      std::pair<int,int> n_stages){
+    
+  // Determine the ideal steady-state feed flows for this cascade design given
+  // the maximum potential design feed rate
+  std::vector<double> feed_flows = CalcFeedFlows(n_stages, design_feed, cut);
+
+  std::vector<std::pair<int, double>> stage_info =
+    CalcStageFeatures(design_feed, design_alpha, design_delU, cut,
+		      n_stages, feed_flows);
+  
+  // Do design parameters require more centrifuges than what is available?
+  int machines_needed = FindTotalMachines(stage_info);
+
+  double optimal_feed = design_feed;
+
+  bool pos_inc = false;
+  bool neg_inc = false;
+  bool optimal_number = false;
+  double step = 1.05;
+  double step_size = 1.0;
+
+  double curr_feed = design_feed;
+  int max_tries = 1000;
+  int ntries = 0;
+
+  // If there are not enough centrifuges for optimal design
+  if (machines_needed < max_centrifuges){
+    pos_inc = true;
+    step_size = step;
+  }
+  else if (machines_needed > max_centrifuges){
+    neg_inc = true;
+    step_size = 1.0/step;
+  }
+  else{
+    optimal_number = true;
+  }
+  
+  while ((optimal_number == false) && (ntries < max_tries)){
+    ntries += 1;
+    double last_feed = curr_feed;
+    curr_feed *= step_size;
+    feed_flows = CalcFeedFlows(n_stages, curr_feed, cut);
+    stage_info = CalcStageFeatures(curr_feed, design_alpha, design_delU,
+				   cut, n_stages, feed_flows);
+    machines_needed = FindTotalMachines(stage_info);
+    std::pair<int, double> last_stage = stage_info.back();
+    std::cout << "# in last stage " << last_stage.first << std::endl;
+    // If cannot converge on a cascade with allowable number of centrifuges
+    if (ntries >= max_tries){
+      throw cyclus::ValueError(
+			       "Could not design a cascade using the max allowed machines");
+    }
+    // If the last stage of the cascade has zero centrifuges then there are
+    // not enough to achieve the target enrichment
+    else if (last_stage.first < 1){
+      throw cyclus::ValueError(
+			       "Not enough available centrifuges to achieve target enrichment level");
+    }
+    // If optimal design is finally found
+    else if ((neg_inc == true) and (machines_needed <= max_centrifuges)){
+      optimal_feed = curr_feed;
+      optimal_number = true;
+    }
+    else if ((pos_inc == true) and (machines_needed > max_centrifuges)){
+      optimal_feed = last_feed;
+      optimal_number = true;
+    }
+    feed_flows = CalcFeedFlows(n_stages, optimal_feed, cut);
+    stage_info = CalcStageFeatures(optimal_feed, design_alpha, design_delU, cut,
+				   n_stages, feed_flows);
+    machines_needed = FindTotalMachines(stage_info);
+    
+  }
+  // Otherwise if there are enough centrifuges to process more than the
+  // requested amount of material
+  
+
+
+  std::pair<int, double> cascade_info = std::make_pair(machines_needed,
+						       optimal_feed);
+  return cascade_info;
+  }
 
 
   

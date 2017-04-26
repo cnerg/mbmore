@@ -173,21 +173,40 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
 
   std::pair<double, double> n_stages = FindNStages(alpha, fa, pa, wa);
   std::vector<double> flows = CalcFeedFlows(n_stages, feed_c, cut);
- 
+
   // if # Machines for the stage is within tol_num of an integer
   // then round down. Otherwise round up to the next integer machine to
   // preserve steady-state flow calculations.
   std::vector<std::pair<int, double>> stage_info =
     CalcStageFeatures(fa, alpha, delU, cut, n_stages, flows);
-
+  
   for (int i = 0; i < pycode_flows.size(); i++){
     EXPECT_NEAR(flows[i], pycode_flows[i], tol_num);
     int nmach = stage_info[i].first;
     EXPECT_EQ(nmach, pycode_machines[i]);
   }
-
   
+  // not enough machines
+  int max_centrifuges = 80;
+  std::pair<int, double> design_params = DesignCascade(feed_c, alpha, delU,
+						       cut, max_centrifuges,
+						       n_stages);
+  int py_tot_mach = 80;
+  double py_opt_feed = 2.52859296482e-05;
   
+  EXPECT_EQ(py_tot_mach, design_params.first);
+  EXPECT_NEAR(py_opt_feed, design_params.second, tol_qty);
+  
+  // more machines than requested capacity
+  max_centrifuges = 1000;
+  design_params = DesignCascade(feed_c, alpha, delU,
+				cut, max_centrifuges,
+				n_stages);
+  py_tot_mach = 991;
+  py_opt_feed = 0.000325705437911;
+  
+  EXPECT_EQ(py_tot_mach, design_params.first);
+  EXPECT_NEAR(py_opt_feed, design_params.second, tol_qty);
   
 }
   
