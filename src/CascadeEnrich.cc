@@ -114,7 +114,7 @@ void CascadeEnrich::Tock() {
   RecordTimeSeries<cyclus::toolkit::ENRICH_FEED>(this, intra_timestep_feed_);
 
 }
-  /*
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::set<cyclus::RequestPortfolio<cyclus::Material>::Ptr>
 CascadeEnrich::GetMatlRequests() {
@@ -134,16 +134,62 @@ CascadeEnrich::GetMatlRequests() {
 
   return ports;
 }
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Sort offers of input material to have higher preference for more
+//  U-235 content
+void CascadeEnrich::AdjustMatlPrefs(
+    cyclus::PrefMap<cyclus::Material>::type& prefs) {
+  using cyclus::Bid;
+  using cyclus::Material;
+  using cyclus::Request;
+
+  if (order_prefs == false) {
+    return;
+  }
+
+  cyclus::PrefMap<cyclus::Material>::type::iterator reqit;
+
+  // Loop over all requests
+  for (reqit = prefs.begin(); reqit != prefs.end(); ++reqit) {
+    std::vector<Bid<Material>*> bids_vector;
+    std::map<Bid<Material>*, double>::iterator mit;
+    for (mit = reqit->second.begin(); mit != reqit->second.end(); ++mit) {
+      Bid<Material>* bid = mit->first;
+      bids_vector.push_back(bid);
+    }
+    //    std::sort(bids_vector.begin(), bids_vector.end(), SortBids);
+
+    // Assign preferences to the sorted vector
+    double n_bids = bids_vector.size();
+    bool u235_mass = 0;
+
+    for (int bidit = 0; bidit < bids_vector.size(); bidit++) {
+      int new_pref = bidit + 1;
+
+      // For any bids with U-235 qty=0, set pref to zero.
+      if (!u235_mass) {
+        cyclus::Material::Ptr mat = bids_vector[bidit]->offer();
+        cyclus::toolkit::MatQuery mq(mat);
+        if (mq.mass(922350000) == 0) {
+          new_pref = -1;
+        } else {
+          u235_mass = true;
+        }
+      }
+      (reqit->second)[bids_vector[bidit]] = new_pref;
+    }  // each bid
+  }    // each Material Request
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 cyclus::Material::Ptr CascadeEnrich::Request_() {
   double qty = std::max(0.0, inventory.capacity() - inventory.quantity());
   return cyclus::Material::CreateUntracked(qty,
                                            context()->GetRecipe(feed_recipe));
 }
- 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SortBids(cyclus::Bid<cyclus::Material>* i,
+  bool SortBids(cyclus::Bid<cyclus::Material>* i,
               cyclus::Bid<cyclus::Material>* j) {
   cyclus::Material::Ptr mat_i = i->offer();
   cyclus::Material::Ptr mat_j = j->offer();
@@ -154,7 +200,7 @@ bool SortBids(cyclus::Bid<cyclus::Material>* i,
   return ((mq_i.mass(922350000) / mq_i.qty()) <=
           (mq_j.mass(922350000) / mq_j.qty()));
 }
-  */
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 double CascadeEnrich::FeedAssay() {
   using cyclus::Material;
