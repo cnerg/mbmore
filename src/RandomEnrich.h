@@ -263,7 +263,8 @@ class RandomEnrich : public cyclus::Facility {
   // Find the simulation duration
   //  cyclus::SimInfo si_;
   int simdur = context()->sim_info().duration;
-  
+
+ 
  private:
   ///   @brief adds a material into the natural uranium inventory
   ///   @throws if the material is not the same composition as the feed_recipe
