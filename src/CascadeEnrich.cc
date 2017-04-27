@@ -39,7 +39,12 @@ CascadeEnrich::~CascadeEnrich() {}
 std::string CascadeEnrich::str() {
   std::stringstream ss;
   ss << cyclus::Facility::str()
-     << " with enrichment facility parameters:";
+     << " with enrichment facility parameters:"
+     << " * SWU capacity: " << SwuCapacity()
+     << " * Tails assay: " << tails_assay << " * Feed assay: " << FeedAssay()
+     << " * Input cyclus::Commodity: " << feed_commod
+     << " * Output cyclus::Commodity: " << product_commod
+     << " * Tails cyclus::Commodity: " << tails_commod;
   return ss.str();
 }
 
@@ -93,14 +98,76 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::Tick() {
 
-
+ current_swu_capacity = SwuCapacity();
+ 
  }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::Tock() {
+  using cyclus::toolkit::RecordTimeSeries;
+
+  LOG(cyclus::LEV_INFO4, "EnrFac") << prototype() << " used "
+                                   << intra_timestep_swu_ << " SWU";
+  RecordTimeSeries<cyclus::toolkit::ENRICH_SWU>(this, intra_timestep_swu_);
+  LOG(cyclus::LEV_INFO4, "EnrFac") << prototype() << " used "
+                                   << intra_timestep_feed_ << " feed";
+  RecordTimeSeries<cyclus::toolkit::ENRICH_FEED>(this, intra_timestep_feed_);
 
 }
+  /*
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::set<cyclus::RequestPortfolio<cyclus::Material>::Ptr>
+CascadeEnrich::GetMatlRequests() {
+  using cyclus::Material;
+  using cyclus::RequestPortfolio;
+  using cyclus::Request;
 
+  std::set<RequestPortfolio<Material>::Ptr> ports;
+  RequestPortfolio<Material>::Ptr port(new RequestPortfolio<Material>());
+  Material::Ptr mat = Request_();
+  double amt = mat->quantity();
+
+  if (amt > cyclus::eps_rsrc()) {
+    port->AddRequest(mat, this, feed_commod);
+    ports.insert(port);
+  }
+
+  return ports;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+cyclus::Material::Ptr CascadeEnrich::Request_() {
+  double qty = std::max(0.0, inventory.capacity() - inventory.quantity());
+  return cyclus::Material::CreateUntracked(qty,
+                                           context()->GetRecipe(feed_recipe));
+}
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SortBids(cyclus::Bid<cyclus::Material>* i,
+              cyclus::Bid<cyclus::Material>* j) {
+  cyclus::Material::Ptr mat_i = i->offer();
+  cyclus::Material::Ptr mat_j = j->offer();
+
+  cyclus::toolkit::MatQuery mq_i(mat_i);
+  cyclus::toolkit::MatQuery mq_j(mat_j);
+
+  return ((mq_i.mass(922350000) / mq_i.qty()) <=
+          (mq_j.mass(922350000) / mq_j.qty()));
+}
+  */
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+double CascadeEnrich::FeedAssay() {
+  using cyclus::Material;
+
+  if (inventory.empty()) {
+    return 0;
+  }
+  double pop_qty = inventory.quantity();
+  cyclus::Material::Ptr fission_matl =
+      inventory.Pop(pop_qty, cyclus::eps_rsrc());
+  inventory.Push(fission_matl);
+  return cyclus::toolkit::UraniumAssay(fission_matl);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 extern "C" cyclus::Agent* ConstructCascadeEnrich(cyclus::Context* ctx) {
