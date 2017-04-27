@@ -44,6 +44,84 @@ B) Change cascade feed assay
 
    */
 
+/// @class SWUConverter
+///
+/// @brief The SWUConverter is a simple Converter class for material to
+/// determine the amount of SWU required for their proposed enrichment
+class SWUConverter : public cyclus::Converter<cyclus::Material> {
+ public:
+  SWUConverter(double feed_commod, double tails) : feed_(feed_commod),
+    tails_(tails) {}
+  virtual ~SWUConverter() {}
+
+  /// @brief provides a conversion for the SWU required
+  virtual double convert(
+      cyclus::Material::Ptr m,
+      cyclus::Arc const * a = NULL,
+      cyclus::ExchangeTranslationContext<cyclus::Material>
+          const * ctx = NULL) const {
+    cyclus::toolkit::Assays assays(feed_, cyclus::toolkit::UraniumAssay(m),
+                                   tails_);
+    return cyclus::toolkit::SwuRequired(m->quantity(), assays);
+  }
+
+  /// @returns true if Converter is a SWUConverter and feed and tails equal
+  virtual bool operator==(Converter& other) const {
+    SWUConverter* cast = dynamic_cast<SWUConverter*>(&other);
+    return cast != NULL &&
+    feed_ == cast->feed_ &&
+    tails_ == cast->tails_;
+  }
+
+ private:
+  double feed_, tails_;
+};
+
+/// @class NatUConverter
+///
+/// @brief The NatUConverter is a simple Converter class for material to
+/// determine the amount of natural uranium required for their proposed
+/// enrichment
+class NatUConverter : public cyclus::Converter<cyclus::Material> {
+ public:
+  NatUConverter(double feed_commod, double tails) : feed_(feed_commod),
+    tails_(tails) {}
+  virtual ~NatUConverter() {}
+
+  //  virtual std::string version() { return CYCAMORE_VERSION; }
+
+  /// @brief provides a conversion for the amount of natural Uranium required
+  virtual double convert(
+      cyclus::Material::Ptr m,
+      cyclus::Arc const * a = NULL,
+      cyclus::ExchangeTranslationContext<cyclus::Material>
+          const * ctx = NULL) const {
+    cyclus::toolkit::Assays assays(feed_, cyclus::toolkit::UraniumAssay(m),
+                                   tails_);
+    cyclus::toolkit::MatQuery mq(m);
+    std::set<cyclus::Nuc> nucs;
+    nucs.insert(922350000);
+    nucs.insert(922380000);
+
+    double natu_frac = mq.mass_frac(nucs);
+    double natu_req = cyclus::toolkit::FeedQty(m->quantity(), assays);
+    return natu_req / natu_frac;
+  }
+
+  /// @returns true if Converter is a NatUConverter and feed and tails equal
+  virtual bool operator==(Converter& other) const {
+    NatUConverter* cast = dynamic_cast<NatUConverter*>(&other);
+    return cast != NULL &&
+    feed_ == cast->feed_ &&
+    tails_ == cast->tails_;
+  }
+
+ private:
+  double feed_, tails_;
+};
+
+
+  
  public:
   // --- Module Members ---
   ///    Constructor for the CascadeEnrich class
@@ -87,9 +165,27 @@ B) Change cascade feed assay
   /// Any offers that have zero U-235 content are not accepted
   virtual void AdjustMatlPrefs(cyclus::PrefMap<cyclus::Material>::type& prefs);
 
-    
+  /// @brief The Enrichment place accepted trade Materials in their
+  /// Inventory
+  virtual void AcceptMatlTrades(
+      const std::vector< std::pair<cyclus::Trade<cyclus::Material>,
+      cyclus::Material::Ptr> >& responses);
+
+ /// @brief Responds to each request for this facility's commodity.  If a given
+  /// request is more than this facility's inventory or SWU capacity, it will
+  /// offer its minimum of its capacities.
+  virtual std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr>
+    GetMatlBids(cyclus::CommodMap<cyclus::Material>::type&
+    commod_requests);
+
+  
   inline double SwuCapacity() const { return swu_capacity; }
 
+  ///  @brief Determines if a particular material is a valid request to respond
+  ///  to.  Valid requests must contain U235 and U238 and must have a relative
+  ///  U235-to-U238 ratio less than this facility's tails_assay().
+  ///  @return true if the above description is met by the material
+  bool ValidReq(const cyclus::Material::Ptr mat);
 
 
   /*
@@ -105,9 +201,22 @@ B) Change cascade feed assay
     ///  @brief calculates the feed assay based on the unenriched inventory
   double FeedAssay();
 
+  ///   @brief adds a material into the natural uranium inventory
+  ///   @throws if the material is not the same composition as the feed_recipe
+  void AddMat_(cyclus::Material::Ptr mat);
+
   ///   @brief generates a request for this facility given its current state.
   ///   Quantity of the material will be equal to remaining inventory size.
   cyclus::Material::Ptr Request_();
+
+  ///  @brief Generates a material offer for a given request. The response
+  ///  composition will be comprised only of U235 and U238 at their relative
+  ///  ratio in the requested material. The response quantity will be the
+  ///  same as the requested commodity.
+  ///
+  ///  @param req the requested material being responded to
+  cyclus::Material::Ptr Offer_(cyclus::Material::Ptr req);
+
 
   
   // These state variables are constrained by the design input params at

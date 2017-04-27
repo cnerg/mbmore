@@ -182,6 +182,135 @@ void CascadeEnrich::AdjustMatlPrefs(
   }    // each Material Request
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CascadeEnrich::AcceptMatlTrades(
+    const std::vector<std::pair<cyclus::Trade<cyclus::Material>,
+                                cyclus::Material::Ptr> >& responses) {
+  // see
+  // http://stackoverflow.com/questions/5181183/boostshared-ptr-and-inheritance
+  std::vector<std::pair<cyclus::Trade<cyclus::Material>,
+                        cyclus::Material::Ptr> >::const_iterator it;
+  for (it = responses.begin(); it != responses.end(); ++it) {
+    AddMat_(it->second);
+  }
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CascadeEnrich::AddMat_(cyclus::Material::Ptr mat) {
+  // Elements and isotopes other than U-235, U-238 are sent directly to tails
+  cyclus::CompMap cm = mat->comp()->atom();
+  bool extra_u = false;
+  bool other_elem = false;
+  for (cyclus::CompMap::const_iterator it = cm.begin(); it != cm.end(); ++it) {
+    if (pyne::nucname::znum(it->first) == 92) {
+      if (pyne::nucname::anum(it->first) != 235 &&
+          pyne::nucname::anum(it->first) != 238 && it->second > 0) {
+        extra_u = true;
+      }
+    } else if (it->second > 0) {
+      other_elem = true;
+    }
+  }
+  if (extra_u) {
+    cyclus::Warn<cyclus::VALUE_WARNING>(
+        "More than 2 isotopes of U.  "
+        "Istopes other than U-235, U-238 are sent directly to tails.");
+  }
+  if (other_elem) {
+    cyclus::Warn<cyclus::VALUE_WARNING>(
+        "Non-uranium elements are "
+        "sent directly to tails.");
+  }
+
+  LOG(cyclus::LEV_INFO5, "EnrFac") << prototype() << " is initially holding "
+                                   << inventory.quantity() << " total.";
+
+  try {
+    inventory.Push(mat);
+  } catch (cyclus::Error& e) {
+    e.msg(Agent::InformErrorMsg(e.msg()));
+    throw e;
+  }
+
+  LOG(cyclus::LEV_INFO5, "EnrFac")
+      << prototype() << " added " << mat->quantity() << " of " << feed_commod
+      << " to its inventory, which is holding " << inventory.quantity()
+      << " total.";
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr>
+CascadeEnrich::GetMatlBids(cyclus::CommodMap<cyclus::Material>::type& out_requests) {
+  using cyclus::Bid;
+  using cyclus::BidPortfolio;
+  using cyclus::CapacityConstraint;
+  using cyclus::Converter;
+  using cyclus::Material;
+  using cyclus::Request;
+  using cyclus::toolkit::MatVec;
+
+  std::set<BidPortfolio<Material>::Ptr> ports;
+
+  if ((out_requests.count(tails_commod) > 0) && (tails.quantity() > 0)) {
+    BidPortfolio<Material>::Ptr tails_port(new BidPortfolio<Material>());
+
+    std::vector<Request<Material>*>& tails_requests =
+        out_requests[tails_commod];
+    std::vector<Request<Material>*>::iterator it;
+    for (it = tails_requests.begin(); it != tails_requests.end(); ++it) {
+      // offer bids for all tails material, keeping discrete quantities
+      // to preserve possible variation in composition
+      MatVec mats = tails.PopN(tails.count());
+      tails.Push(mats);
+      for (int k = 0; k < mats.size(); k++) {
+        Material::Ptr m = mats[k];
+        Request<Material>* req = *it;
+        tails_port->AddBid(req, m, this);
+      }
+    }
+    // overbidding (bidding on every offer)
+    // add an overall capacity constraint
+    CapacityConstraint<Material> tails_constraint(tails.quantity());
+    tails_port->AddConstraint(tails_constraint);
+    LOG(cyclus::LEV_INFO5, "EnrFac") << prototype()
+                                     << " adding tails capacity constraint of "
+                                     << tails.capacity();
+    ports.insert(tails_port);
+  }
+
+  if ((out_requests.count(product_commod) > 0) && (inventory.quantity() > 0)) {
+    BidPortfolio<Material>::Ptr commod_port(new BidPortfolio<Material>());
+
+    std::vector<Request<Material>*>& commod_requests =
+        out_requests[product_commod];
+    std::vector<Request<Material>*>::iterator it;
+    for (it = commod_requests.begin(); it != commod_requests.end(); ++it) {
+      Request<Material>* req = *it;
+      Material::Ptr mat = req->target();
+      double request_enrich = cyclus::toolkit::UraniumAssay(mat);
+      if (ValidReq(req->target()) &&
+          ((request_enrich < max_enrich) ||
+           (cyclus::AlmostEq(request_enrich, max_enrich)))) {
+        Material::Ptr offer = Offer_(req->target());
+        commod_port->AddBid(req, offer, this);
+      }
+    }
+
+    Converter<Material>::Ptr sc(new SWUConverter(FeedAssay(), tails_assay));
+    Converter<Material>::Ptr nc(new NatUConverter(FeedAssay(), tails_assay));
+    CapacityConstraint<Material> swu(swu_capacity, sc);
+    CapacityConstraint<Material> natu(inventory.quantity(), nc);
+    commod_port->AddConstraint(swu);
+    commod_port->AddConstraint(natu);
+
+    LOG(cyclus::LEV_INFO5, "EnrFac")
+        << prototype() << " adding a swu constraint of " << swu.capacity();
+    LOG(cyclus::LEV_INFO5, "EnrFac")
+        << prototype() << " adding a natu constraint of " << natu.capacity();
+    ports.insert(commod_port);
+  }
+  return ports;
+}
+
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 cyclus::Material::Ptr CascadeEnrich::Request_() {
@@ -190,7 +319,23 @@ cyclus::Material::Ptr CascadeEnrich::Request_() {
                                            context()->GetRecipe(feed_recipe));
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-double CascadeEnrich::FeedAssay() {
+cyclus::Material::Ptr CascadeEnrich::Offer_(cyclus::Material::Ptr mat) {
+  cyclus::toolkit::MatQuery q(mat);
+  cyclus::CompMap comp;
+  comp[922350000] = q.atom_frac(922350000);
+  comp[922380000] = q.atom_frac(922380000);
+  return cyclus::Material::CreateUntracked(
+      mat->quantity(), cyclus::Composition::CreateFromAtom(comp));
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
+  cyclus::toolkit::MatQuery q(mat);
+  double u235 = q.atom_frac(922350000);
+  double u238 = q.atom_frac(922380000);
+  return (u238 > 0 && u235 / (u235 + u238) > tails_assay);
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  double CascadeEnrich::FeedAssay() {
   using cyclus::Material;
 
   if (inventory.empty()) {
