@@ -77,27 +77,30 @@ B) Change cascade feed assay
   ///  @param time is the time to perform the tock
   virtual void Tock();
 
-  /*
   /// @brief The Enrichment request Materials of its given
   /// commodity.
     virtual std::set<cyclus::RequestPortfolio<cyclus::Material>::Ptr>
       GetMatlRequests();
-  */
 
-  
+  /// @brief The Enrichment adjusts preferences for offers of
+  /// natural uranium it has received to maximize U-235 content
+  /// Any offers that have zero U-235 content are not accepted
+  virtual void AdjustMatlPrefs(cyclus::PrefMap<cyclus::Material>::type& prefs);
+
+    
   inline double SwuCapacity() const { return swu_capacity; }
 
 
 
-
-  
+  /*
+  // TODO: DELETE, These are not used 
   int NEnrichStages(double alpha, double delU, double feed,
 		       double feed_assay);
 
   int NStripStages(double alpha, double delU, double feed,
 		       double feed_assay);
 
-
+  */
  private:
     ///  @brief calculates the feed assay based on the unenriched inventory
   double FeedAssay();
