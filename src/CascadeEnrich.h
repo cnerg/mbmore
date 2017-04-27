@@ -77,6 +77,20 @@ B) Change cascade feed assay
   ///  @param time is the time to perform the tock
   virtual void Tock();
 
+  /*
+  /// @brief The Enrichment request Materials of its given
+  /// commodity.
+    virtual std::set<cyclus::RequestPortfolio<cyclus::Material>::Ptr>
+      GetMatlRequests();
+  */
+
+  
+  inline double SwuCapacity() const { return swu_capacity; }
+
+
+
+
+  
   int NEnrichStages(double alpha, double delU, double feed,
 		       double feed_assay);
 
@@ -84,6 +98,15 @@ B) Change cascade feed assay
 		       double feed_assay);
 
 
+ private:
+    ///  @brief calculates the feed assay based on the unenriched inventory
+  double FeedAssay();
+
+  ///   @brief generates a request for this facility given its current state.
+  ///   Quantity of the material will be equal to remaining inventory size.
+  cyclus::Material::Ptr Request_();
+
+  
   // These state variables are constrained by the design input params at
   // the start of the simulation:
   
