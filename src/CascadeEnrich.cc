@@ -157,7 +157,8 @@ void CascadeEnrich::AdjustMatlPrefs(
       Bid<Material>* bid = mit->first;
       bids_vector.push_back(bid);
     }
-    //    std::sort(bids_vector.begin(), bids_vector.end(), SortBids);
+
+    std::sort(bids_vector.begin(), bids_vector.end(), SortBids);
 
     // Assign preferences to the sorted vector
     double n_bids = bids_vector.size();
@@ -188,19 +189,6 @@ cyclus::Material::Ptr CascadeEnrich::Request_() {
   return cyclus::Material::CreateUntracked(qty,
                                            context()->GetRecipe(feed_recipe));
 }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool SortBids(cyclus::Bid<cyclus::Material>* i,
-              cyclus::Bid<cyclus::Material>* j) {
-  cyclus::Material::Ptr mat_i = i->offer();
-  cyclus::Material::Ptr mat_j = j->offer();
-
-  cyclus::toolkit::MatQuery mq_i(mat_i);
-  cyclus::toolkit::MatQuery mq_j(mat_j);
-
-  return ((mq_i.mass(922350000) / mq_i.qty()) <=
-          (mq_j.mass(922350000) / mq_j.qty()));
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 double CascadeEnrich::FeedAssay() {
   using cyclus::Material;

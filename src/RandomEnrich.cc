@@ -1,6 +1,7 @@
 // Implements the RandomEnrich class
 #include "RandomEnrich.h"
 #include "behavior_functions.h"
+#include "enrich_functions.h"
 #include "sim_init.h"
 
 #include <algorithm>
@@ -138,20 +139,6 @@ std::set<cyclus::RequestPortfolio<cyclus::Material>::Ptr>
   }
 
   return ports;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SortBids(
-    cyclus::Bid<cyclus::Material>* i, cyclus::Bid<cyclus::Material>* j) {
-
-  cyclus::Material::Ptr mat_i = i->offer();
-  cyclus::Material::Ptr mat_j = j->offer();
-
-  cyclus::toolkit::MatQuery mq_i(mat_i);
-  cyclus::toolkit::MatQuery mq_j(mat_j);
-
-  return ((mq_i.mass(922350000) / mq_i.qty()) <=
-	  (mq_j.mass(922350000) / mq_j.qty()));
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Sort offers of input material to have higher preference for more
