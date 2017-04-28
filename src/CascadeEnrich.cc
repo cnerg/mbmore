@@ -81,7 +81,8 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
   max_feed_inventory = cascade_info.second;
   // Number of machines times swu per machine
   //TODO: CONVERT SWU TO PER MONTH INSTEAD OF KG/SEC
-  swu_capacity = cascade_info.first * design_delU * secpermonth;
+  //  swu_capacity = cascade_info.first * design_delU * secpermonth;
+  SwuCapacity(cascade_info.first * design_delU * secpermonth);
 
   Facility::Build(parent);
   if (initial_feed > 0) {
@@ -89,7 +90,7 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
       Material::Create(
         this, initial_feed, context()->GetRecipe(feed_recipe)));
   }
-
+  
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << "CascadeEnrich "
 				    << " entering the simuluation: ";
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << str();

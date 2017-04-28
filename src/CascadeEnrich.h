@@ -190,8 +190,19 @@ class NatUConverter : public cyclus::Converter<cyclus::Material> {
   // ---
 
   
+   inline void SetMaxInventorySize(double size) {
+    max_feed_inventory = size;
+    inventory.capacity(size);
+  }
+ 
+  inline void SwuCapacity(double capacity) {
+    swu_capacity = capacity;
+    current_swu_capacity = swu_capacity;
+  }
+
   inline double SwuCapacity() const { return swu_capacity; }
 
+  
   ///  @brief Determines if a particular material is a valid request to respond
   ///  to.  Valid requests must contain U235 and U238 and must have a relative
   ///  U235-to-U238 ratio less than this facility's tails_assay().
@@ -236,15 +247,12 @@ class NatUConverter : public cyclus::Converter<cyclus::Material> {
   
   // These state variables are constrained by the design input params at
   // the start of the simulation:
-  
   // Set by max feed for an individual machine
   double design_delU;
   double design_alpha;
-
   // Set by design assays (feed, product, waste)
   int n_enrich_stages;
   int n_strip_stages;
-
   // Set by maximum allowable centrifuges
   double max_feed_inventory;
   double swu_capacity;
