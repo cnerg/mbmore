@@ -310,7 +310,148 @@ CascadeEnrich::GetMatlBids(cyclus::CommodMap<cyclus::Material>::type& out_reques
   return ports;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CascadeEnrich::GetMatlTrades(
+    const std::vector<cyclus::Trade<cyclus::Material> >& trades,
+    std::vector<std::pair<cyclus::Trade<cyclus::Material>,
+                          cyclus::Material::Ptr> >& responses) {
+  using cyclus::Material;
+  using cyclus::Trade;
 
+  intra_timestep_swu_ = 0;
+  intra_timestep_feed_ = 0;
+
+  std::vector<Trade<Material> >::const_iterator it;
+  for (it = trades.begin(); it != trades.end(); ++it) {
+    double qty = it->amt;
+    std::string commod_type = it->bid->request()->commodity();
+    Material::Ptr response;
+
+    // Figure out whether material is tails or enriched,
+    // if tails then make transfer of material
+    if (commod_type == tails_commod) {
+      LOG(cyclus::LEV_INFO5, "EnrFac")
+          << prototype() << " just received an order"
+          << " for " << it->amt << " of " << tails_commod;
+      double pop_qty = std::min(qty, tails.quantity());
+      response = tails.Pop(pop_qty, cyclus::eps_rsrc());
+    } else {
+      LOG(cyclus::LEV_INFO5, "EnrFac")
+          << prototype() << " just received an order"
+          << " for " << it->amt << " of " << product_commod;
+      response = Enrich_(it->bid->offer(), qty);
+    }
+    responses.push_back(std::make_pair(*it, response));
+  }
+
+  if (cyclus::IsNegative(tails.quantity())) {
+    std::stringstream ss;
+    ss << "is being asked to provide more than its current inventory.";
+    throw cyclus::ValueError(Agent::InformErrorMsg(ss.str()));
+  }
+  if (cyclus::IsNegative(current_swu_capacity)) {
+    throw cyclus::ValueError("EnrFac " + prototype() +
+                             " is being asked to provide more than" +
+                             " its SWU capacity.");
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
+                                          double qty) {
+  using cyclus::Material;
+  using cyclus::ResCast;
+  using cyclus::toolkit::Assays;
+  using cyclus::toolkit::UraniumAssay;
+  using cyclus::toolkit::SwuRequired;
+  using cyclus::toolkit::FeedQty;
+  using cyclus::toolkit::TailsQty;
+
+  // get enrichment parameters
+  Assays assays(FeedAssay(), UraniumAssay(mat), tails_assay);
+  double swu_req = SwuRequired(qty, assays);
+  double natu_req = FeedQty(qty, assays);
+
+  // Determine the composition of the natural uranium
+  // (ie. U-235+U-238/TotalMass)
+  double pop_qty = inventory.quantity();
+  Material::Ptr natu_matl = inventory.Pop(pop_qty, cyclus::eps_rsrc());
+  inventory.Push(natu_matl);
+
+  cyclus::toolkit::MatQuery mq(natu_matl);
+  std::set<cyclus::Nuc> nucs;
+  nucs.insert(922350000);
+  nucs.insert(922380000);
+  double natu_frac = mq.mass_frac(nucs);
+  double feed_req = natu_req / natu_frac;
+
+  // pop amount from inventory and blob it into one material
+  Material::Ptr r;
+  try {
+    // required so popping doesn't take out too much
+    if (cyclus::AlmostEq(feed_req, inventory.quantity())) {
+      r = cyclus::toolkit::Squash(inventory.PopN(inventory.count()));
+    } else {
+      r = inventory.Pop(feed_req, cyclus::eps_rsrc());
+    }
+  } catch (cyclus::Error& e) {
+    NatUConverter nc(FeedAssay(), tails_assay);
+    std::stringstream ss;
+    ss << " tried to remove " << feed_req << " from its inventory of size "
+       << inventory.quantity()
+       << " and the conversion of the material into natu is "
+       << nc.convert(mat);
+    throw cyclus::ValueError(Agent::InformErrorMsg(ss.str()));
+  }
+
+  // "enrich" it, but pull out the composition and quantity we require from the
+  // blob
+  cyclus::Composition::Ptr comp = mat->comp();
+  Material::Ptr response = r->ExtractComp(qty, comp);
+  tails.Push(r);
+
+  current_swu_capacity -= swu_req;
+
+  intra_timestep_swu_ += swu_req;
+  intra_timestep_feed_ += feed_req;
+  RecordEnrichment_(feed_req, swu_req);
+
+  LOG(cyclus::LEV_INFO5, "EnrFac") << prototype()
+                                   << " has performed an enrichment: ";
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Qty: " << feed_req;
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Assay: "
+                                   << assays.Feed() * 100;
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Product Qty: " << qty;
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Product Assay: "
+                                   << assays.Product() * 100;
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Qty: "
+                                   << TailsQty(qty, assays);
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Assay: "
+                                   << assays.Tails() * 100;
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * SWU: " << swu_req;
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Current SWU capacity: "
+                                   << current_swu_capacity;
+
+  return response;
+}
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CascadeEnrich::RecordEnrichment_(double natural_u, double swu) {
+  using cyclus::Context;
+  using cyclus::Agent;
+
+  LOG(cyclus::LEV_DEBUG1, "EnrFac") << prototype()
+                                    << " has enriched a material:";
+  LOG(cyclus::LEV_DEBUG1, "EnrFac") << "  * Amount: " << natural_u;
+  LOG(cyclus::LEV_DEBUG1, "EnrFac") << "  *    SWU: " << swu;
+
+  Context* ctx = Agent::context();
+  ctx->NewDatum("Enrichments")
+      ->AddVal("ID", id())
+      ->AddVal("Time", ctx->time())
+      ->AddVal("Natural_Uranium", natural_u)
+      ->AddVal("SWU", swu)
+      ->Record();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 cyclus::Material::Ptr CascadeEnrich::Request_() {
