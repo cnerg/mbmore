@@ -178,6 +178,17 @@ class NatUConverter : public cyclus::Converter<cyclus::Material> {
     GetMatlBids(cyclus::CommodMap<cyclus::Material>::type&
     commod_requests);
 
+    /// @brief respond to each trade with a material enriched to the appropriate
+  /// level given this facility's inventory
+  ///
+  /// @param trades all trades in which this trader is the supplier
+  /// @param responses a container to populate with responses to each trade
+  virtual void GetMatlTrades(
+    const std::vector< cyclus::Trade<cyclus::Material> >& trades,
+    std::vector<std::pair<cyclus::Trade<cyclus::Material>,
+    cyclus::Material::Ptr> >& responses);
+  // ---
+
   
   inline double SwuCapacity() const { return swu_capacity; }
 
@@ -217,6 +228,10 @@ class NatUConverter : public cyclus::Converter<cyclus::Material> {
   ///  @param req the requested material being responded to
   cyclus::Material::Ptr Offer_(cyclus::Material::Ptr req);
 
+  cyclus::Material::Ptr Enrich_(cyclus::Material::Ptr mat, double qty);
+
+  ///  @brief records and enrichment with the cyclus::Recorder
+  void RecordEnrichment_(double natural_u, double swu);
 
   
   // These state variables are constrained by the design input params at
