@@ -100,9 +100,9 @@ std::map<std::string, bool>
   InteractRegion::DefinedFactors(std::string eqn_type) {
 
   std::map<std::string, double> wts;
-  if (eqn_type == "Pursuit"){
+  //  if (eqn_type == "Pursuit"){
     wts = p_wts;
-  }
+    //  }
 
   std::map<std::string, bool> present;
   std::map<std::string,double>::iterator factor_it;
@@ -124,13 +124,17 @@ std::map<std::string, bool>
 // defined in this sim.
 std::map<std::string, bool>
   InteractRegion::GetDefinedFactors(std::string eqn_type) {
-  if (eqn_type == "Pursuit"){
+  //  if (eqn_type == "Pursuit"){
     return p_present;
-  }
+}
+    /*
+}
   else {
     return a_present;
   }
 }
+    */
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
@@ -140,7 +144,9 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determine the likelihood value for the equation at the current time,
 // (where the current value of the equation is normalized to be between 0-1)
-  double InteractRegion::GetLikely(std::string phase, double eqn_val) {
+double InteractRegion::GetLikely(std::string phase, double eqn_val) {
+
+  double hist_duration = 70; // historical data covers 70 years
 
   std::pair<std::string, std::vector<double> > likely_pair =
     likely_rescale[phase];
@@ -149,15 +155,24 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
 
   double phase_likely;
   if (phase == "Pursuit"){
-    phase_likely = CalcYVal(function, constants, eqn_val);
+    double integ_likely;
+    // historical data defines the likelihood integrated over 70yrs
+    if ((function == "Power") || (function == "power")){
+      integ_likely = CalcYVal(function, constants, eqn_val/10.0);
+    }
+    else {
+      integ_likely = CalcYVal(function, constants, eqn_val);
+    }
+    std::cout << "First CALCYVAL is" << integ_likely << std::endl;
+    phase_likely = ProbPerTime(integ_likely, hist_duration);
   }
   else {
     // for acquire, determine the avg time (N_years) to weapon based on score,
-    // then convert to a likelihood per timestep 1/(N_years * years2months)
+    // then convert to a likelihood per timestep 1/(N_years)
     // TODO: CHANGE HARDCODING TO CHECK FOR ARBITRARY TIMESTEP DURATION
-    //       (currently assumes timestep is one month)
+    //       (currently assumes timestep is one year)
     double avg_time = CalcYVal(function, constants, eqn_val);
-    phase_likely = 1.0/(12.0*avg_time);
+    phase_likely = 1.0/avg_time;
   }
 
   if ((phase_likely < 0) || (phase_likely > 1)){
@@ -260,14 +275,14 @@ double InteractRegion::GetConflictScore(std::string eqn_type,
 void InteractRegion::ChangeConflictReln(std::string eqn_type,
 					  std::string this_state,
 					  std::string other_state, int new_val){
-  if (eqn_type == "Pursuit"){
+  //  if (eqn_type == "Pursuit"){
     p_conflict_map[this_state][other_state] = new_val;
     RecordConflictReln(eqn_type, this_state, other_state, new_val);
     if (symmetric == 1){
       p_conflict_map[other_state][this_state] = new_val;
       RecordConflictReln(eqn_type, other_state, this_state, new_val);
     }
-  }
+    //  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

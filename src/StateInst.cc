@@ -298,8 +298,11 @@ void StateInst::DeploySecret() {
       d->AddVal(factor.c_str(), factor_curr_y);
     }
   }
-  //Convert pursuit eqn result to a Y/N decision
-  double likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn/10);
+  std::cout << "outcome of pursuit eqn is" << pursuit_eqn << std::endl;
+  // Convert pursuit eqn result to a Y/N decision
+  // GetLikely requires an input value between 0-10, and the function type
+  // should be normalized to convert that value to have a max of y=1.0 for x=10
+  double likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn);
   bool decision = XLikely(likely, rng_seed);
   
   std::cout << "Decision is " << decision << std::endl;
