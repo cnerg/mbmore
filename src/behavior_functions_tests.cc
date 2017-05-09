@@ -207,6 +207,33 @@ TEST(Behavior_Functions_Test, TestCalcYVal) {
   y_curr = CalcYVal("power", constants, x_val);
   EXPECT_NEAR(y_curr, 4.5, tol);
 
+  // Bounded Power
+  double lower_bound = 0;
+  double upper_bound = 10;
+  double y_off = 0.5;
+  std::vector<double> bounded_const = constants;
+  bounded_const.push_back(y_off);
+  bounded_const.push_back(lower_bound);
+  bounded_const.push_back(upper_bound);
+
+  // Check that it simplies to regular power law
+  double y_bound = CalcYVal("bounded_power", bounded_const, x_val);
+  EXPECT_NEAR(y_bound, y_curr + y_off, tol);
+
+  // check upper bound of 2
+  bounded_const[4] = 2;
+  y_bound = CalcYVal("bounded_power", bounded_const, x_val);
+  y_curr = CalcYVal("bounded_power", bounded_const, bounded_const[4]);
+  EXPECT_NEAR(y_bound, y_curr, tol);
+
+  // check lower bound of 4
+  bounded_const[4]=10;
+  bounded_const[3]=4;
+  y_bound = CalcYVal("bounded_power", bounded_const, x_val);
+  y_curr = CalcYVal("bounded_power", bounded_const, 0.0);
+  EXPECT_NEAR(y_bound, y_curr, tol);
+  
+  
   // Linear
   y_curr = CalcYVal("linear", constants, t_final);
   EXPECT_NEAR(y_curr, y10, tol);
@@ -218,8 +245,22 @@ TEST(Behavior_Functions_Test, TestCalcYVal) {
   EXPECT_NEAR(y_curr, y0, tol);
   y_curr = CalcYVal("step", constants, y10);
   EXPECT_NEAR(y_curr, y10, tol);
-       
-  }
 
+
+  }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+  
+TEST(Behavior_Functions_Test, TestProbPerTime) {
+  double n_timesteps = 70;
+  double tol = 1e-6;
+  // likelihood of pursuit integrated over time
+  double x_val = 0.75;
+  double y_val = ProbPerTime(x_val, n_timesteps);
+  double py_val = 0.01960939;
+
+  EXPECT_NEAR(y_val, py_val, tol);
+}
 
 } // namespace mbmore
