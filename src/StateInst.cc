@@ -138,7 +138,7 @@ void StateInst::Tock() {
     dynamic_cast<InteractRegion*>(this->parent());
   Agent* me = this;
   std::string proto = me->prototype();
-  
+  std::cout << "Printing Weapont status in Tock " << weapon_status << std::endl;
   // Pursuit (if detected) and acquire each change the conflict map
   if (weapon_status == 0) {
     std::string eqn_type = "Pursuit";
@@ -155,6 +155,7 @@ void StateInst::Tock() {
   // If state is pursuing but hasn't yet acquired
   else if (weapon_status == 2) {
     std::string eqn_type = "Acquire";
+    //    std::string eqn_type = "Pu";
     bool acquire_decision = WeaponDecision(eqn_type);
     // State now successfully acquires
     if (acquire_decision == 1) {
@@ -275,8 +276,10 @@ void StateInst::DeploySecret() {
 	else{
 	  Agent* me = this;
 	  std::string proto = me->prototype();
+	  std::cout << "fetching conflict score for  "<< proto <<std::endl;
 	  factor_curr_y =
 	    pseudo_region->GetConflictScore("Pursuit", proto);
+	  std::cout << "conflict score is " << factor_curr_y << std::endl;
 	  // Then check conflict value to see if it needs to change. If
 	  //constants is a single element then it doesn't have a time-based
 	  // change. This change is not propogated until the NEXT timestep
@@ -284,6 +287,7 @@ void StateInst::DeploySecret() {
 	  // also affect another state whose score for this timestep may have
 	  // already been calculated.
 	  if ((constants.size() > 1) && (constants[1] == context()->time())){
+	    std::cout << "now changin conflict score" << std::endl;
 	    int new_val = std::round(constants[0]);
 	    pseudo_region->ChangeConflictReln("Pursuit", proto,
 					      relation, new_val); 
