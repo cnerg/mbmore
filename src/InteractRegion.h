@@ -29,7 +29,7 @@ class InteractRegion
                               "to track information needed by multiple " \
                               "prototypes."}
 
-  virtual void Tick() {}
+  virtual void Tick();
 
   virtual void Tock() {}
 
@@ -37,7 +37,7 @@ class InteractRegion
   virtual void Build(cyclus::Agent* parent);
 
   /// enter the simulation and register any children present
-  virtual void EnterNotify();
+  //  virtual void EnterNotify();
 
   // shares the pursuit and acquisition equation weighting information
   // with the child institutions

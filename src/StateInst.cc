@@ -119,7 +119,7 @@ void StateInst::Tick() {
       // If conflict has a single value and its not +1, 0, -1 then it does not
       // change in the simulation
       if ((factor == "Conflict" || factor == "conflict")
-	       && (constants.size() == 1)){
+	  && (constants.size() == 1)){
 	double yf = constants[0];
 	if (std::abs(yf) <= 1){
 	  int t_change = RNG_Integer(0, simdur, rng_seed);
