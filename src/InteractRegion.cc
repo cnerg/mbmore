@@ -44,60 +44,66 @@ int InteractRegion::GetNStates() {
   return n_states;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void InteractRegion::EnterNotify() {
-  cyclus::Region::EnterNotify();
+//void InteractRegion::EnterNotify() {
+//  cyclus::Region::EnterNotify();
 
-  // Create conflict score map
-  BuildScoreMatrix();
-  
-  // Define Master List of column names for the database only once.
-  std::string master_factors [] = { "Auth", "Conflict", "Enrich",
-				    "Mil_Iso","Mil_Sp","Reactors",
-				    "Sci_Net", "U_Reserve"};
-  int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
-  
-  if (column_names.size() == 0){
-    for(int f_it = 0; f_it < n_factors; f_it++) {
-      std::cout << "EnterNotify adding " << master_factors[f_it] << std::endl;
-      column_names.push_back(master_factors[f_it]);
+void InteractRegion::Tick() {
+
+  // Things to do only at beginning of Simulation
+  if (context()->time() == 0){
+
+    // Create conflict score map
+    BuildScoreMatrix();
+    
+    // Define Master List of column names for the database only once.
+    std::string master_factors [] = { "Auth", "Conflict", "Enrich",
+				      "Mil_Iso","Mil_Sp","Reactors",
+				      "Sci_Net", "U_Reserve"};
+    int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
+    
+    if (column_names.size() == 0){
+      for(int f_it = 0; f_it < n_factors; f_it++) {
+	std::cout << "EnterNotify adding " << master_factors[f_it] << std::endl;
+	column_names.push_back(master_factors[f_it]);
+      }
     }
-  }
-
-  // Determine which factors are used in the simulation based on the defined
-  // weights.
-  p_present = DefinedFactors("Pursuit");
-  //  a_present = DefinedFactors("Acquire");
-
-  // Check weights to make sure they add to one, otherwise normalize
-  double tot_weight = 0.0;
-  std::map <std::string, double>::iterator wt_it;
-  for(wt_it = p_wts.begin(); wt_it != p_wts.end(); wt_it++) {
-    tot_weight+= wt_it->second;
-  }
-  if (tot_weight == 0){
-    cyclus::Warn<cyclus::VALUE_WARNING>("Weights must be defined!");
-  }
-  else if (tot_weight != 1.0) {
+    
+    // Determine which factors are used in the simulation based on the defined
+    // weights.
+    p_present = DefinedFactors("Pursuit");
+    //  a_present = DefinedFactors("Acquire");
+    
+    // Check weights to make sure they add to one, otherwise normalize
+    double tot_weight = 0.0;
+    std::map <std::string, double>::iterator wt_it;
     for(wt_it = p_wts.begin(); wt_it != p_wts.end(); wt_it++) {
-      wt_it->second = wt_it->second/tot_weight;
+      tot_weight+= wt_it->second;
     }
-  }
-
-  // If conflict is defined, record initial conflict relations in database
-  int n_states = GetNStates();
-  std::cout << "Building region, should be recording conflict here" << std::endl;
-  if ((p_present["Conflict"] == true) && n_states > 1){
-    std::cout << "Conflict is in list of factors so recording" << std::endl;
-    std::string eqn_type = "Pursuit";
-    for (auto const &ent1 : p_conflict_map) {
-      for (auto const &ent2 : ent1.second){
-	std::cout << "recording value for " <<  ent1.first << " and " << ent2.first << " to be " << ent2.second << std::endl;
-	RecordConflictReln(eqn_type, ent1.first, ent2.first, ent2.second);
+    if (tot_weight == 0){
+      cyclus::Warn<cyclus::VALUE_WARNING>("Weights must be defined!");
+    }
+    else if (tot_weight != 1.0) {
+      for(wt_it = p_wts.begin(); wt_it != p_wts.end(); wt_it++) {
+	wt_it->second = wt_it->second/tot_weight;
+      }
+    }
+    
+    // If conflict is defined, record initial conflict relations in database
+    int n_states = GetNStates();
+    std::cout << "Building region, should be recording conflict here" << std::endl;
+    if ((p_present["Conflict"] == true) && n_states > 1){
+      std::cout << "Conflict is in list of factors so recording" << std::endl;
+      std::string eqn_type = "Pursuit";
+      for (auto const &ent1 : p_conflict_map) {
+	for (auto const &ent2 : ent1.second){
+	  std::cout << "recording value for " <<  ent1.first << " and " << ent2.first << " to be " << ent2.second << std::endl;
+	  RecordConflictReln(eqn_type, ent1.first, ent2.first, ent2.second);
+	}
       }
     }
   }
 }
- // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determines which factors are defined for this sim
 std::map<std::string, bool>
   InteractRegion::DefinedFactors(std::string eqn_type) {
