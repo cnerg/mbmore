@@ -174,6 +174,7 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
     // TODO: CHANGE HARDCODING TO CHECK FOR ARBITRARY TIMESTEP DURATION
     //       (currently assumes timestep is one year)
     double avg_time = CalcYVal(function, constants, eqn_val);
+    std::cout << "For acquire, the avg time is" << avg_time << std::endl;
     phase_likely = 1.0/avg_time;
   }
 
@@ -191,16 +192,25 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
   
 double InteractRegion::GetConflictScore(std::string eqn_type,
 					 std::string prototype) {
-    
+
+  std::cout << "Now in GetConflictScore" << std::endl;
   std::map<std::string, std::map<std::string, int> > relations_map ;
   // Use only pursuit map for now
   relations_map = p_conflict_map;
   int gross_score = 0;
 
+  if (p_conflict_map.find(prototype) == p_conflict_map.end() ) {
+    std::stringstream ss;
+    ss << "State " << prototype
+       << " is not defined in the p_conflict_relations";
+    throw cyclus::ValueError(ss.str());
+  }
+  
   std::map<std::string, int> relationships = relations_map[prototype];
   std::map<std::string, int>::iterator map_it;
  
   for(map_it = relationships.begin(); map_it != relationships.end(); map_it++) {
+    std::cout << "iterating thru conflicts" << std::endl;
     std::string other_state = map_it->first;
     // allies, neutral, or enemies
     int this_relation = map_it->second;
@@ -222,6 +232,7 @@ double InteractRegion::GetConflictScore(std::string eqn_type,
 					    this_relation);
     }
     gross_score += score_matrix[relation_string];
+    std::cout << "Iterating to retrieve conflict score, value is " << score_matrix[relation_string] << std::endl;
   }
       
   // Take all conflict relationships for a single state and average them
