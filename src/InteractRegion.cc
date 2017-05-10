@@ -85,10 +85,13 @@ void InteractRegion::EnterNotify() {
 
   // If conflict is defined, record initial conflict relations in database
   int n_states = GetNStates();
+  std::cout << "Building region, should be recording conflict here" << std::endl;
   if ((p_present["Conflict"] == true) && n_states > 1){
+    std::cout << "Conflict is in list of factors so recording" << std::endl;
     std::string eqn_type = "Pursuit";
     for (auto const &ent1 : p_conflict_map) {
       for (auto const &ent2 : ent1.second){
+	std::cout << "recording value for " <<  ent1.first << " and " << ent2.first << " to be " << ent2.second << std::endl;
 	RecordConflictReln(eqn_type, ent1.first, ent2.first, ent2.second);
       }
     }
@@ -119,22 +122,21 @@ std::map<std::string, bool>
   return present;
 }
 
+  /* 
+//THIS IS NOT BEING USED
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
 std::map<std::string, bool>
   InteractRegion::GetDefinedFactors(std::string eqn_type) {
   //  if (eqn_type == "Pursuit"){
-    return p_present;
-}
-    /*
-}
-  else {
+  return p_present;
+    }
+    else {
     return a_present;
-  }
-}
-    */
-
+    }
+    }
+*/
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
@@ -276,7 +278,8 @@ void InteractRegion::ChangeConflictReln(std::string eqn_type,
 					  std::string this_state,
 					  std::string other_state, int new_val){
   //  if (eqn_type == "Pursuit"){
-    p_conflict_map[this_state][other_state] = new_val;
+  std::cout << "Changing Conflict Reln so recording " << std::endl;
+  p_conflict_map[this_state][other_state] = new_val;
     RecordConflictReln(eqn_type, this_state, other_state, new_val);
     if (symmetric == 1){
       p_conflict_map[other_state][this_state] = new_val;
@@ -309,7 +312,8 @@ void InteractRegion::RecordConflictReln(std::string eqn_type,
 					std::string other_state, int new_val){
   using cyclus::Context;
   using cyclus::Recorder;
-
+  std::cout << "Currently INSIDE RecordConflictReln fn" << std::endl;
+  
   cyclus::Datum *d = context()->NewDatum("InteractRelations");
   d->AddVal("Time", context()->time());
   d->AddVal("PrimaryAgent", this_state);
