@@ -51,7 +51,7 @@ void InteractRegion::Tick() {
 
   // Things to do only at beginning of Simulation
   if (context()->time() == 0){
-
+    
     // Create conflict score map
     BuildScoreMatrix();
     
@@ -94,11 +94,17 @@ void InteractRegion::Tick() {
     if ((p_present["Conflict"] == true) && n_states > 1){
       std::cout << "Conflict is in list of factors so recording" << std::endl;
       std::string eqn_type = "Pursuit";
-      for (auto const &ent1 : p_conflict_map) {
-	for (auto const &ent2 : ent1.second){
-	  std::cout << "recording value for " <<  ent1.first << " and " << ent2.first << " to be " << ent2.second << std::endl;
-	  RecordConflictReln(eqn_type, ent1.first, ent2.first, ent2.second);
-	}
+      std::map<std::pair<std::string, std::string>,int>::iterator it;
+      for (it = p_conflict_map.begin(); it != p_conflict_map.end(); ++it ) {
+	
+	//      for (auto const &ent1 : p_conflict_map) {
+	//	for (auto const &ent2 : ent1.second){
+		std::cout << "recording value for " <<  it->first.first << " and " << it->first.second << " to be " << it->second << std::endl;
+	RecordConflictReln(eqn_type, it->first.first, it->first.second, it->second);
+      //	std::pair<std::string, std::string> state_pair = ent1.first;
+      //	int relation = ent1.second;
+	//	std::cout << "recording value for " <<  state_pair.first << " and " << state_pair.second << " to be " << relation << std::endl;
+	//	RecordConflictReln(eqn_type, it.first.first, it.first.second, it.second);
       }
     }
   }
@@ -197,63 +203,71 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
 // 5 == neutral, 10 == conflict)
   
 double InteractRegion::GetConflictScore(std::string eqn_type,
-					 std::string prototype) {
-
+					std::string prototype) {
+  
   std::cout << "Now in GetConflictScore" << std::endl;
-  std::map<std::string, std::map<std::string, int> > relations_map ;
+  //  std::map<std::string, std::map<std::string, int> > relations_map ;
+  //  std::map<std::pair<std::string,std::string>, int> > relations_map ;
   // Use only pursuit map for now
-  relations_map = p_conflict_map;
+  //  relations_map = p_conflict_map;
   int gross_score = 0;
-
-  if (p_conflict_map.find(prototype) == p_conflict_map.end() ) {
+  
+  int n_entries = 0;
+  std::map<std::pair<std::string, std::string>,int>::iterator map_it;
+  for (map_it = p_conflict_map.begin(); map_it != p_conflict_map.end(); ++map_it){
+    std::string curr_state = map_it->first.first;
+    if (curr_state == prototype){
+      n_entries+=1;
+      
+      //      std::map<std::string, int> relationships = relations_map[prototype];
+      //  std::map<std::string, int>::iterator map_it;
+      
+      //  for(map_it = relationships.begin(); map_it != relationships.end(); map_it++) {
+      std::cout << "iterating thru conflicts" << std::endl;
+      std::string other_state = map_it->first.second;
+      // allies, neutral, or enemies
+      int this_relation = map_it->second;
+      
+      // what is each state's NW status?
+      int my_weapon_status = sim_weapon_status[prototype];
+      int other_weapon_status = sim_weapon_status[other_state];
+      
+      std::string relation_string;
+      // order smallest number first (0_2 instead of 2_0)
+      if (my_weapon_status > other_weapon_status){
+	relation_string = BuildRelationString(other_weapon_status,
+					      my_weapon_status,
+					      this_relation);
+      }
+      else {
+	relation_string = BuildRelationString(my_weapon_status,
+					      other_weapon_status,
+					      this_relation);
+      }
+      gross_score += score_matrix[relation_string];
+      std::cout << "Iterating to retrieve conflict score, value is " << score_matrix[relation_string] << std::endl;
+    }
+  }
+  if (n_entries == 0){
     std::stringstream ss;
     ss << "State " << prototype
        << " is not defined in the p_conflict_relations";
     throw cyclus::ValueError(ss.str());
   }
-  
-  std::map<std::string, int> relationships = relations_map[prototype];
-  std::map<std::string, int>::iterator map_it;
- 
-  for(map_it = relationships.begin(); map_it != relationships.end(); map_it++) {
-    std::cout << "iterating thru conflicts" << std::endl;
-    std::string other_state = map_it->first;
-    // allies, neutral, or enemies
-    int this_relation = map_it->second;
 
-    // what is each state's NW status?
-    int my_weapon_status = sim_weapon_status[prototype];
-    int other_weapon_status = sim_weapon_status[other_state];
-
-    std::string relation_string;
-    // order smallest number first (0_2 instead of 2_0)
-    if (my_weapon_status > other_weapon_status){
-      relation_string = BuildRelationString(other_weapon_status,
-					    my_weapon_status,
-					    this_relation);
-    }
-    else {
-      relation_string = BuildRelationString(my_weapon_status,
-					    other_weapon_status,
-					    this_relation);
-    }
-    gross_score += score_matrix[relation_string];
-    std::cout << "Iterating to retrieve conflict score, value is " << score_matrix[relation_string] << std::endl;
-  }
-      
   // Take all conflict relationships for a single state and average them
   // together to get final conflict score
   // Example: if A-B = 2, A-C = 6, A-D = 10, then total conflict for A = 6
-    double avg_score = static_cast<double>(gross_score)/relationships.size();
-    return avg_score;
+  double avg_score = static_cast<double>(gross_score)/n_entries;
+  return avg_score;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Make a string that contains the weapons status of states A and state B, as
 // well as their relationship as statusA_statusB_relationship
 // String is used as key for map of conflict scores
 // Status 0 - Non Weapon State, 2 - Pursuing, 3 - Acquired
-  std::string InteractRegion::BuildRelationString(int statusA,
+std::string InteractRegion::BuildRelationString(int statusA,
 						  int statusB,
 						  int relation){
 
@@ -296,10 +310,12 @@ void InteractRegion::ChangeConflictReln(std::string eqn_type,
 					  std::string other_state, int new_val){
   //  if (eqn_type == "Pursuit"){
   std::cout << "Changing Conflict Reln so recording " << std::endl;
-  p_conflict_map[this_state][other_state] = new_val;
+  p_conflict_map[std::pair<std::string, std::string>
+		  (this_state, other_state)] = new_val;
     RecordConflictReln(eqn_type, this_state, other_state, new_val);
     if (symmetric == 1){
-      p_conflict_map[other_state][this_state] = new_val;
+      p_conflict_map[std::pair<std::string, std::string>
+		  (other_state, this_state)] = new_val;
       RecordConflictReln(eqn_type, other_state, this_state, new_val);
     }
     //  }
