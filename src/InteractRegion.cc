@@ -28,8 +28,7 @@ InteractRegion::InteractRegion(cyclus::Context* ctx)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::map<std::string, double>
   InteractRegion::GetWeights(std::string eqn_type) {
-    //TODO: use eqn_type ot expand in offering PE or AQ results
-    return p_wts;
+    return wts;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int InteractRegion::GetNStates() {
@@ -44,9 +43,6 @@ int InteractRegion::GetNStates() {
   return n_states;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//void InteractRegion::EnterNotify() {
-//  cyclus::Region::EnterNotify();
-
 void InteractRegion::Tick() {
 
   // Things to do only at beginning of Simulation
@@ -71,40 +67,30 @@ void InteractRegion::Tick() {
     // Determine which factors are used in the simulation based on the defined
     // weights.
     p_present = DefinedFactors("Pursuit");
-    //  a_present = DefinedFactors("Acquire");
     
     // Check weights to make sure they add to one, otherwise normalize
     double tot_weight = 0.0;
     std::map <std::string, double>::iterator wt_it;
-    for(wt_it = p_wts.begin(); wt_it != p_wts.end(); wt_it++) {
+    for(wt_it = wts.begin(); wt_it != wts.end(); wt_it++) {
       tot_weight+= wt_it->second;
     }
     if (tot_weight == 0){
       cyclus::Warn<cyclus::VALUE_WARNING>("Weights must be defined!");
     }
     else if (tot_weight != 1.0) {
-      for(wt_it = p_wts.begin(); wt_it != p_wts.end(); wt_it++) {
+      for(wt_it = wts.begin(); wt_it != wts.end(); wt_it++) {
 	wt_it->second = wt_it->second/tot_weight;
       }
     }
     
     // If conflict is defined, record initial conflict relations in database
     int n_states = GetNStates();
-    std::cout << "Building region, should be recording conflict here" << std::endl;
     if ((p_present["Conflict"] == true) && n_states > 1){
-      std::cout << "Conflict is in list of factors so recording" << std::endl;
       std::string eqn_type = "Pursuit";
       std::map<std::pair<std::string, std::string>,int>::iterator it;
-      for (it = p_conflict_map.begin(); it != p_conflict_map.end(); ++it ) {
-	
-	//      for (auto const &ent1 : p_conflict_map) {
-	//	for (auto const &ent2 : ent1.second){
-		std::cout << "recording value for " <<  it->first.first << " and " << it->first.second << " to be " << it->second << std::endl;
-	RecordConflictReln(eqn_type, it->first.first, it->first.second, it->second);
-      //	std::pair<std::string, std::string> state_pair = ent1.first;
-      //	int relation = ent1.second;
-	//	std::cout << "recording value for " <<  state_pair.first << " and " << state_pair.second << " to be " << relation << std::endl;
-	//	RecordConflictReln(eqn_type, it.first.first, it.first.second, it.second);
+      for (it = p_conflict_map.begin(); it != p_conflict_map.end(); ++it) {
+	RecordConflictReln(eqn_type, it->first.first,
+			   it->first.second, it->second);
       }
     }
   }
@@ -113,11 +99,6 @@ void InteractRegion::Tick() {
 // Determines which factors are defined for this sim
 std::map<std::string, bool>
   InteractRegion::DefinedFactors(std::string eqn_type) {
-
-  std::map<std::string, double> wts;
-  //  if (eqn_type == "Pursuit"){
-    wts = p_wts;
-    //  }
 
   std::map<std::string, bool> present;
   std::map<std::string,double>::iterator factor_it;
@@ -133,22 +114,6 @@ std::map<std::string, bool>
   }
   return present;
 }
-
-  /* 
-//THIS IS NOT BEING USED
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Returns a map of regularly used factors and bool to indicate whether they are
-// defined in this sim.
-std::map<std::string, bool>
-  InteractRegion::GetDefinedFactors(std::string eqn_type) {
-  //  if (eqn_type == "Pursuit"){
-  return p_present;
-    }
-    else {
-    return a_present;
-    }
-    }
-*/
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
@@ -177,7 +142,6 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
     else {
       integ_likely = CalcYVal(function, constants, eqn_val);
     }
-    std::cout << "First CALCYVAL is" << integ_likely << std::endl;
     phase_likely = ProbPerTime(integ_likely, hist_duration);
   }
   else {
@@ -186,12 +150,14 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
     // TODO: CHANGE HARDCODING TO CHECK FOR ARBITRARY TIMESTEP DURATION
     //       (currently assumes timestep is one year)
     double avg_time = CalcYVal(function, constants, eqn_val);
-    std::cout << "For acquire, the avg time is" << avg_time << std::endl;
     phase_likely = 1.0/avg_time;
   }
 
   if ((phase_likely < 0) || (phase_likely > 1)){
-    cyclus::Warn<cyclus::VALUE_WARNING>("likelihood of weapon decision isnt between 0-1! Something went wrong!");
+    std::stringstream ss;
+    ss << "likelihood of weapon decision isnt between 0-1!"
+       << "Something went wrong!";
+    cyclus::Warn<cyclus::VALUE_WARNING>(ss.str());
   }
   return phase_likely;
   
@@ -204,27 +170,17 @@ double InteractRegion::GetLikely(std::string phase, double eqn_val) {
   
 double InteractRegion::GetConflictScore(std::string eqn_type,
 					std::string prototype) {
-  
-  std::cout << "Now in GetConflictScore" << std::endl;
-  //  std::map<std::string, std::map<std::string, int> > relations_map ;
-  //  std::map<std::pair<std::string,std::string>, int> > relations_map ;
-  // Use only pursuit map for now
-  //  relations_map = p_conflict_map;
   int gross_score = 0;
-  
   int n_entries = 0;
+
   std::map<std::pair<std::string, std::string>,int>::iterator map_it;
-  for (map_it = p_conflict_map.begin(); map_it != p_conflict_map.end(); ++map_it){
+  for (map_it = p_conflict_map.begin();
+       map_it != p_conflict_map.end(); ++map_it){
     std::string curr_state = map_it->first.first;
     if (curr_state == prototype){
       n_entries+=1;
-      
-      //      std::map<std::string, int> relationships = relations_map[prototype];
-      //  std::map<std::string, int>::iterator map_it;
-      
-      //  for(map_it = relationships.begin(); map_it != relationships.end(); map_it++) {
-      std::cout << "iterating thru conflicts" << std::endl;
       std::string other_state = map_it->first.second;
+
       // allies, neutral, or enemies
       int this_relation = map_it->second;
       
@@ -245,7 +201,6 @@ double InteractRegion::GetConflictScore(std::string eqn_type,
 					      this_relation);
       }
       gross_score += score_matrix[relation_string];
-      std::cout << "Iterating to retrieve conflict score, value is " << score_matrix[relation_string] << std::endl;
     }
   }
   if (n_entries == 0){
@@ -308,17 +263,15 @@ std::string InteractRegion::BuildRelationString(int statusA,
 void InteractRegion::ChangeConflictReln(std::string eqn_type,
 					  std::string this_state,
 					  std::string other_state, int new_val){
-  //  if (eqn_type == "Pursuit"){
-  std::cout << "Changing Conflict Reln so recording " << std::endl;
+
   p_conflict_map[std::pair<std::string, std::string>
-		  (this_state, other_state)] = new_val;
-    RecordConflictReln(eqn_type, this_state, other_state, new_val);
-    if (symmetric == 1){
-      p_conflict_map[std::pair<std::string, std::string>
-		  (other_state, this_state)] = new_val;
-      RecordConflictReln(eqn_type, other_state, this_state, new_val);
-    }
-    //  }
+		 (this_state, other_state)] = new_val;
+  RecordConflictReln(eqn_type, this_state, other_state, new_val);
+  if (symmetric == 1){
+    p_conflict_map[std::pair<std::string, std::string>
+		   (other_state, this_state)] = new_val;
+    RecordConflictReln(eqn_type, other_state, this_state, new_val);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -345,7 +298,6 @@ void InteractRegion::RecordConflictReln(std::string eqn_type,
 					std::string other_state, int new_val){
   using cyclus::Context;
   using cyclus::Recorder;
-  std::cout << "Currently INSIDE RecordConflictReln fn" << std::endl;
   
   cyclus::Datum *d = context()->NewDatum("InteractRelations");
   d->AddVal("Time", context()->time());

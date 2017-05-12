@@ -113,7 +113,6 @@ void StateInst::Tick() {
 	int t_change = RNG_Integer(0, simdur, rng_seed);
 	// add the t_change to the P_f record
 	eqn_it->second.second.push_back(t_change);
-	std::cout << "Adding random step at : " << t_change << std::endl;
       }
       // Conflict occurs once and changes to neutral or opposite original value
       // If conflict has a single value and its not +1, 0, -1 then it does not
@@ -138,7 +137,6 @@ void StateInst::Tock() {
     dynamic_cast<InteractRegion*>(this->parent());
   Agent* me = this;
   std::string proto = me->prototype();
-  std::cout << "Printing Weapont status in Tock " << weapon_status << std::endl;
   // Pursuit (if detected) and acquire each change the conflict map
   if (weapon_status == 0) {
     std::string eqn_type = "Pursuit";
@@ -276,10 +274,8 @@ void StateInst::DeploySecret() {
 	else{
 	  Agent* me = this;
 	  std::string proto = me->prototype();
-	  std::cout << "fetching conflict score for  "<< proto <<std::endl;
 	  factor_curr_y =
 	    pseudo_region->GetConflictScore("Pursuit", proto);
-	  std::cout << "conflict score is " << factor_curr_y << std::endl;
 	  // Then check conflict value to see if it needs to change. If
 	  //constants is a single element then it doesn't have a time-based
 	  // change. This change is not propogated until the NEXT timestep
@@ -287,10 +283,9 @@ void StateInst::DeploySecret() {
 	  // also affect another state whose score for this timestep may have
 	  // already been calculated.
 	  if ((constants.size() > 1) && (constants[1] == context()->time())){
-	    std::cout << "now changin conflict score" << std::endl;
 	    int new_val = std::round(constants[0]);
 	    pseudo_region->ChangeConflictReln("Pursuit", proto,
-					      relation, new_val); 
+				      relation, new_val); 
 	  }
 	}
       }
@@ -302,14 +297,12 @@ void StateInst::DeploySecret() {
       d->AddVal(factor.c_str(), factor_curr_y);
     }
   }
-  std::cout << "outcome of pursuit eqn is" << pursuit_eqn << std::endl;
   // Convert pursuit eqn result to a Y/N decision
   // GetLikely requires an input value between 0-10, and the function type
   // should be normalized to convert that value to have a max of y=1.0 for x=10
   double likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn);
   bool decision = XLikely(likely, rng_seed);
   
-  std::cout << "Decision is " << decision << std::endl;
   d->AddVal("EqnVal", pursuit_eqn);
   d->AddVal("Likelihood", likely);
   d->AddVal("Decision", decision);

@@ -117,8 +117,8 @@ class StateInst
     "alias": ["pursuit_factors", "factor", ["function","name", ["params","val"]]], \
     "doc": "Pursuit Factors,  All factors must be between 0 and 10. The "\
            " allowed Individual Factors define the States independent " \
-	   " perspective, and are: Auth (authoritarianism), Enrich," \
-           "  Mil_Sp (military spending/GDP),"\
+	   " perspective, and are: Auth (authoritarianism), Enrich " \
+           "(and reprocessing),  Mil_Sp (military spending/GDP),"\
            " Reactors, Sci_Net (scientific network), U_Reserve. "\
 	   " The Relational Factors describe how the States interact with " \
 	   " one another, and are: Conflict, Mil_Iso (military isolation)." \
