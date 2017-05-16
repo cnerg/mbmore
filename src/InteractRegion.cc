@@ -59,7 +59,6 @@ void InteractRegion::Tick() {
     
     if (column_names.size() == 0){
       for(int f_it = 0; f_it < n_factors; f_it++) {
-	std::cout << "EnterNotify adding " << master_factors[f_it] << std::endl;
 	column_names.push_back(master_factors[f_it]);
       }
     }

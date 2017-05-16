@@ -159,7 +159,6 @@ void StateInst::Tock() {
     if (acquire_decision == 1) {
       weapon_status = 3;
       pseudo_region->UpdateWeaponStatus(proto, weapon_status);
-      std::cout << "Weapon Acquired" << context()->time() << "."<< std::endl;
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
 					  << " is producing weapons at: " 
 					  << context()->time() << ".";
@@ -219,7 +218,6 @@ void StateInst::DeploySecret() {
   using cyclus::Context;
   using cyclus::Agent;
   using cyclus::Recorder;
-  
   cyclus::Datum *d = context()->NewDatum("WeaponProgress");
   d->AddVal("Time", context()->time());
   d->AddVal("AgentId", cyclus::Agent::id());
@@ -235,8 +233,7 @@ void StateInst::DeploySecret() {
     dynamic_cast<InteractRegion*>(this->parent());
   
   // All defined factors should be recorded with their actual value
-  P_wt = pseudo_region->GetWeights(eqn_type);
-
+  P_wt = pseudo_region->GetWeights("Pursuit");
   // Even if state is already pursuing and working toward acquire, the success
   // rate is determined by the value of the pursuit factors, so score must be
   // calculated
@@ -284,6 +281,7 @@ void StateInst::DeploySecret() {
 	  // already been calculated.
 	  if ((constants.size() > 1) && (constants[1] == context()->time())){
 	    int new_val = std::round(constants[0]);
+	    // TODO: THIS SHOULD BE eqn_Type not PURSUIT (but doesn't really matteR)
 	    pseudo_region->ChangeConflictReln("Pursuit", proto,
 				      relation, new_val); 
 	  }
@@ -302,12 +300,11 @@ void StateInst::DeploySecret() {
   // should be normalized to convert that value to have a max of y=1.0 for x=10
   double likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn);
   bool decision = XLikely(likely, rng_seed);
-  
+
   d->AddVal("EqnVal", pursuit_eqn);
   d->AddVal("Likelihood", likely);
   d->AddVal("Decision", decision);
   d->Record();
-  
   return decision;  
 }
   
