@@ -113,13 +113,12 @@ void StateInst::Tick() {
 	int t_change = RNG_Integer(0, simdur, rng_seed);
 	// add the t_change to the P_f record
 	eqn_it->second.second.push_back(t_change);
-	std::cout << "Adding random step at : " << t_change << std::endl;
       }
       // Conflict occurs once and changes to neutral or opposite original value
       // If conflict has a single value and its not +1, 0, -1 then it does not
       // change in the simulation
       if ((factor == "Conflict" || factor == "conflict")
-	       && (constants.size() == 1)){
+	  && (constants.size() == 1)){
 	double yf = constants[0];
 	if (std::abs(yf) <= 1){
 	  int t_change = RNG_Integer(0, simdur, rng_seed);
@@ -138,7 +137,6 @@ void StateInst::Tock() {
     dynamic_cast<InteractRegion*>(this->parent());
   Agent* me = this;
   std::string proto = me->prototype();
-  
   // Pursuit (if detected) and acquire each change the conflict map
   if (weapon_status == 0) {
     std::string eqn_type = "Pursuit";
@@ -155,12 +153,12 @@ void StateInst::Tock() {
   // If state is pursuing but hasn't yet acquired
   else if (weapon_status == 2) {
     std::string eqn_type = "Acquire";
+    //    std::string eqn_type = "Pu";
     bool acquire_decision = WeaponDecision(eqn_type);
     // State now successfully acquires
     if (acquire_decision == 1) {
       weapon_status = 3;
       pseudo_region->UpdateWeaponStatus(proto, weapon_status);
-      std::cout << "Weapon Acquired" << context()->time() << "."<< std::endl;
       LOG(cyclus::LEV_INFO2, "StateInst") << "StateInst " << this->id()
 					  << " is producing weapons at: " 
 					  << context()->time() << ".";
@@ -220,7 +218,6 @@ void StateInst::DeploySecret() {
   using cyclus::Context;
   using cyclus::Agent;
   using cyclus::Recorder;
-  
   cyclus::Datum *d = context()->NewDatum("WeaponProgress");
   d->AddVal("Time", context()->time());
   d->AddVal("AgentId", cyclus::Agent::id());
@@ -236,8 +233,7 @@ void StateInst::DeploySecret() {
     dynamic_cast<InteractRegion*>(this->parent());
   
   // All defined factors should be recorded with their actual value
-  P_wt = pseudo_region->GetWeights(eqn_type);
-
+  P_wt = pseudo_region->GetWeights("Pursuit");
   // Even if state is already pursuing and working toward acquire, the success
   // rate is determined by the value of the pursuit factors, so score must be
   // calculated
@@ -285,8 +281,9 @@ void StateInst::DeploySecret() {
 	  // already been calculated.
 	  if ((constants.size() > 1) && (constants[1] == context()->time())){
 	    int new_val = std::round(constants[0]);
+	    // TODO: THIS SHOULD BE eqn_Type not PURSUIT (but doesn't really matteR)
 	    pseudo_region->ChangeConflictReln("Pursuit", proto,
-					      relation, new_val); 
+				      relation, new_val); 
 	  }
 	}
       }
@@ -298,16 +295,16 @@ void StateInst::DeploySecret() {
       d->AddVal(factor.c_str(), factor_curr_y);
     }
   }
-  //Convert pursuit eqn result to a Y/N decision
-  double likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn/10);
+  // Convert pursuit eqn result to a Y/N decision
+  // GetLikely requires an input value between 0-10, and the function type
+  // should be normalized to convert that value to have a max of y=1.0 for x=10
+  double likely = pseudo_region->GetLikely(eqn_type, pursuit_eqn);
   bool decision = XLikely(likely, rng_seed);
-  
-  std::cout << "Decision is " << decision << std::endl;
+
   d->AddVal("EqnVal", pursuit_eqn);
   d->AddVal("Likelihood", likely);
   d->AddVal("Decision", decision);
   d->Record();
-  
   return decision;  
 }
   

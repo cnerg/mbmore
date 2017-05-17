@@ -36,9 +36,12 @@ double RNG_NormalDist(double mean, double sigma, int rng_seed);
 double RNG_Integer(double min, double max, int rng_seed);
 
 // For various types of time varying curves, calculate y for some x
- double CalcYVal(std::string function, std::vector<double> constants,
+double CalcYVal(std::string function, std::vector<double> constants,
 		double x_val);
- 
+
+// Convert probability integrated over n_timesteps (L, N) to a probability (P)
+// at single time, by solving for P:  L = 1 - (1-P)^N 
+double ProbPerTime(double xval, double n_timesteps);
 
 } // namespace mbmore
 

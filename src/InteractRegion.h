@@ -29,7 +29,7 @@ class InteractRegion
                               "to track information needed by multiple " \
                               "prototypes."}
 
-  virtual void Tick() {}
+  virtual void Tick();
 
   virtual void Tock() {}
 
@@ -37,7 +37,7 @@ class InteractRegion
   virtual void Build(cyclus::Agent* parent);
 
   /// enter the simulation and register any children present
-  virtual void EnterNotify();
+  //  virtual void EnterNotify();
 
   // shares the pursuit and acquisition equation weighting information
   // with the child institutions
@@ -94,8 +94,6 @@ class InteractRegion
   /// every agent should be able to print a verbose description
   virtual std::string str();
 
-
-  
  private:
 
 #pragma cyclus var {				\
@@ -112,7 +110,7 @@ bool symmetric;
     "doc": "Weighting for all Pursuit Factors defined in StateInst "	\
            " Total weight should add to 1 (otherwise it will be normalized)", \
     }
-  std::map<std::string, double> p_wts ;
+  std::map<std::string, double> wts ;
 
   #pragma cyclus var {      \
     "alias": ["likely_converter", "phase", ["function","name", ["params","val"]]],\
@@ -125,15 +123,15 @@ bool symmetric;
     }
   std::map<std::string, std::pair<std::string, std::vector<double> > >
     likely_rescale ;
- 
-  #pragma cyclus var {      \
-	  "alias": ["p_conflict_relations", "primary_state", ["pair_state","name","relation"]], \
+
+#pragma cyclus var {							\
+    "alias": ["p_conflict_relations", ["states", "primary_state","pair_state"],"relation"], \
     "doc": "Conflict relationships between states at t=0 for Pursuit"\
            "Each state is entered as the Primary state, with it's perceived " \
            "relations to each other state as the map values." \
            "Choices are +1 (allies), 0 (neutral), -1 (enemies)",	 \
     }
-  std::map<std::string, std::map<std::string, int> > p_conflict_map ;
+  std::map<std::pair<std::string,std::string>, int> p_conflict_map ;
 
 
 // Defines persistent column names in WeaponProgress table of database
