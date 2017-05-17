@@ -195,6 +195,29 @@ double RNG_Integer(double min, double max, int rng_seed) {
 	c_b = constants[1];
       } 
       curr_y = c_b*(pow( x_val, constants[0]));
+    } else if (function == "Bounded_Power" || function == "bounded_power"){
+      // Must be defined with all vals below
+      // (Bx^A)+C, [D,E]
+      // Where D is lower bound and E is upper bound. y for any x vals < D is
+      // set to zero, y for any x vals > E is set to E
+      if (constants.size() != 5) {
+	throw "incorrect number of equation parameters";
+      } else {
+	double c_b = constants[1];
+	double c_a = constants[0];
+	double c_c = constants[2];
+	double c_d = constants[3];
+	double c_e = constants[4];
+	if (x_val < c_d){
+	  curr_y = 0;
+	}
+	else if (x_val > c_e) {
+	  curr_y = c_c + (c_b*(pow(c_e, c_a)));
+	}
+	else {
+	  curr_y = c_c + (c_b*(pow(x_val, c_a)));
+	}
+      }
     } else if (function == "Step" || function == "step"){
       if (constants.size() < 3) {
 	throw "incorrect number of equation parameters";
@@ -213,6 +236,15 @@ double RNG_Integer(double min, double max, int rng_seed) {
   return curr_y;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Determines probability of an event at a single timestep given the
+// likelihood integrated over n_timesteps
+double ProbPerTime(double xval, double n_timesteps){
+  if ((xval >= 1) || (xval < 0)){
+    throw "Xval must be positive and less than 1";
+  }
+  return 1 - (pow((1.0 - xval), (1.0/n_timesteps)));
+}
+
 /*
 double RNG_NormalDist(double mean, double sigma) {
   bool time_seed = 0;

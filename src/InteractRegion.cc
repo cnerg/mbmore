@@ -28,8 +28,7 @@ InteractRegion::InteractRegion(cyclus::Context* ctx)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::map<std::string, double>
   InteractRegion::GetWeights(std::string eqn_type) {
-    //TODO: use eqn_type ot expand in offering PE or AQ results
-    return p_wts;
+    return wts;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int InteractRegion::GetNStates() {
@@ -44,65 +43,61 @@ int InteractRegion::GetNStates() {
   return n_states;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void InteractRegion::EnterNotify() {
-  cyclus::Region::EnterNotify();
+void InteractRegion::Tick() {
 
-  // Create conflict score map
-  BuildScoreMatrix();
-  
-  // Define Master List of column names for the database only once.
-  std::string master_factors [] = { "Auth", "Conflict", "Enrich",
-				    "Mil_Iso","Mil_Sp","Reactors",
-				    "Sci_Net", "U_Reserve"};
-  int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
-  
-  if (column_names.size() == 0){
-    for(int f_it = 0; f_it < n_factors; f_it++) {
-      std::cout << "EnterNotify adding " << master_factors[f_it] << std::endl;
-      column_names.push_back(master_factors[f_it]);
+  // Things to do only at beginning of Simulation
+  if (context()->time() == 0){
+    
+    // Create conflict score map
+    BuildScoreMatrix();
+    
+    // Define Master List of column names for the database only once.
+    std::string master_factors [] = { "Auth", "Conflict", "Enrich",
+				      "Mil_Iso","Mil_Sp","Reactors",
+				      "Sci_Net", "U_Reserve"};
+    int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
+    
+    if (column_names.size() == 0){
+      for(int f_it = 0; f_it < n_factors; f_it++) {
+	column_names.push_back(master_factors[f_it]);
+      }
     }
-  }
-
-  // Determine which factors are used in the simulation based on the defined
-  // weights.
-  p_present = DefinedFactors("Pursuit");
-  //  a_present = DefinedFactors("Acquire");
-
-  // Check weights to make sure they add to one, otherwise normalize
-  double tot_weight = 0.0;
-  std::map <std::string, double>::iterator wt_it;
-  for(wt_it = p_wts.begin(); wt_it != p_wts.end(); wt_it++) {
-    tot_weight+= wt_it->second;
-  }
-  if (tot_weight == 0){
-    cyclus::Warn<cyclus::VALUE_WARNING>("Weights must be defined!");
-  }
-  else if (tot_weight != 1.0) {
-    for(wt_it = p_wts.begin(); wt_it != p_wts.end(); wt_it++) {
-      wt_it->second = wt_it->second/tot_weight;
+    
+    // Determine which factors are used in the simulation based on the defined
+    // weights.
+    p_present = DefinedFactors("Pursuit");
+    
+    // Check weights to make sure they add to one, otherwise normalize
+    double tot_weight = 0.0;
+    std::map <std::string, double>::iterator wt_it;
+    for(wt_it = wts.begin(); wt_it != wts.end(); wt_it++) {
+      tot_weight+= wt_it->second;
     }
-  }
-
-  // If conflict is defined, record initial conflict relations in database
-  int n_states = GetNStates();
-  if ((p_present["Conflict"] == true) && n_states > 1){
-    std::string eqn_type = "Pursuit";
-    for (auto const &ent1 : p_conflict_map) {
-      for (auto const &ent2 : ent1.second){
-	RecordConflictReln(eqn_type, ent1.first, ent2.first, ent2.second);
+    if (tot_weight == 0){
+      cyclus::Warn<cyclus::VALUE_WARNING>("Weights must be defined!");
+    }
+    else if (tot_weight != 1.0) {
+      for(wt_it = wts.begin(); wt_it != wts.end(); wt_it++) {
+	wt_it->second = wt_it->second/tot_weight;
+      }
+    }
+    
+    // If conflict is defined, record initial conflict relations in database
+    int n_states = GetNStates();
+    if ((p_present["Conflict"] == true) && n_states > 1){
+      std::string eqn_type = "Pursuit";
+      std::map<std::pair<std::string, std::string>,int>::iterator it;
+      for (it = p_conflict_map.begin(); it != p_conflict_map.end(); ++it) {
+	RecordConflictReln(eqn_type, it->first.first,
+			   it->first.second, it->second);
       }
     }
   }
 }
- // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determines which factors are defined for this sim
 std::map<std::string, bool>
   InteractRegion::DefinedFactors(std::string eqn_type) {
-
-  std::map<std::string, double> wts;
-  if (eqn_type == "Pursuit"){
-    wts = p_wts;
-  }
 
   std::map<std::string, bool> present;
   std::map<std::string,double>::iterator factor_it;
@@ -118,19 +113,6 @@ std::map<std::string, bool>
   }
   return present;
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Returns a map of regularly used factors and bool to indicate whether they are
-// defined in this sim.
-std::map<std::string, bool>
-  InteractRegion::GetDefinedFactors(std::string eqn_type) {
-  if (eqn_type == "Pursuit"){
-    return p_present;
-  }
-  else {
-    return a_present;
-  }
-}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
@@ -140,7 +122,9 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determine the likelihood value for the equation at the current time,
 // (where the current value of the equation is normalized to be between 0-1)
-  double InteractRegion::GetLikely(std::string phase, double eqn_val) {
+double InteractRegion::GetLikely(std::string phase, double eqn_val) {
+
+  double hist_duration = 70; // historical data covers 70 years
 
   std::pair<std::string, std::vector<double> > likely_pair =
     likely_rescale[phase];
@@ -149,19 +133,30 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
 
   double phase_likely;
   if (phase == "Pursuit"){
-    phase_likely = CalcYVal(function, constants, eqn_val);
+    double integ_likely;
+    // historical data defines the likelihood integrated over 70yrs
+    if ((function == "Power") || (function == "power")){
+      integ_likely = CalcYVal(function, constants, eqn_val/10.0);
+    }
+    else {
+      integ_likely = CalcYVal(function, constants, eqn_val);
+    }
+    phase_likely = ProbPerTime(integ_likely, hist_duration);
   }
   else {
     // for acquire, determine the avg time (N_years) to weapon based on score,
-    // then convert to a likelihood per timestep 1/(N_years * years2months)
+    // then convert to a likelihood per timestep 1/(N_years)
     // TODO: CHANGE HARDCODING TO CHECK FOR ARBITRARY TIMESTEP DURATION
-    //       (currently assumes timestep is one month)
+    //       (currently assumes timestep is one year)
     double avg_time = CalcYVal(function, constants, eqn_val);
-    phase_likely = 1.0/(12.0*avg_time);
+    phase_likely = 1.0/avg_time;
   }
 
   if ((phase_likely < 0) || (phase_likely > 1)){
-    cyclus::Warn<cyclus::VALUE_WARNING>("likelihood of weapon decision isnt between 0-1! Something went wrong!");
+    std::stringstream ss;
+    ss << "likelihood of weapon decision isnt between 0-1!"
+       << "Something went wrong!";
+    cyclus::Warn<cyclus::VALUE_WARNING>(ss.str());
   }
   return phase_likely;
   
@@ -173,53 +168,60 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
 // 5 == neutral, 10 == conflict)
   
 double InteractRegion::GetConflictScore(std::string eqn_type,
-					 std::string prototype) {
-    
-  std::map<std::string, std::map<std::string, int> > relations_map ;
-  // Use only pursuit map for now
-  relations_map = p_conflict_map;
+					std::string prototype) {
   int gross_score = 0;
+  int n_entries = 0;
 
-  std::map<std::string, int> relationships = relations_map[prototype];
-  std::map<std::string, int>::iterator map_it;
- 
-  for(map_it = relationships.begin(); map_it != relationships.end(); map_it++) {
-    std::string other_state = map_it->first;
-    // allies, neutral, or enemies
-    int this_relation = map_it->second;
+  std::map<std::pair<std::string, std::string>,int>::iterator map_it;
+  for (map_it = p_conflict_map.begin();
+       map_it != p_conflict_map.end(); ++map_it){
+    std::string curr_state = map_it->first.first;
+    if (curr_state == prototype){
+      n_entries+=1;
+      std::string other_state = map_it->first.second;
 
-    // what is each state's NW status?
-    int my_weapon_status = sim_weapon_status[prototype];
-    int other_weapon_status = sim_weapon_status[other_state];
-
-    std::string relation_string;
-    // order smallest number first (0_2 instead of 2_0)
-    if (my_weapon_status > other_weapon_status){
-      relation_string = BuildRelationString(other_weapon_status,
-					    my_weapon_status,
-					    this_relation);
-    }
-    else {
-      relation_string = BuildRelationString(my_weapon_status,
-					    other_weapon_status,
-					    this_relation);
-    }
-    gross_score += score_matrix[relation_string];
-  }
+      // allies, neutral, or enemies
+      int this_relation = map_it->second;
       
+      // what is each state's NW status?
+      int my_weapon_status = sim_weapon_status[prototype];
+      int other_weapon_status = sim_weapon_status[other_state];
+      
+      std::string relation_string;
+      // order smallest number first (0_2 instead of 2_0)
+      if (my_weapon_status > other_weapon_status){
+	relation_string = BuildRelationString(other_weapon_status,
+					      my_weapon_status,
+					      this_relation);
+      }
+      else {
+	relation_string = BuildRelationString(my_weapon_status,
+					      other_weapon_status,
+					      this_relation);
+      }
+      gross_score += score_matrix[relation_string];
+    }
+  }
+  if (n_entries == 0){
+    std::stringstream ss;
+    ss << "State " << prototype
+       << " is not defined in the p_conflict_relations";
+    throw cyclus::ValueError(ss.str());
+  }
+
   // Take all conflict relationships for a single state and average them
   // together to get final conflict score
   // Example: if A-B = 2, A-C = 6, A-D = 10, then total conflict for A = 6
-    double avg_score = static_cast<double>(gross_score)/relationships.size();
-    return avg_score;
+  double avg_score = static_cast<double>(gross_score)/n_entries;
+  return avg_score;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Make a string that contains the weapons status of states A and state B, as
 // well as their relationship as statusA_statusB_relationship
 // String is used as key for map of conflict scores
 // Status 0 - Non Weapon State, 2 - Pursuing, 3 - Acquired
-  std::string InteractRegion::BuildRelationString(int statusA,
+std::string InteractRegion::BuildRelationString(int statusA,
 						  int statusB,
 						  int relation){
 
@@ -260,13 +262,14 @@ double InteractRegion::GetConflictScore(std::string eqn_type,
 void InteractRegion::ChangeConflictReln(std::string eqn_type,
 					  std::string this_state,
 					  std::string other_state, int new_val){
-  if (eqn_type == "Pursuit"){
-    p_conflict_map[this_state][other_state] = new_val;
-    RecordConflictReln(eqn_type, this_state, other_state, new_val);
-    if (symmetric == 1){
-      p_conflict_map[other_state][this_state] = new_val;
-      RecordConflictReln(eqn_type, other_state, this_state, new_val);
-    }
+
+  p_conflict_map[std::pair<std::string, std::string>
+		 (this_state, other_state)] = new_val;
+  RecordConflictReln(eqn_type, this_state, other_state, new_val);
+  if (symmetric == 1){
+    p_conflict_map[std::pair<std::string, std::string>
+		   (other_state, this_state)] = new_val;
+    RecordConflictReln(eqn_type, other_state, this_state, new_val);
   }
 }
 
@@ -294,7 +297,7 @@ void InteractRegion::RecordConflictReln(std::string eqn_type,
 					std::string other_state, int new_val){
   using cyclus::Context;
   using cyclus::Recorder;
-
+  
   cyclus::Datum *d = context()->NewDatum("InteractRelations");
   d->AddVal("Time", context()->time());
   d->AddVal("PrimaryAgent", this_state);
