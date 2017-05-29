@@ -48,5 +48,4 @@ class CascadeEnrichTest : public ::testing::Test {
 };
 
 }  // namespace cycamore
-
 #endif  // MBMORE_SRC_CASCADEENRICH_FACILITY_TESTS_
