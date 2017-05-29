@@ -92,8 +92,16 @@
         <name>Cascade</name>
         <config>
             <CascadeEnrich>
-                <feed_recipe>nat_u_recipe</feed_recipe>
-            </CascadeEnrich>
+                <feed_commod>nat_uranium</feed_commod>
+                <product_commod>enriched</product_commod>
+                <tails_commod>tails</tails_commod>
+		<feed_recipe>nat_u_recipe</feed_recipe>
+                <design_feed_flow>739</design_feed_flow>
+ 		<max_centrifuges>100</max_centrifuges>
+		<design_feed_assay>0.007</design_feed_assay>
+		<design_product_assay>0.035</design_product_assay>
+		<design_tails_assay>0.002</design_tails_assay>
+          </CascadeEnrich>
         </config>
     </facility>
 
