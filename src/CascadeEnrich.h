@@ -195,6 +195,18 @@ class CascadeEnrich : public cyclus::Facility {
 
   inline double SwuCapacity() const { return swu_capacity; }
 
+  // TODO: MAKE THESE CONVERSIONS TOOLKIT FNS and have them explicitly check
+  // timestep duration
+
+  // Convert input file flows kg/mon to SI units
+  inline double FlowPerSec(double flow_per_mon) {
+    return flow_per_mon / secpermonth;
+  }
+
+  inline double FlowPerMon(double flow_per_sec) {
+    return flow_per_sec * secpermonth;
+  }
+
   ///  @brief Determines if a particular material is a valid request to respond
   ///  to.  Valid requests must contain U235 and U238 and must have a relative
   ///  U235-to-U238 ratio less than this facility's tails_assay().
@@ -216,6 +228,10 @@ class CascadeEnrich : public cyclus::Facility {
  private:
   ///  @brief calculates the feed assay based on the unenriched inventory
   double FeedAssay();
+
+  // Set to design_tails at beginning of simulation. Gets reset if
+  // facility is used off-design
+  double tails_assay;  
 
   ///   @brief adds a material into the natural uranium inventory
   ///   @throws if the material is not the same composition as the feed_recipe
@@ -240,12 +256,15 @@ class CascadeEnrich : public cyclus::Facility {
 
   // These state variables are constrained by the design input params at
   // the start of the simulation:
+
   // Set by max feed for an individual machine
   double design_delU;
   double design_alpha;
-  // Set by design assays (feed, product, waste)
+  
+  // Set by design assays (feed, product, tails)
   int n_enrich_stages;
   int n_strip_stages;
+
   // Set by maximum allowable centrifuges
   double max_feed_inventory;
   double swu_capacity;
@@ -254,12 +273,13 @@ class CascadeEnrich : public cyclus::Facility {
   const double v_a = 485;        // m/s
   const double height = 0.5;     // meters
   const double diameter = 0.15;  // meters
+  // WHEN machine_Feed becomes a state var, add corrections to kg/sec from g/hr
   const double machine_feed =
       15 * 60 * 60 / ((1e3) * 60 * 60 * 1000.0);  // g/hr to kg/sec
   const double temp = 320.0;                      // Kelvin
 
-  // TODO: Turn into Required state variables
-  const double cascade_feed = 739 / (30.4 * 24 * 60 * 60);  // g/hr to kg/sec
+  // THESE ARE OBSOLETE
+  //  const double cascade_feed = 739 / (30.4 * 24 * 60 * 60);  // kg/mon to kg/sec
   //  const double design_feed_assay = 0.0071;
   //  const double design_product_assay = 0.0071;
 
@@ -273,6 +293,9 @@ class CascadeEnrich : public cyclus::Facility {
   const double eff = 1.0;            // typical efficiencies <0.6
   const double cut = 0.5;            // target for ideal cascade
 
+  const double secpermonth = 60*60*24*(365.25/12);
+
+  
  private:
   #pragma cyclus var { \
     "tooltip" : "feed recipe", \
@@ -286,6 +309,14 @@ class CascadeEnrich : public cyclus::Facility {
     "doc": "amount of natural uranium stored at the enrichment " \
     "facility at the beginning of the simulation (kg)" }
   double initial_feed;
+
+#pragma cyclus var {					      \
+    "default": 0, "tooltip": "design feed flow (kg/mon)", \
+    "uilabel": "Design Feed Flow", \
+    "doc": "Target amount of feed material to be processed by the" \
+    " facility (kg/mon). Either this or max_centrifuges is used to constrain" \
+    " the cascade design" }
+  double design_feed_flow;
 
   #pragma cyclus var { \
     "default" : 0, "tooltip" : "number of centrifuges available ", \
@@ -308,10 +339,10 @@ class CascadeEnrich : public cyclus::Facility {
   double design_product_assay;
 
   #pragma cyclus var { \
-    "default" : 0.003, "tooltip" : "Initial target waste assay", \
-    "uilabel" : "Target waste assay", \
-    "doc" : "desired fraction of U235 in waste" }
-  double design_waste_assay;
+    "default" : 0.003, "tooltip" : "Initial target tails assay", \
+    "uilabel" : "Target tails assay", \
+    "doc" : "desired fraction of U235 in tails" }
+  double design_tails_assay;
 
 // TODO: REMOVE THIS BECAUSE IT IS OVER_WRITTEN BASED ON SWU CONSTRAINT
 // THAT COME OUT OF CASCADE DESIGN
@@ -335,7 +366,6 @@ double max_feed_inventory;
 }
 double swu_capacity;
 
-*/
 
 // FROM LEGACY EF, MAY NEED TO BE REMOVED LATER
   #pragma cyclus var { \
@@ -344,7 +374,7 @@ double swu_capacity;
     "uilabel" : "Tails `Assay", \
     "doc" : "tails assay from the enrichment process" }
   double tails_assay;
-
+*/
   #pragma cyclus var { \
     "default": 1, \
     "userlevel": 10, \
