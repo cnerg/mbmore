@@ -207,6 +207,10 @@ class CascadeEnrich : public cyclus::Facility {
     return flow_per_sec * secpermonth;
   }
 
+  inline double Mg2kgPerSec(double feed_mg_per_sec) {
+    return feed_mg_per_sec / (1e6); 
+  }
+  
   ///  @brief Determines if a particular material is a valid request to respond
   ///  to.  Valid requests must contain U235 and U238 and must have a relative
   ///  U235-to-U238 ratio less than this facility's tails_assay().
@@ -216,22 +220,11 @@ class CascadeEnrich : public cyclus::Facility {
   inline const cyclus::toolkit::ResBuf<cyclus::Material>& Tails() const {
     return tails;
   }
-  /*
-  // TODO: DELETE, These are not used
-  int NEnrichStages(double alpha, double delU, double feed,
-                       double feed_assay);
 
-  int NStripStages(double alpha, double delU, double feed,
-                       double feed_assay);
-
-  */
  private:
   ///  @brief calculates the feed assay based on the unenriched inventory
   double FeedAssay();
 
-  // Set to design_tails at beginning of simulation. Gets reset if
-  // facility is used off-design
-  double tails_assay;  
 
   ///   @brief adds a material into the natural uranium inventory
   ///   @throws if the material is not the same composition as the feed_recipe
@@ -254,6 +247,10 @@ class CascadeEnrich : public cyclus::Facility {
   ///  @brief records and enrichment with the cyclus::Recorder
   void RecordEnrichment_(double natural_u, double swu);
 
+  // Set to design_tails at beginning of simulation. Gets reset if
+  // facility is used off-design
+  double tails_assay;  
+
   // These state variables are constrained by the design input params at
   // the start of the simulation:
 
@@ -269,20 +266,6 @@ class CascadeEnrich : public cyclus::Facility {
   double max_feed_inventory;
   double swu_capacity;
 
-  // TODO: Turn into optional state variables
-  const double v_a = 485;        // m/s
-  const double height = 0.5;     // meters
-  const double diameter = 0.15;  // meters
-  // WHEN machine_Feed becomes a state var, add corrections to kg/sec from g/hr
-  const double machine_feed =
-      15 * 60 * 60 / ((1e3) * 60 * 60 * 1000.0);  // g/hr to kg/sec
-  const double temp = 320.0;                      // Kelvin
-
-  // THESE ARE OBSOLETE
-  //  const double cascade_feed = 739 / (30.4 * 24 * 60 * 60);  // kg/mon to kg/sec
-  //  const double design_feed_assay = 0.0071;
-  //  const double design_product_assay = 0.0071;
-
   // Not physical constants but fixed assumptions for a cascade separating
   // out U235 from U238 in UF6 gas
   const double M = 0.352;   // kg/mol UF6
@@ -294,7 +277,6 @@ class CascadeEnrich : public cyclus::Facility {
   const double cut = 0.5;            // target for ideal cascade
 
   const double secpermonth = 60*60*24*(365.25/12);
-
   
  private:
   #pragma cyclus var { \
@@ -344,37 +326,39 @@ class CascadeEnrich : public cyclus::Facility {
     "doc" : "desired fraction of U235 in tails" }
   double design_tails_assay;
 
-// TODO: REMOVE THIS BECAUSE IT IS OVER_WRITTEN BASED ON SWU CONSTRAINT
-// THAT COME OUT OF CASCADE DESIGN
-/*
-#pragma cyclus var { \
-  "default": 1e299, "tooltip": "max inventory of feed material (kg)", \
-  "uilabel": "Maximum Feed Inventory", \
-  "doc": "maximum total inventory of natural uranium in " \
-         "the enrichment facility (kg)" \
-}
-double max_feed_inventory;
-
-#pragma cyclus var { \
-  "default": 1e299, \
-  "tooltip": "SWU capacity (kgSWU/month)", \
-  "uilabel": "SWU Capacity", \
-  "uitype": "range", \
-  "range": [0.0, 1e299], \
-  "doc": "separative work unit (SWU) capacity of enrichment " \
-         "facility (kgSWU/timestep) " \
-}
-double swu_capacity;
-
-
-// FROM LEGACY EF, MAY NEED TO BE REMOVED LATER
   #pragma cyclus var { \
-    "default" : 0.003, \
-    "tooltip" : "tails assay", \
-    "uilabel" : "Tails `Assay", \
-    "doc" : "tails assay from the enrichment process" }
-  double tails_assay;
-*/
+    "default" : 320.0, "tooltip" : "Centrifuge temperature (Kelvin)", \
+    "uilabel" : "Centrifuge temperature (Kelvin)", \
+    "doc" : "temperature at which centrifuges are operated (Kelvin)" }
+  double temp;
+
+#pragma cyclus var {						      \
+    "default" : 485.0, "tooltip" : "Centrifuge velocity (m/s)", \
+    "uilabel" : "Centrifuge velocity (m/s)", \
+  "doc" : "operational centrifuge velocity (m/s) at the outer radius (a)"}
+  double centrifuge_velocity;
+
+#pragma cyclus var {						\
+    "default" : 0.5, "tooltip" : "Centrifuge height (m)", \
+    "uilabel" : "Centrifuge height (m)", \
+  "doc" : "height of centrifuge (m)"}
+  double height;
+
+#pragma cyclus var {					  \
+    "default" : 0.15, "tooltip" : "Centrifuge diameter (m)", \
+    "uilabel" : "Centrifuge diameter (m)", \
+  "doc" : "diameter of centrifuge (m)"}
+  double diameter;
+
+#pragma cyclus var {					  \
+    "default" : 15.0, "tooltip" : "Centrifuge feed rate (mg/sec)", \
+    "uilabel" : "Max feed rate for single centrifuge (mg/sec)", \
+  "doc" : "maximum feed rate for a single centrifuge (mg/sec)"}
+  double machine_feed;
+
+
+  
+  // Input params from cycamore::Enrichment
   #pragma cyclus var { \
     "default": 1, \
     "userlevel": 10, \
