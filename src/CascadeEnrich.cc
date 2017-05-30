@@ -22,9 +22,13 @@ namespace mbmore {
   design_feed_assay(),
   design_product_assay(),
   design_tails_assay(),
-    //  swu_capacity(0),  // REMOVE
+  centrifuge_velocity(485.0),
+  temp(320.0),
+  height(0.5),
+  diameter(0.15),
+  machine_feed(15),
   max_enrich(1),
-  design_feed_flow(0),   // CHECK AGAINST DESIGN FEED
+  design_feed_flow(0),
   feed_commod(""),
   product_commod(""),
   tails_commod(""),
@@ -52,9 +56,11 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
   tails_assay = design_tails_assay;
   
   // Calculate ideal machine performance
-  double design_delU = CalcDelU(v_a, height, diameter, machine_feed, temp,
+  double design_delU = CalcDelU(centrifuge_velocity, height, diameter,
+				Mg2kgPerSec(machine_feed), temp,
 				cut, eff, M, dM, x, flow_internal);
-  double design_alpha = AlphaBySwu(design_delU, machine_feed, cut, M);
+  double design_alpha = AlphaBySwu(design_delU, Mg2kgPerSec(machine_feed),
+				   cut, M);
 
   // Design ideal cascade based on target feed flow and product assay
   std::pair<int, int> n_stages =
