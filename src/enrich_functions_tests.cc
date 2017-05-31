@@ -193,8 +193,6 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
     EXPECT_EQ(nmach, pycode_machines[i]);
   }
 
-  // TODO: THIS IS NOT MATCHING THE PYTHON CODE TESTS. . . .
-  
   // not enough machines
   int max_centrifuges = 80;
   std::pair<int, double> design_params = DesignCascade(feed_c, alpha, delU,
