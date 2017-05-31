@@ -208,9 +208,9 @@ class CascadeEnrich : public cyclus::Facility {
   }
 
   inline double Mg2kgPerSec(double feed_mg_per_sec) {
-    return feed_mg_per_sec / (1e6); 
+    return feed_mg_per_sec / (1e6);
   }
-  
+
   ///  @brief Determines if a particular material is a valid request to respond
   ///  to.  Valid requests must contain U235 and U238 and must have a relative
   ///  U235-to-U238 ratio less than this facility's tails_assay().
@@ -249,7 +249,7 @@ class CascadeEnrich : public cyclus::Facility {
 
   // Set to design_tails at beginning of simulation. Gets reset if
   // facility is used off-design
-  double tails_assay;  
+  double tails_assay;
 
   // These state variables are constrained by the design input params at
   // the start of the simulation:
@@ -257,7 +257,7 @@ class CascadeEnrich : public cyclus::Facility {
   // Set by max feed for an individual machine
   double design_delU;
   double design_alpha;
-  
+
   // Set by design assays (feed, product, tails)
   int n_enrich_stages;
   int n_strip_stages;
@@ -277,23 +277,26 @@ class CascadeEnrich : public cyclus::Facility {
   const double cut = 0.5;            // target for ideal cascade
 
   const double secpermonth = 60*60*24*(365.25/12);
-  
+
  private:
   #pragma cyclus var { \
     "tooltip" : "feed recipe", \
     "doc" : "recipe for enrichment facility feed commodity", \
-    "uilabel" : "Feed Recipe", "uitype" : "recipe" }
+    "uilabel" : "Feed Recipe", \
+    "uitype" : "recipe" }
   std::string feed_recipe;
 
   #pragma cyclus var { \
-    "default": 0, "tooltip": "initial uranium reserves (kg)", \
+    "default": 0, \
+    "tooltip": "initial uranium reserves (kg)", \
     "uilabel": "Initial Feed Inventory", \
     "doc": "amount of natural uranium stored at the enrichment " \
     "facility at the beginning of the simulation (kg)" }
   double initial_feed;
 
 #pragma cyclus var {					      \
-    "default": 0, "tooltip": "design feed flow (kg/mon)", \
+    "default": 0, \
+    "tooltip": "design feed flow (kg/mon)", \
     "uilabel": "Design Feed Flow", \
     "doc": "Target amount of feed material to be processed by the" \
     " facility (kg/mon). Either this or max_centrifuges is used to constrain" \
@@ -301,63 +304,72 @@ class CascadeEnrich : public cyclus::Facility {
   double design_feed_flow;
 
   #pragma cyclus var { \
-    "default" : 0, "tooltip" : "number of centrifuges available ", \
+    "default" : 0, \
+    "tooltip" : "number of centrifuges available ", \
     "uilabel" : "Number of Centrifuges", \
     "doc" : "number of centrifuges available to make the cascade" }
   int max_centrifuges;
 
 // TODO: USE FEED RECIPE TO DETERMINE FEED ASSAY!!!
   #pragma cyclus var { \
-    "default": 0.0071, "tooltip": "initial uranium reserves (kg)", \
+    "default": 0.0071, \
+    "tooltip": "initial uranium reserves (kg)", \
     "uilabel": "Initial feed assay", \
     "doc": "desired fraction of U235 in feed material (should be consistent "\
            "with feed recipe" }
   double design_feed_assay;
 
   #pragma cyclus var { \
-    "default" : 0.035, "tooltip" : "Initial target product assay", \
+    "default" : 0.035, \
+    "tooltip" : "Initial target product assay", \
     "uilabel" : "Target product assay", \
     "doc" : "desired fraction of U235 in product" }
   double design_product_assay;
 
   #pragma cyclus var { \
-    "default" : 0.003, "tooltip" : "Initial target tails assay", \
+    "default" : 0.003, \
+    "tooltip" : "Initial target tails assay", \
     "uilabel" : "Target tails assay", \
     "doc" : "desired fraction of U235 in tails" }
   double design_tails_assay;
 
   #pragma cyclus var { \
-    "default" : 320.0, "tooltip" : "Centrifuge temperature (Kelvin)", \
+    "default" : 320.0, \
+    "tooltip" : "Centrifuge temperature (Kelvin)", \
     "uilabel" : "Centrifuge temperature (Kelvin)", \
     "doc" : "temperature at which centrifuges are operated (Kelvin)" }
   double temp;
 
 #pragma cyclus var {						      \
-    "default" : 485.0, "tooltip" : "Centrifuge velocity (m/s)", \
+    "default" : 485.0, \
+    "tooltip" : "Centrifuge velocity (m/s)", \
     "uilabel" : "Centrifuge velocity (m/s)", \
   "doc" : "operational centrifuge velocity (m/s) at the outer radius (a)"}
   double centrifuge_velocity;
 
 #pragma cyclus var {						\
-    "default" : 0.5, "tooltip" : "Centrifuge height (m)", \
+    "default" : 0.5, \
+    "tooltip" : "Centrifuge height (m)", \
     "uilabel" : "Centrifuge height (m)", \
   "doc" : "height of centrifuge (m)"}
   double height;
 
 #pragma cyclus var {					  \
-    "default" : 0.15, "tooltip" : "Centrifuge diameter (m)", \
+    "default" : 0.15, \
+    "tooltip" : "Centrifuge diameter (m)", \
     "uilabel" : "Centrifuge diameter (m)", \
   "doc" : "diameter of centrifuge (m)"}
   double diameter;
 
 #pragma cyclus var {					  \
-    "default" : 15.0, "tooltip" : "Centrifuge feed rate (mg/sec)", \
+    "default" : 15.0, \
+    "tooltip" : "Centrifuge feed rate (mg/sec)", \
     "uilabel" : "Max feed rate for single centrifuge (mg/sec)", \
   "doc" : "maximum feed rate for a single centrifuge (mg/sec)"}
   double machine_feed;
 
 
-  
+
   // Input params from cycamore::Enrichment
   #pragma cyclus var { \
     "default": 1, \
@@ -386,19 +398,22 @@ class CascadeEnrich : public cyclus::Facility {
   #pragma cyclus var { \
     "tooltip" : "feed commodity", \
     "doc" : "feed commodity that the enrichment facility accepts", \
-    "uilabel" : "Feed Commodity", "uitype" : "incommodity" }
+    "uilabel" : "Feed Commodity", \
+    "uitype" : "incommodity" }
   std::string feed_commod;
 
   #pragma cyclus var { \
     "tooltip" : "product commodity", \
     "doc" : "product commodity that the enrichment facility generates", \
-    "uilabel" : "Product Commodity", "uitype" : "outcommodity" }
+    "uilabel" : "Product Commodity", \
+    "uitype" : "outcommodity" }
   std::string product_commod;
 
   #pragma cyclus var { \
     "tooltip" : "tails commodity", \
     "doc" : "tails commodity supplied by enrichment facility", \
-    "uilabel" : "Tails Commodity", "uitype" : "outcommodity" }
+    "uilabel" : "Tails Commodity", \
+    "uitype" : "outcommodity" }
   std::string tails_commod;
 
   double current_swu_capacity;
