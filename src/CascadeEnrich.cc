@@ -5,42 +5,40 @@
 #include "sim_init.h"
 
 #include <algorithm>
+#include <boost/lexical_cast.hpp>
 #include <cmath>
 #include <limits>
 #include <sstream>
 #include <vector>
-#include <boost/lexical_cast.hpp>
-
 
 namespace mbmore {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
+CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
     : cyclus::Facility(ctx),
-  feed_recipe(""),
-  max_centrifuges(),
-  design_feed_assay(),
-  design_product_assay(),
-  design_tails_assay(),
-  centrifuge_velocity(485.0),
-  temp(320.0),
-  height(0.5),
-  diameter(0.15),
-  machine_feed(15),
-  max_enrich(1),
-  design_feed_flow(0),
-  feed_commod(""),
-  product_commod(""),
-  tails_commod(""),
-  order_prefs(true) {}
+      feed_recipe(""),
+      max_centrifuges(),
+      design_feed_assay(),
+      design_product_assay(),
+      design_tails_assay(),
+      centrifuge_velocity(485.0),
+      temp(320.0),
+      height(0.5),
+      diameter(0.15),
+      machine_feed(15),
+      max_enrich(1),
+      design_feed_flow(0),
+      feed_commod(""),
+      product_commod(""),
+      tails_commod(""),
+      order_prefs(true) {}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CascadeEnrich::~CascadeEnrich() {}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string CascadeEnrich::str() {
   std::stringstream ss;
-  ss << cyclus::Facility::str()
-     << " with enrichment facility parameters:"
+  ss << cyclus::Facility::str() << " with enrichment facility parameters:"
      << " * SWU capacity: " << SwuCapacity()
      << " * Tails assay: " << tails_assay << " * Feed assay: " << FeedAssay()
      << " * Input cyclus::Commodity: " << feed_commod
@@ -54,56 +52,52 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
   using cyclus::Material;
 
   tails_assay = design_tails_assay;
-  
+
   // Calculate ideal machine performance
-  double design_delU = CalcDelU(centrifuge_velocity, height, diameter,
-				Mg2kgPerSec(machine_feed), temp,
-				cut, eff, M, dM, x, flow_internal);
-  double design_alpha = AlphaBySwu(design_delU, Mg2kgPerSec(machine_feed),
-				   cut, M);
+  double design_delU =
+      CalcDelU(centrifuge_velocity, height, diameter, Mg2kgPerSec(machine_feed),
+               temp, cut, eff, M, dM, x, flow_internal);
+  double design_alpha =
+      AlphaBySwu(design_delU, Mg2kgPerSec(machine_feed), cut, M);
 
   // Design ideal cascade based on target feed flow and product assay
   std::pair<int, int> n_stages =
-    FindNStages(design_alpha, design_feed_assay, design_product_assay,
-		design_tails_assay);
+      FindNStages(design_alpha, design_feed_assay, design_product_assay,
+                  design_tails_assay);
 
   // TODO DELETE THIS, STAGES ARE ALREADY INTS
   // set as internal state variables
   // int truncates but we need # of stages to assure target values,
-  // so if the number is 5.1 we need 6. 
+  // so if the number is 5.1 we need 6.
   //  n_enrich_stages = int(n_stages.first) + 1;
   //  n_strip_stages = int(n_stages.second) + 1;
   n_enrich_stages = n_stages.first;
   n_strip_stages = n_stages.second;
 
-  std::pair<int,double> cascade_info = DesignCascade(FlowPerSec(design_feed_flow),
-						     design_alpha,
-						     design_delU,
-						     cut, max_centrifuges,
-						     n_stages);
+  std::pair<int, double> cascade_info =
+      DesignCascade(FlowPerSec(design_feed_flow), design_alpha, design_delU,
+                    cut, max_centrifuges, n_stages);
 
-  max_feed_inventory = FlowPerMon(cascade_info.second);
+  double max_feed_inventory = FlowPerMon(cascade_info.second);
+  if (max_feed_inventory > 0) {
+    inventory.capacity(max_feed_inventory);
+  }
   // Number of machines times swu per machine
   SwuCapacity(cascade_info.first * FlowPerMon(design_delU));
 
   Facility::Build(parent);
   if (initial_feed > 0) {
-    inventory.Push(
-      Material::Create(
-        this, initial_feed, context()->GetRecipe(feed_recipe)));
+    inventory.Push(Material::Create(this, initial_feed,
+                                    context()->GetRecipe(feed_recipe)));
   }
-  
+
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << "CascadeEnrich "
-				    << " entering the simuluation: ";
+                                    << " entering the simuluation: ";
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << str();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::Tick() {
-
- current_swu_capacity = SwuCapacity();
- 
- }
+void CascadeEnrich::Tick() { current_swu_capacity = SwuCapacity(); }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::Tock() {
@@ -115,7 +109,6 @@ void CascadeEnrich::Tock() {
   LOG(cyclus::LEV_INFO4, "EnrFac") << prototype() << " used "
                                    << intra_timestep_feed_ << " feed";
   RecordTimeSeries<cyclus::toolkit::ENRICH_FEED>(this, intra_timestep_feed_);
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -241,7 +234,8 @@ void CascadeEnrich::AddMat_(cyclus::Material::Ptr mat) {
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr>
-CascadeEnrich::GetMatlBids(cyclus::CommodMap<cyclus::Material>::type& out_requests) {
+CascadeEnrich::GetMatlBids(
+    cyclus::CommodMap<cyclus::Material>::type& out_requests) {
   using cyclus::Bid;
   using cyclus::BidPortfolio;
   using cyclus::CapacityConstraint;
@@ -251,7 +245,6 @@ CascadeEnrich::GetMatlBids(cyclus::CommodMap<cyclus::Material>::type& out_reques
   using cyclus::toolkit::MatVec;
 
   std::set<BidPortfolio<Material>::Ptr> ports;
-
   if ((out_requests.count(tails_commod) > 0) && (tails.quantity() > 0)) {
     BidPortfolio<Material>::Ptr tails_port(new BidPortfolio<Material>());
 
@@ -298,14 +291,14 @@ CascadeEnrich::GetMatlBids(cyclus::CommodMap<cyclus::Material>::type& out_reques
     }
 
     Converter<Material>::Ptr sc(new SWUConverter(FeedAssay(), tails_assay));
-    Converter<Material>::Ptr nc(new NatUConverter(FeedAssay(), tails_assay));
     CapacityConstraint<Material> swu(swu_capacity, sc);
-    CapacityConstraint<Material> natu(inventory.quantity(), nc);
     commod_port->AddConstraint(swu);
-    commod_port->AddConstraint(natu);
-
     LOG(cyclus::LEV_INFO5, "EnrFac")
         << prototype() << " adding a swu constraint of " << swu.capacity();
+
+    Converter<Material>::Ptr nc(new NatUConverter(FeedAssay(), tails_assay));
+    CapacityConstraint<Material> natu(inventory.quantity(), nc);
+    commod_port->AddConstraint(natu);
     LOG(cyclus::LEV_INFO5, "EnrFac")
         << prototype() << " adding a natu constraint of " << natu.capacity();
     ports.insert(commod_port);
@@ -361,7 +354,7 @@ void CascadeEnrich::GetMatlTrades(
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
-                                          double qty) {
+                                             double qty) {
   using cyclus::Material;
   using cyclus::ResCast;
   using cyclus::toolkit::Assays;
@@ -437,7 +430,7 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
 
   return response;
 }
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::RecordEnrichment_(double natural_u, double swu) {
   using cyclus::Context;
   using cyclus::Agent;
@@ -479,7 +472,7 @@ bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
   return (u238 > 0 && u235 / (u235 + u238) > tails_assay);
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  double CascadeEnrich::FeedAssay() {
+double CascadeEnrich::FeedAssay() {
   using cyclus::Material;
 
   if (inventory.empty()) {
@@ -496,5 +489,5 @@ bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
 extern "C" cyclus::Agent* ConstructCascadeEnrich(cyclus::Context* ctx) {
   return new CascadeEnrich(ctx);
 }
-  
+
 }  // namespace mbmore
