@@ -184,6 +184,7 @@ class CascadeEnrich : public cyclus::Facility {
   // ---
 
   inline void SetMaxInventorySize(double size) {
+    max_feed_inventory = size;
     inventory.capacity(size);
   }
 
@@ -262,6 +263,7 @@ class CascadeEnrich : public cyclus::Facility {
   int n_strip_stages;
 
   // Set by maximum allowable centrifuges
+  double max_feed_inventory;
   double swu_capacity;
 
   // Not physical constants but fixed assumptions for a cascade separating
@@ -293,7 +295,7 @@ class CascadeEnrich : public cyclus::Facility {
   double initial_feed;
 
 #pragma cyclus var {					      \
-    "default": 0, \
+    "default": 100, \
     "tooltip": "design feed flow (kg/mon)", \
     "uilabel": "Design Feed Flow", \
     "doc": "Target amount of feed material to be processed by the" \
@@ -302,7 +304,7 @@ class CascadeEnrich : public cyclus::Facility {
   double design_feed_flow;
 
   #pragma cyclus var { \
-    "default" : 0, \
+    "default" : 1000, \
     "tooltip" : "number of centrifuges available ", \
     "uilabel" : "Number of Centrifuges", \
     "doc" : "number of centrifuges available to make the cascade" }
