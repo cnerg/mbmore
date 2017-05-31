@@ -78,7 +78,8 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
       DesignCascade(FlowPerSec(design_feed_flow), design_alpha, design_delU,
                     cut, max_centrifuges, n_stages);
 
-  double max_feed_inventory = FlowPerMon(cascade_info.second);
+  max_feed_inventory = FlowPerMon(cascade_info.second);
+  std::cout << "max_feed_inventory: "<< max_feed_inventory << std::endl;
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
