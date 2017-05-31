@@ -7,7 +7,9 @@
 #include "facility_tests.h"
 
 namespace mbmore {
-  
+
+  // Benchmarked against mbmore_enrich_compare.ipynb  
+  // https://github.com/mbmcgarry/data_analysis/tree/master/enrich_calcs
   namespace enrichfunctiontests {
     // Fixed for a cascade separating out U235 from U238 in UF6 gas
     const double M = 0.352; // kg/mol UF6
@@ -34,7 +36,7 @@ namespace mbmore {
     const double feed_c = 739 / (30.4 * 24 * 60 * 60); // kg/month -> kg/sec
     const double product_c = 77 / (30.4 * 24 * 60 * 60); // kg/month -> kg/sec
 
-    //del U=1.35806e-07 alpha=1.22681
+    //del U=7.0323281e-08 alpha=1.16321
     double delU = CalcDelU(v_a, height, diameter, feed_m, temp, cut, eff,
 			   M, dM, x, flow_internal);
     
@@ -70,12 +72,12 @@ TEST(Enrich_Functions_Test, TestAssays) {
 // and separation factor alpha)
 TEST(Enrich_Functions_Test, TestSWU) {
 
-  double pycode_U = 1.35805875245e-07;
+  double pycode_U = 7.03232816847e-08;
   double tol = 1e-9;
   
   EXPECT_NEAR(delU, pycode_U, tol);
 
-  double pycode_alpha = 1.2268;
+  double pycode_alpha = 1.16321;
   double tol_alpha = 1e-2;
   EXPECT_NEAR(alpha, pycode_alpha, tol_alpha);
 }
@@ -87,19 +89,16 @@ TEST(Enrich_Functions_Test, TestCascade) {
   double n_machines = MachinesPerCascade(delU, product_assay,
 					 waste_assay, feed_c, product_c);
 
-  double pycode_n_mach = 13458.399;
+  double pycode_n_mach = 25990.392;
   EXPECT_NEAR(n_machines, pycode_n_mach, tol_num);
 
   std::pair<double, double> n_stages = FindNStages(alpha, feed_assay,
 						   product_assay,
 						   waste_assay);
-  int pycode_n_enrich_stage = 8;
-  int pycode_n_strip_stage = 9;
+  int pycode_n_enrich_stage = 11;
+  int pycode_n_strip_stage = 13;
 
-  // Now test assays when cascade is modified away from ideal design
-  // (cascade optimized for natural uranium feed, now use 20% enriched
-  double feed_assay_mod = 0.20;
-
+ 
   //  int n_stage_enrich = (int) n_stages.first + 1;  // Round up to next integer
   //  int n_stage_waste = (int) n_stages.second + 1;  // Round up to next integer
   int n_stage_enrich = n_stages.first;
@@ -108,14 +107,18 @@ TEST(Enrich_Functions_Test, TestCascade) {
   EXPECT_EQ(n_stage_enrich, pycode_n_enrich_stage);
   EXPECT_EQ(n_stage_waste, pycode_n_strip_stage);
 
-  std::cout << "alpha " << alpha << " feed " << feed_assay_mod << " nstage " << n_stage_enrich << " unrounded stages " << n_stages.first << std::endl;
+ // Now test assays when cascade is modified away from ideal design
+  // (cascade optimized for natural uranium feed, now use 20% enriched
+  double feed_assay_mod = 0.20;
+
   double mod_product_assay = ProductAssayFromNStages(alpha, feed_assay_mod,
 						     n_stage_enrich);
   double mod_waste_assay = WasteAssayFromNStages(alpha, feed_assay_mod,
 						 n_stage_waste);
 
-  double pycode_mod_product_assay = 0.605435;
-  double pycode_mod_waste_assay = 0.031445;
+  std::cout << "alpha " << alpha << " feed " << feed_assay_mod << " nstage " << n_stage_enrich << " unrounded stages " << n_stages.first << std::endl;
+  double pycode_mod_product_assay = 0.60085;
+  double pycode_mod_waste_assay = 0.0290846;
   EXPECT_NEAR(mod_product_assay, pycode_mod_product_assay, tol_assay);
   EXPECT_NEAR(mod_waste_assay, pycode_mod_waste_assay, tol_assay);
   }
@@ -133,9 +136,9 @@ TEST(Enrich_Functions_Test, TestCascade) {
     double enrich_waste_assay = (feed_c * feed_assay - product_s *
 				 product_assay_s)/enrich_waste;
 
-    double pycode_product_assay_s = 0.008696;
+    double pycode_product_assay_s = 0.0082492;
     double pycode_n_mach_e = 53.287;
-    double pycode_product_s = 0.0001409;
+    double pycode_product_s = 0.0001408;
 
     EXPECT_NEAR(n_mach_e, pycode_n_mach_e, tol_num);
     EXPECT_NEAR(product_assay_s, pycode_product_assay_s, tol_assay);
@@ -148,8 +151,8 @@ TEST(Enrich_Functions_Test, TestCascade) {
     //    double strip_waste = WastePerStripStage(alpha, enrich_waste_assay,
     //					    strip_waste_assay, enrich_waste);
 
-    double pycode_n_mach_w = 26.6007;
-    double pycode_waste_assay_s = 0.00448653;
+    double pycode_n_mach_w = 26.6127;
+    double pycode_waste_assay_s = 0.005117;
     //    double pycode_waste_s = 8.60660553717e-05;
 
     EXPECT_NEAR(n_mach_w, pycode_n_mach_w, tol_num);
@@ -166,10 +169,14 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   double pa = 0.20;
   double wa = 0.05;
 
-  std::vector<double> pycode_flows = {0.00028136,  0.00056271,  0.00084407,
-				      0.00112543,  0.00084407,
-				      0.00056271,  0.00028136};
-  std::vector<int> pycode_machines={54, 107, 160, 214, 160, 107, 54};
+  std::vector<double> pycode_flows = {0.00030693,  0.00061387,  0.0009208 ,
+				      0.00122774,  0.00153467,  0.00127889,
+				      0.00102311,  0.00076734,  0.00051156,
+				      0.00025578};
+
+  
+  std::vector<int> pycode_machines={59, 117, 175, 233, 291, 243, 194,
+				    146, 97, 49};
 
   std::pair<double, double> n_stages = FindNStages(alpha, fa, pa, wa);
   std::vector<double> flows = CalcFeedFlows(n_stages, feed_c, cut);
@@ -186,14 +193,15 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
     EXPECT_EQ(nmach, pycode_machines[i]);
   }
 
+  // TODO: THIS IS NOT MATCHING THE PYTHON CODE TESTS. . . .
   
   // not enough machines
   int max_centrifuges = 80;
   std::pair<int, double> design_params = DesignCascade(feed_c, alpha, delU,
 						       cut, max_centrifuges,
 						       n_stages);
-  int py_tot_mach = 80;
-  double py_opt_feed = 2.52859296482e-05;
+  int py_tot_mach = 79;
+  double py_opt_feed = 1.30116169899e-05;
   
   EXPECT_EQ(py_tot_mach, design_params.first);
   EXPECT_NEAR(py_opt_feed, design_params.second, tol_qty);
@@ -203,8 +211,8 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   design_params = DesignCascade(feed_c, alpha, delU,
 				cut, max_centrifuges,
 				n_stages);
-  py_tot_mach = 991;
-  py_opt_feed = 0.000325705437911;
+  py_tot_mach = 986;
+  py_opt_feed = 0.000172728;
   
   EXPECT_EQ(py_tot_mach, design_params.first);
   EXPECT_NEAR(py_opt_feed, design_params.second, tol_qty);
