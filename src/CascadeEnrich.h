@@ -184,7 +184,6 @@ class CascadeEnrich : public cyclus::Facility {
   // ---
 
   inline void SetMaxInventorySize(double size) {
-    max_feed_inventory = size;
     inventory.capacity(size);
   }
 
@@ -263,7 +262,6 @@ class CascadeEnrich : public cyclus::Facility {
   int n_strip_stages;
 
   // Set by maximum allowable centrifuges
-  double max_feed_inventory;
   double swu_capacity;
 
   // Not physical constants but fixed assumptions for a cascade separating
@@ -428,7 +426,6 @@ class CascadeEnrich : public cyclus::Facility {
 
 // END LEGACY
 
-#pragma cyclus var { 'capacity' : 'max_feed_inventory' }
   cyclus::toolkit::ResBuf<cyclus::Material> inventory;  // natural u
 
   friend class CascadeEnrichTest;
