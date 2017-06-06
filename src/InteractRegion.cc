@@ -124,7 +124,7 @@ std::vector<std::string>& InteractRegion::GetMasterFactors() {
 // (where the current value of the equation is normalized to be between 0-1)
 double InteractRegion::GetLikely(std::string phase, double eqn_val) {
 
-  double hist_duration = 70; // historical data covers 70 years
+  double hist_duration = 75; // historical data covers 70 years
 
   std::pair<std::string, std::vector<double> > likely_pair =
     likely_rescale[phase];
