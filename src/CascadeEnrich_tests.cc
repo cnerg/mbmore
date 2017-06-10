@@ -80,9 +80,9 @@ TEST_F(CascadeEnrichTest, RequestQty) {
   Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
 
   // Should be only one transaction into the EF,
-  // and it should be exactly 1kg of natu
-  EXPECT_EQ(1.0, qr.rows.size());
-  EXPECT_NEAR(1.0, m->quantity(), 1e-10)
+  // and it should be exactly 207.8928179411368kg of natu
+  EXPECT_EQ(1, qr.rows.size());
+  EXPECT_NEAR(207.8928179411368, m->quantity(), 1e-10)
       << "matched trade provides the wrong quantity of material";
 }
 
@@ -99,8 +99,7 @@ TEST_F(CascadeEnrichTest, CheckSWUConstraint) {
       "   <product_commod>enr_u</product_commod> "
       "   <tails_commod>tails</tails_commod> "
       "   <tails_assay>0.003</tails_assay> "
-      "   <initial_feed>1000</initial_feed> "
-      "   <swu_capacity>195</swu_capacity> ";
+      "   <initial_feed>200</initial_feed> ";
 
   int simdur = 1;
 
@@ -120,7 +119,7 @@ TEST_F(CascadeEnrichTest, CheckSWUConstraint) {
   Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
 
   EXPECT_EQ(1.0, qr.rows.size());
-  EXPECT_NEAR(5.0, m->quantity(), 0.1)
+  EXPECT_NEAR(4.1, m->quantity(), 0.1)
       << "traded quantity exceeds SWU constraint";
 }
 
