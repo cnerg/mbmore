@@ -134,13 +134,13 @@ class CascadeEnrich : public cyclus::Facility {
 
   // --- Facility Members ---
   /// perform module-specific tasks when entering the simulation
-  virtual void Build(cyclus::Agent* parent);
+  //virtual void Build(cyclus::Agent* parent);
   // ---
 
   // --- Agent Members ---
   ///  Each facility is prompted to do its beginning-of-time-step
   ///  stuff at the tick of the timer.
-
+  virtual void EnterNotify();
   ///  @param time is the time to perform the tick
   virtual void Tick();
 
@@ -247,6 +247,20 @@ class CascadeEnrich : public cyclus::Facility {
   ///  @brief records and enrichment with the cyclus::Recorder
   void RecordEnrichment_(double natural_u, double swu);
 
+
+  // Not physical constants but fixed assumptions for a cascade separating
+  // out U235 from U238 in UF6 gas
+  const double M = 0.352;   // kg/mol UF6
+  const double dM = 0.003;  // kg/mol U238 - U235
+  const double x = 1000;    // Pressure ratio (Glaser)
+
+  const double flow_internal = 2.0;  // can vary from 2-4
+  const double eff = 1.0;            // typical efficiencies <0.6
+  const double cut = 0.5;            // target for ideal cascade
+
+  const double secpermonth = 60*60*24*(365.25/12);
+
+ private:
   // Set to design_tails at beginning of simulation. Gets reset if
   // facility is used off-design
   double tails_assay;
@@ -266,19 +280,6 @@ class CascadeEnrich : public cyclus::Facility {
   double max_feed_inventory;
   double swu_capacity;
 
-  // Not physical constants but fixed assumptions for a cascade separating
-  // out U235 from U238 in UF6 gas
-  const double M = 0.352;   // kg/mol UF6
-  const double dM = 0.003;  // kg/mol U238 - U235
-  const double x = 1000;    // Pressure ratio (Glaser)
-
-  const double flow_internal = 2.0;  // can vary from 2-4
-  const double eff = 1.0;            // typical efficiencies <0.6
-  const double cut = 0.5;            // target for ideal cascade
-
-  const double secpermonth = 60*60*24*(365.25/12);
-
- private:
   #pragma cyclus var { \
     "tooltip" : "feed recipe", \
     "doc" : "recipe for enrichment facility feed commodity", \
