@@ -48,9 +48,9 @@ std::string CascadeEnrich::str() {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::Build(cyclus::Agent* parent) {
+void CascadeEnrich::EnterNotify() {
   using cyclus::Material;
-
+cyclus::Facility::EnterNotify();
   tails_assay = design_tails_assay;
 
   // Calculate ideal machine performance
@@ -85,20 +85,20 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
   }
   // Number of machines times swu per machine
   SwuCapacity(cascade_info.first * FlowPerMon(design_delU));
-
-  Facility::Build(parent);
+  std::cout << "swu_capacity: " << swu_capacity << std::endl;
   if (initial_feed > 0) {
     inventory.Push(Material::Create(this, initial_feed,
                                     context()->GetRecipe(feed_recipe)));
   }
-
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << "CascadeEnrich "
                                     << " entering the simuluation: ";
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << str();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::Tick() { current_swu_capacity = SwuCapacity(); }
+void CascadeEnrich::Tick() {
+
+  current_swu_capacity = SwuCapacity(); }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::Tock() {
@@ -272,7 +272,7 @@ CascadeEnrich::GetMatlBids(
                                      << tails.capacity();
     ports.insert(tails_port);
   }
-
+  std::cout << "inbid: " << out_requests.count(product_commod)  << std::endl;
   if ((out_requests.count(product_commod) > 0) && (inventory.quantity() > 0)) {
     BidPortfolio<Material>::Ptr commod_port(new BidPortfolio<Material>());
 
@@ -286,11 +286,13 @@ CascadeEnrich::GetMatlBids(
       if (ValidReq(req->target()) &&
           ((request_enrich < max_enrich) ||
            (cyclus::AlmostEq(request_enrich, max_enrich)))) {
+        std::cout << "in adding requrest" << std::endl;
         Material::Ptr offer = Offer_(req->target());
         commod_port->AddBid(req, offer, this);
       }
     }
 
+    std::cout << "swu_capacity: " << swu_capacity << std::endl;
     Converter<Material>::Ptr sc(new SWUConverter(FeedAssay(), tails_assay));
     CapacityConstraint<Material> swu(swu_capacity, sc);
     commod_port->AddConstraint(swu);
@@ -317,13 +319,13 @@ void CascadeEnrich::GetMatlTrades(
 
   intra_timestep_swu_ = 0;
   intra_timestep_feed_ = 0;
-
+ std::cout<< trades.size() << std::endl;
   std::vector<Trade<Material> >::const_iterator it;
   for (it = trades.begin(); it != trades.end(); ++it) {
     double qty = it->amt;
     std::string commod_type = it->bid->request()->commodity();
     Material::Ptr response;
-
+  std::cout << commod_type << std::endl;
     // Figure out whether material is tails or enriched,
     // if tails then make transfer of material
     if (commod_type == tails_commod) {
@@ -363,7 +365,7 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   using cyclus::toolkit::SwuRequired;
   using cyclus::toolkit::FeedQty;
   using cyclus::toolkit::TailsQty;
-
+  std::cout << "in" << std::endl;
   // get enrichment parameters
   Assays assays(FeedAssay(), UraniumAssay(mat), tails_assay);
   double swu_req = SwuRequired(qty, assays);
