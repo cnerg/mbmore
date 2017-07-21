@@ -4,7 +4,7 @@ Mbmore!
 This repository is a collection of custom Cyclus facility archetypes that
 utilize a random number generator (RNG) to create non-deterministic behaviors.
 General methods controlling the behavior (including random number generation
-and Gaussian distributions) are defined in the `behavior functions. <https://github.com/mbmcgarry/mbmore/blob/master/src/behavior_functions.h>`_
+and Gaussian distributions) are defined in the `behavior functions. <https://github.com/cnerg/mbmore/blob/master/src/behavior_functions.h>`_
 
 
 Behavior Functions
@@ -36,6 +36,46 @@ Available behavior functions are:
 
 Archetypes
 ----------
+
+CascadeEnrich
++++++++++++++
+Based on `cycamore:Enrich <http://fuelcycle.org/user/cycamoreagents.html#cycamore-enrichment>`_ , this facility designs a cascade based on the physical parameters of the individual counter-current centrifuges being used, the target assays and cascade feed flow, and the available number of centrifuges.  Only one physical centrifuge maybe used in the cascade, it cannot mix centrifuge designs. The cascade is designed as an ideal one-up, one-down cascade in which the product/tails from one stage moves up/down to the next stage, respectively. The cascade produced deviates from an ideal cascade only in that integer numbers of centrifuges must be used for each stage.  If the number of available centrifuges is insufficient to meet both the target assays and the target feed flow, then feedflow will be reduced to meet the other requirements.  The cascade will produce an enrichment level At Least as high as the ``design_product_assay``, again constrained by integer stage steps.   This archetype automatically designs the cascade at the beginning of the simulation, at which point the physical configuration of the centrifuges and cascade design are fixed for the remainder of the simulation.  The facility will still attempt to produce material of non-target product assay as requested, within the limits of integer number of stages, SWU and feed flow capacity constraints. When processing off-design material assays, separative capacity will be reduced. The facility assumes two-isotope enrichment (U-235 and U-238) such that molecutlar mass is 0.352kg/mol (UF6), a cut (ratio of product/feed quantity) of 0.5, an internal flow of 2.0 (in practice dependent on baffle/scoop design and can range from 2-4), and a pressure ratio of 1000 (Glaser, Science and Global Security, 2009).
+
+Future work: Cut, efficiency (which can be significantly less than 1), pressure ratio, and internal flow should be user-defined with reasonable defaults. Blending capability to achieve the exact requested enrichment level.  
+
+Enrichment and cascade design calculations are implemented in the accompanying enrich_functions.cc file.
+  - ``design_feed_flow``: The amount of feed material the cascade is
+    initially designed to process (kg/month).  Combined with
+    ``design_feed_assay``, ``design_product_assay``, and ``design_waste_assay``,
+    this sets the ideal
+    number of centrifuges for the cascade. If there are not sufficient
+    centrifuges available then actual production will not achieve this target.
+  - ``max_centrifuges``: The total number of centrifuges available to design
+    the cascade. If there are more available than necessary to achieve the
+    ``design_feed_flow``, (given ``design_feed_assay``, ``design_product_assay``
+    and ``design_waste_assay``)  then the cascade will use as many of the
+    centrifuges as possible given the constraint that each stage must have an
+    integer number of machines.
+  - ``design_feed_assay``: Expected feed assay for which ideal cascade
+    is designed.
+  - ``design_product_assay``: Desired product assay for which ideal cascade
+    is designed.
+  - ``design_tails_assay``: Desired waste assay for which ideal cascade
+    is designed.
+  - ``temp``: Operating temperature of individual centrifuge machine, which
+    is used to calculate machine separative capacity (Kelvin).
+  -``centrifuge_velocity``: Desired operational velocity of the centrifuge,
+    which is used to calculate machine separative capacity (m/s).
+  - ``height``: height of the centrifuge, which is used to calculate machine
+    separative capacity (m).
+  - ``diameter``: diameter of the centrifuge, which is used to calculate machine
+    separative capacity (m).
+  - ``machine_feed``: maximum throughput for a single centrifuge, which is used
+    to calculate machine separative capacity (m).
+
+    
+
+
 
 InteractRegion
 ++++++++++++++
