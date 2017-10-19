@@ -44,7 +44,7 @@ double CalcDelU(double v_a, double height, double diameter, double feed,
   // Converting from molecular mass to atomic mass (assuming U238)
   // Warning: This assumption is only valid at low enrichment
   // TODO: EXPLICITLY CALCULATE ATOMIC MASS GIVEN FEED ASSAY
-  double C1 = (2.0 * M_PI * (D_rho*M_238/M_mol) / (log(r_2 / r_1)));
+  double C1 = (2.0 * M_PI * (D_rho * M_238 / M_mol) / (log(r_2 / r_1)));
   //  double C1 = (2.0 * M_PI * D_rho / (log(r_2 / r_1)));
   double A_p = C1 * (1.0 / feed) *
                (cut / ((1.0 + flow_internal) * (1.0 - cut + flow_internal)));
@@ -374,8 +374,7 @@ int FindTotalMachines(std::vector<std::pair<int, double>> stage_info) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::pair<int, double> DesignCascade(double design_feed,
-				     double design_alpha,
+std::pair<int, double> DesignCascade(double design_feed, double design_alpha,
                                      double design_delU, double cut,
                                      int max_centrifuges,
                                      std::pair<int, int> n_stages) {
