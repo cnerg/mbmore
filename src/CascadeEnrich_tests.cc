@@ -134,7 +134,7 @@ TEST_F(CascadeEnrichTest, CheckCapConstraint) {
       "   <product_commod>enr_u</product_commod> "
       "   <tails_commod>tails</tails_commod> "
       "   <tails_assay>0.003</tails_assay> "
-      "   <initial_feed>243</initial_feed> ";
+      "   <initial_feed>200</initial_feed> ";
 
   int simdur = 1;
 
@@ -154,7 +154,7 @@ TEST_F(CascadeEnrichTest, CheckCapConstraint) {
   Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
 
   EXPECT_EQ(1.0, qr.rows.size());
-  EXPECT_NEAR(5.0, m->quantity(), 0.01)
+  EXPECT_NEAR(4.1, m->quantity(), 0.01)
       << "traded quantity exceeds capacity constraint";
 }
 
@@ -290,7 +290,7 @@ TEST_F(CascadeEnrichTest, BidPrefs) {
 
   std::string config =
       "   <feed_commod>natu</feed_commod> "
-      "   <feed_recipe>natu1</feed_recipe> "
+      "   <feed_recipe>natu2</feed_recipe> "
       "   <product_commod>enr_u</product_commod> "
       "   <tails_commod>tails</tails_commod> "
       "   <tails_assay>0.003</tails_assay> "
@@ -304,7 +304,7 @@ TEST_F(CascadeEnrichTest, BidPrefs) {
 
   sim.AddSource("natu").recipe("natu1").capacity(1).Finalize();
 
-  sim.AddSource("natu").recipe("natu2").capacity(1).Finalize();
+  sim.AddSource("natu").recipe("natu2").capacity(2).Finalize();
 
   int id = sim.Run();
 
@@ -313,7 +313,7 @@ TEST_F(CascadeEnrichTest, BidPrefs) {
   QueryResult qr = sim.db().Query("Transactions", &conds);
 
   // should trade only with #2 since it has higher U235
-  EXPECT_EQ(1, qr.rows.size());
+  EXPECT_EQ(2, qr.rows.size());
 
   Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
   CompMap got = m->comp()->mass();

@@ -50,7 +50,7 @@ std::string CascadeEnrich::str() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::EnterNotify() {
   using cyclus::Material;
-cyclus::Facility::EnterNotify();
+  cyclus::Facility::EnterNotify();
   tails_assay = design_tails_assay;
 
   // Calculate ideal machine performance
@@ -79,7 +79,7 @@ cyclus::Facility::EnterNotify();
                     cut, max_centrifuges, n_stages);
 
   max_feed_inventory = FlowPerMon(cascade_info.second);
-  std::cout << "max_feed_inventory: "<< max_feed_inventory << std::endl;
+  std::cout << "max_feed_inventory: " << max_feed_inventory << std::endl;
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
@@ -96,9 +96,7 @@ cyclus::Facility::EnterNotify();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::Tick() {
-
-  current_swu_capacity = SwuCapacity(); }
+void CascadeEnrich::Tick() { current_swu_capacity = SwuCapacity(); }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::Tock() {
@@ -143,7 +141,7 @@ void CascadeEnrich::AdjustMatlPrefs(
   if (order_prefs == false) {
     return;
   }
-
+  std::cout << " in AMP" << std::endl;
   cyclus::PrefMap<cyclus::Material>::type::iterator reqit;
 
   // Loop over all requests
@@ -162,7 +160,9 @@ void CascadeEnrich::AdjustMatlPrefs(
     bool u235_mass = 0;
 
     for (int bidit = 0; bidit < bids_vector.size(); bidit++) {
-      int new_pref = bidit + 1;
+      int new_pref = bidit + 10;
+      std::cout << new_pref << std::endl;
+
 
       // For any bids with U-235 qty=0, set pref to zero.
       if (!u235_mass) {
@@ -272,7 +272,7 @@ CascadeEnrich::GetMatlBids(
                                      << tails.capacity();
     ports.insert(tails_port);
   }
-  std::cout << "inbid: " << out_requests.count(product_commod)  << std::endl;
+  std::cout << "inbid: " << out_requests.count(product_commod) << std::endl;
   if ((out_requests.count(product_commod) > 0) && (inventory.quantity() > 0)) {
     BidPortfolio<Material>::Ptr commod_port(new BidPortfolio<Material>());
 
@@ -319,13 +319,13 @@ void CascadeEnrich::GetMatlTrades(
 
   intra_timestep_swu_ = 0;
   intra_timestep_feed_ = 0;
- std::cout<< trades.size() << std::endl;
+  std::cout << trades.size() << std::endl;
   std::vector<Trade<Material> >::const_iterator it;
   for (it = trades.begin(); it != trades.end(); ++it) {
     double qty = it->amt;
     std::string commod_type = it->bid->request()->commodity();
     Material::Ptr response;
-  std::cout << commod_type << std::endl;
+    std::cout << commod_type << std::endl;
     // Figure out whether material is tails or enriched,
     // if tails then make transfer of material
     if (commod_type == tails_commod) {
