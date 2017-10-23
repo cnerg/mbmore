@@ -1,5 +1,5 @@
-// Implements the RandomEnrich class
-#include "RandomEnrich.h"
+// Implements the CascadeEnrich class
+#include "CascadeEnrich.h"
 #include "behavior_functions.h"
 #include "enrich_functions.h"
 #include "sim_init.h"
@@ -15,7 +15,7 @@
 namespace mbmore {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RandomEnrich::RandomEnrich(cyclus::Context* ctx)
+CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
     : cyclus::Facility(ctx),
       tails_assay(0),
       sigma_tails(0),
@@ -37,10 +37,10 @@ RandomEnrich::RandomEnrich(cyclus::Context* ctx)
       order_prefs(true){}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RandomEnrich::~RandomEnrich() {}
+CascadeEnrich::~CascadeEnrich() {}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string RandomEnrich::str() {
+std::string CascadeEnrich::str() {
   std::stringstream ss;
   ss << cyclus::Facility::str()
      << " with enrichment facility parameters:"
@@ -54,7 +54,7 @@ std::string RandomEnrich::str() {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RandomEnrich::Build(cyclus::Agent* parent) {
+void CascadeEnrich::Build(cyclus::Agent* parent) {
   using cyclus::Material;
 
   Facility::Build(parent);
@@ -64,13 +64,13 @@ void RandomEnrich::Build(cyclus::Agent* parent) {
         this, initial_feed, context()->GetRecipe(feed_recipe)));
   }
 
-  LOG(cyclus::LEV_DEBUG2, "EnrFac") << "RandomEnrich "
+  LOG(cyclus::LEV_DEBUG2, "EnrFac") << "CascadeEnrich "
 				    << " entering the simuluation: ";
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << str();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RandomEnrich::Tick() {
+void CascadeEnrich::Tick() {
 
   int cur_time = context()->time();
 
@@ -108,7 +108,7 @@ void RandomEnrich::Tick() {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RandomEnrich::Tock() {
+void CascadeEnrich::Tock() {
   using cyclus::toolkit::RecordTimeSeries;
   RecordTimeSeries<cyclus::toolkit::ENRICH_SWU>(this, intra_timestep_swu_);
   RecordTimeSeries<cyclus::toolkit::ENRICH_FEED>(this, intra_timestep_feed_);
@@ -123,7 +123,7 @@ void RandomEnrich::Tock() {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::set<cyclus::RequestPortfolio<cyclus::Material>::Ptr>
-    RandomEnrich::GetMatlRequests() {
+    CascadeEnrich::GetMatlRequests() {
   using cyclus::Material;
   using cyclus::RequestPortfolio;
   using cyclus::Request;
@@ -140,10 +140,24 @@ std::set<cyclus::RequestPortfolio<cyclus::Material>::Ptr>
 
   return ports;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool SortBids(
+    cyclus::Bid<cyclus::Material>* i, cyclus::Bid<cyclus::Material>* j) {
+
+  cyclus::Material::Ptr mat_i = i->offer();
+  cyclus::Material::Ptr mat_j = j->offer();
+
+  cyclus::toolkit::MatQuery mq_i(mat_i);
+  cyclus::toolkit::MatQuery mq_j(mat_j);
+
+  return ((mq_i.mass(922350000) / mq_i.qty()) <=
+	  (mq_j.mass(922350000) / mq_j.qty()));
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Sort offers of input material to have higher preference for more
 //  U-235 content
-void RandomEnrich::AdjustMatlPrefs(
+void CascadeEnrich::AdjustMatlPrefs(
     cyclus::PrefMap<cyclus::Material>::type& prefs) {
 
   using cyclus::Bid;
@@ -190,7 +204,7 @@ void RandomEnrich::AdjustMatlPrefs(
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RandomEnrich::AcceptMatlTrades(
+void CascadeEnrich::AcceptMatlTrades(
     const std::vector< std::pair<cyclus::Trade<cyclus::Material>,
     cyclus::Material::Ptr> >& responses) {
   // see
@@ -203,7 +217,7 @@ void RandomEnrich::AcceptMatlTrades(
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr> RandomEnrich::GetMatlBids(
+std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr> CascadeEnrich::GetMatlBids(
     cyclus::CommodMap<cyclus::Material>::type& out_requests){
   using cyclus::Bid;
   using cyclus::BidPortfolio;
@@ -281,7 +295,7 @@ std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr> RandomEnrich::GetMatlBids(
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RandomEnrich::ValidReq(const cyclus::Material::Ptr mat) {
+bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
   cyclus::toolkit::MatQuery q(mat);
   double u235 = q.atom_frac(922350000);
   double u238 = q.atom_frac(922380000);
@@ -289,7 +303,7 @@ bool RandomEnrich::ValidReq(const cyclus::Material::Ptr mat) {
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RandomEnrich::GetMatlTrades(
+void CascadeEnrich::GetMatlTrades(
     const std::vector< cyclus::Trade<cyclus::Material> >& trades,
     std::vector<std::pair<cyclus::Trade<cyclus::Material>,
     cyclus::Material::Ptr> >& responses) {
@@ -337,7 +351,7 @@ void RandomEnrich::GetMatlTrades(
   }
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RandomEnrich::AddMat_(cyclus::Material::Ptr mat) {
+void CascadeEnrich::AddMat_(cyclus::Material::Ptr mat) {
   // Elements and isotopes other than U-235, U-238 are sent directly to tails
   cyclus::CompMap cm = mat->comp()->atom();
   bool extra_u = false;
@@ -380,14 +394,14 @@ void RandomEnrich::AddMat_(cyclus::Material::Ptr mat) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-cyclus::Material::Ptr RandomEnrich::Request_() {
+cyclus::Material::Ptr CascadeEnrich::Request_() {
   double qty = std::max(0.0, inventory.capacity() - inventory.quantity());
   return cyclus::Material::CreateUntracked(qty,
 					   context()->GetRecipe(feed_recipe));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-cyclus::Material::Ptr RandomEnrich::Offer_(cyclus::Material::Ptr mat) {
+cyclus::Material::Ptr CascadeEnrich::Offer_(cyclus::Material::Ptr mat) {
   cyclus::toolkit::MatQuery q(mat);
   cyclus::CompMap comp;
   comp[922350000] = q.atom_frac(922350000);
@@ -396,7 +410,7 @@ cyclus::Material::Ptr RandomEnrich::Offer_(cyclus::Material::Ptr mat) {
            mat->quantity(), cyclus::Composition::CreateFromAtom(comp));
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-cyclus::Material::Ptr RandomEnrich::Enrich_(
+cyclus::Material::Ptr CascadeEnrich::Enrich_(
     cyclus::Material::Ptr mat,
     double qty) {
 
@@ -455,7 +469,7 @@ cyclus::Material::Ptr RandomEnrich::Enrich_(
 
   intra_timestep_swu_ += swu_req;
   intra_timestep_feed_ += feed_req;
-  RecordRandomEnrich_(feed_req, swu_req);
+  RecordCascadeEnrich_(feed_req, swu_req);
 
   // If enriched to HEU then record total HEU produced
   double heu_definition = 0.2;
@@ -486,7 +500,7 @@ cyclus::Material::Ptr RandomEnrich::Enrich_(
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RandomEnrich::RecordRandomEnrich_(double natural_u, double swu) {
+void CascadeEnrich::RecordCascadeEnrich_(double natural_u, double swu) {
   using cyclus::Context;
   using cyclus::Agent;
 
@@ -496,7 +510,7 @@ void RandomEnrich::RecordRandomEnrich_(double natural_u, double swu) {
   LOG(cyclus::LEV_DEBUG1, "EnrFac") << "  *    SWU: " << swu;
 
   Context* ctx = Agent::context();
-  ctx->NewDatum("RandomEnrichs")
+  ctx->NewDatum("CascadeEnrichs")
       ->AddVal("ID", id())
       ->AddVal("Time", ctx->time())
       ->AddVal("Natural_Uranium", natural_u)
@@ -504,7 +518,7 @@ void RandomEnrich::RecordRandomEnrich_(double natural_u, double swu) {
       ->Record();
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RandomEnrich::RecordInspection_() {
+void CascadeEnrich::RecordInspection_() {
   using cyclus::Context;
   using cyclus::Agent;
 
@@ -602,7 +616,7 @@ void RandomEnrich::RecordInspection_() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Decide whether each individual bid will be responded to based on whether
 // the enrichment facility is trading
-cyclus::BidPortfolio<cyclus::Material>::Ptr RandomEnrich::ConsiderMatlRequests(
+cyclus::BidPortfolio<cyclus::Material>::Ptr CascadeEnrich::ConsiderMatlRequests(
   cyclus::CommodMap<cyclus::Material>::type& out_requests) {
   using cyclus::Bid;
   using cyclus::BidPortfolio;
@@ -633,7 +647,7 @@ cyclus::BidPortfolio<cyclus::Material>::Ptr RandomEnrich::ConsiderMatlRequests(
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-double RandomEnrich::FeedAssay() {
+double CascadeEnrich::FeedAssay() {
   using cyclus::Material;
 
   if (inventory.empty()) {
@@ -645,8 +659,8 @@ double RandomEnrich::FeedAssay() {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-extern "C" cyclus::Agent* ConstructRandomEnrich(cyclus::Context* ctx) {
-  return new RandomEnrich(ctx);
+extern "C" cyclus::Agent* ConstructCascadeEnrich(cyclus::Context* ctx) {
+  return new CascadeEnrich(ctx);
 }
   
 }  // namespace mbmore

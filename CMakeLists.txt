@@ -114,6 +114,11 @@ FIND_PACKAGE( COIN REQUIRED )
 SET(STUB_INCLUDE_DIRS ${STUB_INCLUDE_DIRS} ${COIN_INCLUDE_DIR})
 set(LIBS ${LIBS} ${COIN_LIBRARIES})
 
+# find LAPACK and link (needed until this archetype is merged into cyclus)
+FIND_PACKAGE(LAPACK REQUIRED)
+set(LIBS ${LIBS} ${LAPACK_LIBRARIES})
+MESSAGE("\tFound LAPACK Libraries: ${LAPACK_LIBRARIES}")
+
 # include all the directories we just found
 INCLUDE_DIRECTORIES(${STUB_INCLUDE_DIRS})
 
