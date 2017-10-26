@@ -71,7 +71,6 @@ void CascadeEnrich::EnterNotify() {
   //  n_strip_stages = int(n_stages.second) + 1;
   n_enrich_stages = n_stages.first;
   n_strip_stages = n_stages.second;
-  std::cout << "n_enrich_stages " << n_enrich_stages << std::endl;
   std::pair<int, double> cascade_info =
       DesignCascade(FlowPerSec(design_feed_flow), design_alpha, design_delU,
                     cut, max_centrifuges, n_stages);
@@ -83,13 +82,6 @@ void CascadeEnrich::EnterNotify() {
 
   cascade_features = CalcStageFeatures(design_feed_assay, design_alpha,
                                        design_delU, cut, n_stages, feed_flows);
-  for (int i = 0; i < cascade_features.size(); i++) {
-    std::cout << "CF " << i << " machine " << cascade_features[i].first
-              << " second " << FlowPerMon(cascade_features[i].second)
-              << std::endl;
-    std::cout << "enrich stage " << i-n_strip_stages << std::endl;
-    std::cout << "ProductAssay " << ProductAssayFromNStages(design_alpha, design_feed_assay, i-n_strip_stages) << std::endl;
-  }
 
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
@@ -149,7 +141,6 @@ void CascadeEnrich::AdjustMatlPrefs(
   if (order_prefs == false) {
     return;
   }
-  std::cout << " in AMP" << std::endl;
   cyclus::PrefMap<cyclus::Material>::type::iterator reqit;
 
   // Loop over all requests
@@ -169,7 +160,6 @@ void CascadeEnrich::AdjustMatlPrefs(
 
     for (int bidit = 0; bidit < bids_vector.size(); bidit++) {
       int new_pref = bidit + 10;
-      std::cout << new_pref << std::endl;
 
       // For any bids with U-235 qty=0, set pref to zero.
       if (!u235_mass) {
@@ -330,13 +320,11 @@ void CascadeEnrich::GetMatlTrades(
   using cyclus::Trade;
 
   intra_timestep_feed_ = 0;
-  std::cout << trades.size() << std::endl;
   std::vector<Trade<Material>>::const_iterator it;
   for (it = trades.begin(); it != trades.end(); ++it) {
     double qty = it->amt;
     std::string commod_type = it->bid->request()->commodity();
     Material::Ptr response;
-    std::cout << commod_type << std::endl;
     // Figure out whether material is tails or enriched,
     // if tails then make transfer of material
     if (commod_type == tails_commod) {
