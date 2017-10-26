@@ -62,10 +62,9 @@ TEST_F(CascadeEnrichTest, RequestQty) {
       "   <feed_recipe>natu1</feed_recipe> "
       "   <product_commod>enr_u</product_commod> "
       "   <tails_commod>tails</tails_commod> "
-      "   <max_feed_inventory>1.0</max_feed_inventory> "
       "   <tails_assay>0.003</tails_assay> ";
 
-  int simdur = 10;
+  int simdur = 1;
   cyclus::MockSim sim(cyclus::AgentSpec(":mbmore:CascadeEnrich"), config,
                       simdur);
   sim.AddRecipe("natu1", cascadenrichtest::c_natu1());
@@ -82,7 +81,7 @@ TEST_F(CascadeEnrichTest, RequestQty) {
   // Should be only one transaction into the EF,
   // and it should be exactly 207.8928179411368kg of natu
   EXPECT_EQ(1, qr.rows.size());
-  EXPECT_NEAR(207.8928179411368, m->quantity(), 1e-10)
+  EXPECT_NEAR(207.8928, m->quantity(), 1e-3)
       << "matched trade provides the wrong quantity of material";
 }
 
@@ -99,7 +98,7 @@ TEST_F(CascadeEnrichTest, CheckSWUConstraint) {
       "   <product_commod>enr_u</product_commod> "
       "   <tails_commod>tails</tails_commod> "
       "   <tails_assay>0.003</tails_assay> "
-      "   <initial_feed>200</initial_feed> ";
+      "   <initial_feed>207</initial_feed> ";
 
   int simdur = 1;
 
