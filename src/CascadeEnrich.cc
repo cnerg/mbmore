@@ -95,11 +95,8 @@ void CascadeEnrich::EnterNotify() {
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << str();
 }
 
-
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::Tick() {  }
+void CascadeEnrich::Tick() {}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::Tock() {
@@ -270,7 +267,7 @@ CascadeEnrich::GetMatlBids(
                                      << tails.capacity();
     ports.insert(tails_port);
   }
-  
+
   if ((out_requests.count(product_commod) > 0) && (inventory.quantity() > 0)) {
     BidPortfolio<Material>::Ptr commod_port(new BidPortfolio<Material>());
 
@@ -287,7 +284,7 @@ CascadeEnrich::GetMatlBids(
 
     // overbidding (bidding on every offer)
     // add an overall production capacity constraint
-   
+
     // correct the actual inventory quantity by the amount of Uranium in it...
     double feed_qty = inventory.quantity();
     Material::Ptr natu_matl = inventory.Pop(feed_qty, cyclus::eps_rsrc());
@@ -298,13 +295,15 @@ CascadeEnrich::GetMatlBids(
     nucs.insert(922380000);
     double u_frac = mq.mass_frac(nucs);
     double cor_feed_qty = feed_qty * u_frac;
-    
-    double production_capacity = ProductFlow( std::min(cor_feed_qty, max_feed_flow));
-    cyclus::CapacityConstraint<Material> production_contraint(production_capacity);
+
+    double production_capacity =
+        ProductFlow(std::min(cor_feed_qty, max_feed_flow));
+    cyclus::CapacityConstraint<Material> production_contraint(
+        production_capacity);
     commod_port->AddConstraint(production_contraint);
-    LOG(cyclus::LEV_INFO5, "EnrFac") << prototype()
-                                     << " adding production capacity constraint of "
-                                     << production_capacity;
+    LOG(cyclus::LEV_INFO5, "EnrFac")
+        << prototype() << " adding production capacity constraint of "
+        << production_capacity;
 
     ports.insert(commod_port);
   }
@@ -363,7 +362,7 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   double max_product_mass = ProductFlow(max_feed_flow);
 
   double feed_qty = qty / max_product_mass * max_feed_flow;
-  
+
   double tails_assay = TailsAssay(FeedAssay());
   double tails_mass = TailsFlow(feed_qty);
 
@@ -402,21 +401,17 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   Material::Ptr response = r->ExtractComp(qty, comp);
   tails.Push(r);
 
-
   RecordEnrichment_(feed_req);
 
   LOG(cyclus::LEV_INFO5, "EnrFac") << prototype()
                                    << " has performed an enrichment: ";
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Qty: " << feed_req;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Assay: "
-                                   << FeedAssay() * 100;
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Assay: " << FeedAssay() * 100;
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Product Qty: " << qty;
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Product Assay: "
                                    << product_assay * 100;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Qty: "
-                                   << tails_mass;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Assay: "
-                                   << tails_assay * 100;
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Qty: " << tails_mass;
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Assay: " << tails_assay * 100;
 
   return response;
 }
@@ -452,7 +447,6 @@ cyclus::Material::Ptr CascadeEnrich::Offer_(cyclus::Material::Ptr mat) {
   comp[922350000] = product_assay;
   comp[922380000] = 1 - product_assay;
 
-
   return cyclus::Material::CreateUntracked(
       mat->quantity(), cyclus::Composition::CreateFromMass(comp));
 }
@@ -477,16 +471,18 @@ double CascadeEnrich::FeedAssay() {
   return cyclus::toolkit::UraniumAssay(fission_matl);
 }
 
-double CascadeEnrich::ProductAssay(double feed_assay){
-  return  ProductAssayFromNStages(design_alpha, design_feed_assay, n_enrich_stages -1);
+double CascadeEnrich::ProductAssay(double feed_assay) {
+  return ProductAssayFromNStages(design_alpha, design_feed_assay,
+                                 n_enrich_stages - 1);
 }
-double CascadeEnrich::TailsAssay(double feed_assay){
-  return  WasteAssayFromNStages(design_alpha, design_feed_assay, n_enrich_stages -1);
+double CascadeEnrich::TailsAssay(double feed_assay) {
+  return WasteAssayFromNStages(design_alpha, design_feed_assay,
+                               n_enrich_stages - 1);
 }
-double CascadeEnrich::ProductFlow(double feed_flow){
+double CascadeEnrich::ProductFlow(double feed_flow) {
   return feed_flow / max_feed_flow * cascade_features.back().second;
 }
-double CascadeEnrich::TailsFlow(double feed_flow){
+double CascadeEnrich::TailsFlow(double feed_flow) {
   // this assume mass flow conservation
   return feed_flow - ProductFlow(feed_flow);
 }
