@@ -162,8 +162,8 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 double ProductAssayFromNStages(double alpha, double feed_assay,
                                double enrich_stages) {
   double A =
-      (feed_assay / (1 - feed_assay)) * exp(enrich_stages * (alpha - 1.0));
-  double product_assay = A / (1 + A);
+      (feed_assay / (1. - feed_assay)) * exp(enrich_stages * (alpha - 1.0));
+  double product_assay = A / (1. + A);
   return product_assay;
 }
 
@@ -233,9 +233,16 @@ std::vector<double> CalcFeedFlows(std::pair<int, int> n_st, double cascade_feed,
   // to be much larger than it should ever need to be
   int max_stages = 100;
 
+  // Number of enrich stages
   int n_enrich = n_st.first;
+  // NUmber of stripping stages
   int n_strip = n_st.second;
+  // total number of stages
   int n_stages = n_st.first + n_st.second;
+  if (n_stages > max_stages){
+    std::cout << "To many stages in the cascade, can't calculated the thoerritical flows..." << std::endl;
+    exit(1);
+  }
 
   // LAPACK takes the external flow feeds as B, and then returns a modified
   // version of the same array now representing the solution flow rates.
@@ -301,7 +308,6 @@ std::vector<double> CalcFeedFlows(std::pair<int, int> n_st, double cascade_feed,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determine number of machines in each stage of the cascade, and total
 // output flow from each stage
-
 std::vector<std::pair<int, double>> CalcStageFeatures(
     double feed_assay, double alpha, double del_U, double cut,
     std::pair<int, int> n_st, std::vector<double> feed_flow) {

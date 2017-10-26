@@ -39,7 +39,6 @@ CascadeEnrich::~CascadeEnrich() {}
 std::string CascadeEnrich::str() {
   std::stringstream ss;
   ss << cyclus::Facility::str() << " with enrichment facility parameters:"
-     << " * SWU capacity: " << SwuCapacity()
      << " * Tails assay: " << tails_assay << " * Feed assay: " << FeedAssay()
      << " * Input cyclus::Commodity: " << feed_commod
      << " * Output cyclus::Commodity: " << product_commod
@@ -54,11 +53,10 @@ void CascadeEnrich::EnterNotify() {
   tails_assay = design_tails_assay;
 
   // Calculate ideal machine performance
-  double design_delU =
+  design_delU =
       CalcDelU(centrifuge_velocity, height, diameter, Mg2kgPerSec(machine_feed),
                temp, cut, eff, M, dM, x, flow_internal);
-  double design_alpha =
-      AlphaBySwu(design_delU, Mg2kgPerSec(machine_feed), cut, M);
+  design_alpha = AlphaBySwu(design_delU, Mg2kgPerSec(machine_feed), cut, M);
 
   // Design ideal cascade based on target feed flow and product assay
   std::pair<int, int> n_stages =
@@ -73,19 +71,29 @@ void CascadeEnrich::EnterNotify() {
   //  n_strip_stages = int(n_stages.second) + 1;
   n_enrich_stages = n_stages.first;
   n_strip_stages = n_stages.second;
-
+  std::cout << "n_enrich_stages " << n_enrich_stages << std::endl;
   std::pair<int, double> cascade_info =
       DesignCascade(FlowPerSec(design_feed_flow), design_alpha, design_delU,
                     cut, max_centrifuges, n_stages);
 
-  max_feed_inventory = FlowPerMon(cascade_info.second);
-  std::cout << "max_feed_inventory: " << max_feed_inventory << std::endl;
+  max_feed_flow = FlowPerMon(cascade_info.second);
+
+  std::vector<double> feed_flows;
+  feed_flows = CalcFeedFlows(n_stages, FlowPerSec(max_feed_flow), cut);
+
+  cascade_features = CalcStageFeatures(design_feed_assay, design_alpha,
+                                       design_delU, cut, n_stages, feed_flows);
+  for (int i = 0; i < cascade_features.size(); i++) {
+    std::cout << "CF " << i << " machine " << cascade_features[i].first
+              << " second " << FlowPerMon(cascade_features[i].second)
+              << std::endl;
+    std::cout << "enrich stage " << i-n_strip_stages << std::endl;
+    std::cout << "ProductAssay " << ProductAssayFromNStages(design_alpha, design_feed_assay, i-n_strip_stages) << std::endl;
+  }
+
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
-  // Number of machines times swu per machine
-  SwuCapacity(cascade_info.first * FlowPerMon(design_delU));
-  std::cout << "swu_capacity: " << swu_capacity << std::endl;
   if (initial_feed > 0) {
     inventory.Push(Material::Create(this, initial_feed,
                                     context()->GetRecipe(feed_recipe)));
@@ -95,16 +103,16 @@ void CascadeEnrich::EnterNotify() {
   LOG(cyclus::LEV_DEBUG2, "EnrFac") << str();
 }
 
+
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::Tick() { current_swu_capacity = SwuCapacity(); }
+void CascadeEnrich::Tick() {  }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::Tock() {
   using cyclus::toolkit::RecordTimeSeries;
 
-  LOG(cyclus::LEV_INFO4, "EnrFac") << prototype() << " used "
-                                   << intra_timestep_swu_ << " SWU";
-  RecordTimeSeries<cyclus::toolkit::ENRICH_SWU>(this, intra_timestep_swu_);
   LOG(cyclus::LEV_INFO4, "EnrFac") << prototype() << " used "
                                    << intra_timestep_feed_ << " feed";
   RecordTimeSeries<cyclus::toolkit::ENRICH_FEED>(this, intra_timestep_feed_);
@@ -163,7 +171,6 @@ void CascadeEnrich::AdjustMatlPrefs(
       int new_pref = bidit + 10;
       std::cout << new_pref << std::endl;
 
-
       // For any bids with U-235 qty=0, set pref to zero.
       if (!u235_mass) {
         cyclus::Material::Ptr mat = bids_vector[bidit]->offer();
@@ -182,11 +189,11 @@ void CascadeEnrich::AdjustMatlPrefs(
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::AcceptMatlTrades(
     const std::vector<std::pair<cyclus::Trade<cyclus::Material>,
-                                cyclus::Material::Ptr> >& responses) {
+                                cyclus::Material::Ptr>>& responses) {
   // see
   // http://stackoverflow.com/questions/5181183/boostshared-ptr-and-inheritance
   std::vector<std::pair<cyclus::Trade<cyclus::Material>,
-                        cyclus::Material::Ptr> >::const_iterator it;
+                        cyclus::Material::Ptr>>::const_iterator it;
   for (it = responses.begin(); it != responses.end(); ++it) {
     AddMat_(it->second);
   }
@@ -246,6 +253,7 @@ CascadeEnrich::GetMatlBids(
   using cyclus::toolkit::MatVec;
 
   std::set<BidPortfolio<Material>::Ptr> ports;
+
   if ((out_requests.count(tails_commod) > 0) && (tails.quantity() > 0)) {
     BidPortfolio<Material>::Ptr tails_port(new BidPortfolio<Material>());
 
@@ -272,7 +280,7 @@ CascadeEnrich::GetMatlBids(
                                      << tails.capacity();
     ports.insert(tails_port);
   }
-  std::cout << "inbid: " << out_requests.count(product_commod) << std::endl;
+  
   if ((out_requests.count(product_commod) > 0) && (inventory.quantity() > 0)) {
     BidPortfolio<Material>::Ptr commod_port(new BidPortfolio<Material>());
 
@@ -281,29 +289,33 @@ CascadeEnrich::GetMatlBids(
     std::vector<Request<Material>*>::iterator it;
     for (it = commod_requests.begin(); it != commod_requests.end(); ++it) {
       Request<Material>* req = *it;
-      Material::Ptr mat = req->target();
-      double request_enrich = cyclus::toolkit::UraniumAssay(mat);
-      if (ValidReq(req->target()) &&
-          ((request_enrich < max_enrich) ||
-           (cyclus::AlmostEq(request_enrich, max_enrich)))) {
-        std::cout << "in adding requrest" << std::endl;
-        Material::Ptr offer = Offer_(req->target());
-        commod_port->AddBid(req, offer, this);
-      }
+      Material::Ptr offer = Offer_(req->target());
+      // The offer might not match the required enrichment ! it just produce
+      // what it can according to the cascade configuration and the feed asays
+      commod_port->AddBid(req, offer, this);
     }
 
-    std::cout << "swu_capacity: " << swu_capacity << std::endl;
-    Converter<Material>::Ptr sc(new SWUConverter(FeedAssay(), tails_assay));
-    CapacityConstraint<Material> swu(swu_capacity, sc);
-    commod_port->AddConstraint(swu);
-    LOG(cyclus::LEV_INFO5, "EnrFac")
-        << prototype() << " adding a swu constraint of " << swu.capacity();
+    // overbidding (bidding on every offer)
+    // add an overall production capacity constraint
+   
+    // correct the actual inventory quantity by the amount of Uranium in it...
+    double feed_qty = inventory.quantity();
+    Material::Ptr natu_matl = inventory.Pop(feed_qty, cyclus::eps_rsrc());
+    inventory.Push(natu_matl);
+    cyclus::toolkit::MatQuery mq(natu_matl);
+    std::set<cyclus::Nuc> nucs;
+    nucs.insert(922350000);
+    nucs.insert(922380000);
+    double u_frac = mq.mass_frac(nucs);
+    double cor_feed_qty = feed_qty * u_frac;
+    
+    double production_capacity = ProductFlow( std::min(cor_feed_qty, max_feed_flow));
+    cyclus::CapacityConstraint<Material> production_contraint(production_capacity);
+    commod_port->AddConstraint(production_contraint);
+    LOG(cyclus::LEV_INFO5, "EnrFac") << prototype()
+                                     << " adding production capacity constraint of "
+                                     << production_capacity;
 
-    Converter<Material>::Ptr nc(new NatUConverter(FeedAssay(), tails_assay));
-    CapacityConstraint<Material> natu(inventory.quantity(), nc);
-    commod_port->AddConstraint(natu);
-    LOG(cyclus::LEV_INFO5, "EnrFac")
-        << prototype() << " adding a natu constraint of " << natu.capacity();
     ports.insert(commod_port);
   }
   return ports;
@@ -311,16 +323,15 @@ CascadeEnrich::GetMatlBids(
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::GetMatlTrades(
-    const std::vector<cyclus::Trade<cyclus::Material> >& trades,
+    const std::vector<cyclus::Trade<cyclus::Material>>& trades,
     std::vector<std::pair<cyclus::Trade<cyclus::Material>,
-                          cyclus::Material::Ptr> >& responses) {
+                          cyclus::Material::Ptr>>& responses) {
   using cyclus::Material;
   using cyclus::Trade;
 
-  intra_timestep_swu_ = 0;
   intra_timestep_feed_ = 0;
   std::cout << trades.size() << std::endl;
-  std::vector<Trade<Material> >::const_iterator it;
+  std::vector<Trade<Material>>::const_iterator it;
   for (it = trades.begin(); it != trades.end(); ++it) {
     double qty = it->amt;
     std::string commod_type = it->bid->request()->commodity();
@@ -348,11 +359,6 @@ void CascadeEnrich::GetMatlTrades(
     ss << "is being asked to provide more than its current inventory.";
     throw cyclus::ValueError(Agent::InformErrorMsg(ss.str()));
   }
-  if (cyclus::IsNegative(current_swu_capacity)) {
-    throw cyclus::ValueError("EnrFac " + prototype() +
-                             " is being asked to provide more than" +
-                             " its SWU capacity.");
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -362,14 +368,16 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   using cyclus::ResCast;
   using cyclus::toolkit::Assays;
   using cyclus::toolkit::UraniumAssay;
-  using cyclus::toolkit::SwuRequired;
   using cyclus::toolkit::FeedQty;
   using cyclus::toolkit::TailsQty;
-  std::cout << "in" << std::endl;
   // get enrichment parameters
-  Assays assays(FeedAssay(), UraniumAssay(mat), tails_assay);
-  double swu_req = SwuRequired(qty, assays);
-  double natu_req = FeedQty(qty, assays);
+  double product_assay = ProductAssay(FeedAssay());
+  double max_product_mass = ProductFlow(max_feed_flow);
+
+  double feed_qty = qty / max_product_mass * max_feed_flow;
+  
+  double tails_assay = TailsAssay(FeedAssay());
+  double tails_mass = TailsFlow(feed_qty);
 
   // Determine the composition of the natural uranium
   // (ie. U-235+U-238/TotalMass)
@@ -382,7 +390,7 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   nucs.insert(922350000);
   nucs.insert(922380000);
   double natu_frac = mq.mass_frac(nucs);
-  double feed_req = natu_req / natu_frac;
+  double feed_req = feed_qty / natu_frac;
 
   // pop amount from inventory and blob it into one material
   Material::Ptr r;
@@ -394,12 +402,9 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
       r = inventory.Pop(feed_req, cyclus::eps_rsrc());
     }
   } catch (cyclus::Error& e) {
-    NatUConverter nc(FeedAssay(), tails_assay);
     std::stringstream ss;
     ss << " tried to remove " << feed_req << " from its inventory of size "
-       << inventory.quantity()
-       << " and the conversion of the material into natu is "
-       << nc.convert(mat);
+       << inventory.quantity();
     throw cyclus::ValueError(Agent::InformErrorMsg(ss.str()));
   }
 
@@ -409,46 +414,38 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   Material::Ptr response = r->ExtractComp(qty, comp);
   tails.Push(r);
 
-  current_swu_capacity -= swu_req;
 
-  intra_timestep_swu_ += swu_req;
-  intra_timestep_feed_ += feed_req;
-  RecordEnrichment_(feed_req, swu_req);
+  RecordEnrichment_(feed_req);
 
   LOG(cyclus::LEV_INFO5, "EnrFac") << prototype()
                                    << " has performed an enrichment: ";
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Qty: " << feed_req;
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Assay: "
-                                   << assays.Feed() * 100;
+                                   << FeedAssay() * 100;
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Product Qty: " << qty;
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Product Assay: "
-                                   << assays.Product() * 100;
+                                   << product_assay * 100;
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Qty: "
-                                   << TailsQty(qty, assays);
+                                   << tails_mass;
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Assay: "
-                                   << assays.Tails() * 100;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * SWU: " << swu_req;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Current SWU capacity: "
-                                   << current_swu_capacity;
+                                   << tails_assay * 100;
 
   return response;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::RecordEnrichment_(double natural_u, double swu) {
+void CascadeEnrich::RecordEnrichment_(double natural_u) {
   using cyclus::Context;
   using cyclus::Agent;
 
   LOG(cyclus::LEV_DEBUG1, "EnrFac") << prototype()
                                     << " has enriched a material:";
   LOG(cyclus::LEV_DEBUG1, "EnrFac") << "  * Amount: " << natural_u;
-  LOG(cyclus::LEV_DEBUG1, "EnrFac") << "  *    SWU: " << swu;
 
   Context* ctx = Agent::context();
   ctx->NewDatum("Enrichments")
       ->AddVal("ID", id())
       ->AddVal("Time", ctx->time())
       ->AddVal("Natural_Uranium", natural_u)
-      ->AddVal("SWU", swu)
       ->Record();
 }
 
@@ -460,12 +457,16 @@ cyclus::Material::Ptr CascadeEnrich::Request_() {
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 cyclus::Material::Ptr CascadeEnrich::Offer_(cyclus::Material::Ptr mat) {
-  cyclus::toolkit::MatQuery q(mat);
+  double feed_assay = FeedAssay();
+  double product_assay = ProductAssay(feed_assay);
+
   cyclus::CompMap comp;
-  comp[922350000] = q.atom_frac(922350000);
-  comp[922380000] = q.atom_frac(922380000);
+  comp[922350000] = product_assay;
+  comp[922380000] = 1 - product_assay;
+
+
   return cyclus::Material::CreateUntracked(
-      mat->quantity(), cyclus::Composition::CreateFromAtom(comp));
+      mat->quantity(), cyclus::Composition::CreateFromMass(comp));
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
@@ -486,6 +487,20 @@ double CascadeEnrich::FeedAssay() {
       inventory.Pop(pop_qty, cyclus::eps_rsrc());
   inventory.Push(fission_matl);
   return cyclus::toolkit::UraniumAssay(fission_matl);
+}
+
+double CascadeEnrich::ProductAssay(double feed_assay){
+  return  ProductAssayFromNStages(design_alpha, design_feed_assay, n_enrich_stages -1);
+}
+double CascadeEnrich::TailsAssay(double feed_assay){
+  return  WasteAssayFromNStages(design_alpha, design_feed_assay, n_enrich_stages -1);
+}
+double CascadeEnrich::ProductFlow(double feed_flow){
+  return feed_flow / max_feed_flow * cascade_features.back().second;
+}
+double CascadeEnrich::TailsFlow(double feed_flow){
+  // this assume mass flow conservation
+  return feed_flow - ProductFlow(feed_flow);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
