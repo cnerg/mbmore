@@ -87,7 +87,7 @@ void CascadeEnrich::EnterNotify() {
     std::cout << "stage " << i - n_strip_stages ;
     std::cout << " flow " << FlowPerMon(cascade_features[i].second);
     std::cout << " ProductAssay " << ProductAssayFromNStages(design_alpha, design_feed_assay, i - n_strip_stages);
-    std::cout << " TailsAssay " << WasteAssayFromNStages(design_alpha, design_feed_assay, i- n_strip_stages-1) << std::endl;
+    std::cout << " TailsAssay " << WasteAssayFromNStages(design_alpha, design_feed_assay, i- n_strip_stages) << std::endl;
   }
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
