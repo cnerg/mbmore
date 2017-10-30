@@ -192,6 +192,7 @@ class CascadeEnrich : public cyclus::Facility {
   // Set by max feed for an individual machine
   double design_delU;
   double design_alpha;
+  double design_beta;
 
   // Set by design assays (feed, product, tails)
   int n_enrich_stages;

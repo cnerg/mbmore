@@ -84,6 +84,13 @@ double AlphaBySwu(double del_U, double feed, double cut, double M) {
   return alpha;
 }
 
+double BetaByAlphaAndCut(double alpha, double feed_assay, double cut){
+  double product_assay = ProductAssayByAlpha(alpha, feed_assay);
+  double waste_assay = (feed_assay - cut * product_assay) / (1 - cut);
+  return feed_assay/(1 - feed_assay) *(1 - waste_assay) / waste_assay;
+}
+
+
 // per machine
 double ProductAssayByAlpha(double alpha, double feed_assay) {
   // Possibly incorrect is commented out ?
@@ -91,10 +98,12 @@ double ProductAssayByAlpha(double alpha, double feed_assay) {
   //    return 1.0 / (ratio + 1.0);
   double ratio = alpha * feed_assay / (1.0 - feed_assay);
   return ratio / (1 + ratio);
+  
+  //return alpha / ( alpha - 1 + 1 / feed_assay );
 }
 
-double WasteAssayByAlpha(double alpha, double feed_assay) {
-  double A = (feed_assay / (1 - feed_assay)) / alpha;
+double WasteAssayByBeta(double beta, double feed_assay) {
+  double A = (feed_assay / (1 - feed_assay)) / beta;
   return A / (1 + A);
 }
 
@@ -127,7 +136,7 @@ std::pair<double, double> StagesPerCascade(double alpha, double feed_assay,
 // Determine number of stages required to reach ideal cascade product assay
 // (requires integer number of stages, so output may exceed target assay)
 
-std::pair<int, int> FindNStages(double alpha, double feed_assay,
+std::pair<int, int> FindNStages(double alpha, double beta, double feed_assay,
                                 double product_assay, double waste_assay) {
   using std::pair;
 
@@ -141,7 +150,7 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
   while (stage_product_assay < product_assay) {
     stage_product_assay = ProductAssayByAlpha(alpha, stage_feed_assay);
     if (ideal_enrich_stage == 0) {
-      stage_waste_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
+      stage_waste_assay = WasteAssayByBeta(beta, stage_feed_assay);
     }
     ideal_enrich_stage += 1;
     stage_feed_assay = stage_product_assay;
@@ -149,7 +158,7 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
   // Calculate number of stripping stages
   stage_feed_assay = stage_waste_assay;
   while (stage_waste_assay > waste_assay) {
-    stage_waste_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
+    stage_waste_assay = WasteAssayByBeta(beta, stage_feed_assay);
     ideal_strip_stage += 1;
     stage_feed_assay = stage_waste_assay;
   }
@@ -168,10 +177,17 @@ double ProductAssayFromNStages(double alpha, double feed_assay,
 }
 
 double WasteAssayFromNStages(double alpha, double feed_assay,
-                             double strip_stages) {
-  return 1 /
-         (1 +
-          ((1 - feed_assay) / feed_assay) * exp(strip_stages * (alpha - 1.0)));
+                             double strip_stages, double cut) {
+  
+  double stg_product_assay = ProductAssayFromNStages(alpha, feed_assay, strip_stages);
+  double stg_feed_assay = feed_assay;
+    if( strip_stages < 0 ){
+      stg_feed_assay = ProductAssayFromNStages(alpha, feed_assay, strip_stages +1);
+    } else if (strip_stages > 0) {
+      stg_feed_assay = WasteAssayFromNStages(alpha, feed_assay, strip_stages -1, cut);
+    }
+
+  return (stg_feed_assay - cut * stg_product_assay) / (1 - cut);
 }
 
 double MachinesPerStage(double alpha, double del_U, double stage_feed) {
@@ -312,7 +328,7 @@ std::vector<std::pair<int, double>> CalcStageFeatures(
     double feed_assay, double alpha, double del_U, double cut,
     std::pair<int, int> n_st, std::vector<double> feed_flow) {
   double machine_tol = 0.01;
-
+  double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
   int n_enrich = n_st.first;
   int n_strip = n_st.second;
   int n_stages = n_st.first + n_st.second;
@@ -340,7 +356,7 @@ std::vector<std::pair<int, double>> CalcStageFeatures(
     // waste assay from first enriching stage becomes feed assay for first
     // stripping stage
     if (i == 0) {
-      strip_feed_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
+      strip_feed_assay = WasteAssayByBeta(beta, stage_feed_assay);
     }
     // reset feed assay for next stage to product assay from this stage
     stage_feed_assay = ProductAssayByAlpha(alpha, stage_feed_assay);
@@ -363,7 +379,7 @@ std::vector<std::pair<int, double>> CalcStageFeatures(
     stage_info.insert(stage_info.begin(), curr_info);
 
     // reset feed assay for next stage to waste assay from this stage
-    stage_feed_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
+    stage_feed_assay = WasteAssayByBeta(beta, stage_feed_assay);
   }
 
   return stage_info;
