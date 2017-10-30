@@ -169,9 +169,16 @@ double ProductAssayFromNStages(double alpha, double feed_assay,
 
 double WasteAssayFromNStages(double alpha, double feed_assay,
                              double strip_stages) {
-  return 1 /
-         (1 +
-          ((1 - feed_assay) / feed_assay) * exp(strip_stages * (alpha - 1.0)));
+  if(strip_stages == 0){
+    return WasteAssayByAlpha(alpha, feed_assay);
+  } else if (strip_stages < 0) {
+    double stg_feed_assay = WasteAssayFromNStages(alpha, feed_assay, strip_stages +1);
+    return WasteAssayByAlpha(alpha, stg_feed_assay);
+    
+  } else if (strip_stages > 0){
+    double stg_feed_assay = ProductAssayFromNStages(alpha, feed_assay, strip_stages -1);
+    return WasteAssayByAlpha(alpha, stg_feed_assay);
+  }
 }
 
 double MachinesPerStage(double alpha, double del_U, double stage_feed) {

@@ -83,6 +83,12 @@ void CascadeEnrich::EnterNotify() {
   cascade_features = CalcStageFeatures(design_feed_assay, design_alpha,
                                        design_delU, cut, n_stages, feed_flows);
 
+  for (int i= 0; i < cascade_features.size(); i++){
+    std::cout << "stage " << i - n_strip_stages ;
+    std::cout << " flow " << FlowPerMon(cascade_features[i].second);
+    std::cout << " ProductAssay " << ProductAssayFromNStages(design_alpha, design_feed_assay, i - n_strip_stages);
+    std::cout << " TailsAssay " << WasteAssayFromNStages(design_alpha, design_feed_assay, i- n_strip_stages-1) << std::endl;
+  }
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
