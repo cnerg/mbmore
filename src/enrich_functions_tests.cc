@@ -62,7 +62,7 @@ TEST(Enrich_Functions_Test, TestAssays) {
   double n_stages = 5;
   double pycode_w_assay = 0.00095311 ;
 
-  double cpp_w_assay = WasteAssayFromNStages(cur_alpha, cur_f_assay, n_stages);
+  double cpp_w_assay = WasteAssayFromNStages(cur_alpha, cur_f_assay, n_stages, cut);
   
   EXPECT_NEAR(cpp_w_assay, pycode_w_assay, tol);
 
@@ -91,8 +91,8 @@ TEST(Enrich_Functions_Test, TestCascade) {
 
   double pycode_n_mach = 25990.392;
   EXPECT_NEAR(n_machines, pycode_n_mach, tol_num);
-
-  std::pair<double, double> n_stages = FindNStages(alpha, feed_assay,
+  double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
+  std::pair<double, double> n_stages = FindNStages(alpha, beta, feed_assay,
 						   product_assay,
 						   waste_assay);
   int pycode_n_enrich_stage = 11;
@@ -114,7 +114,7 @@ TEST(Enrich_Functions_Test, TestCascade) {
   double mod_product_assay = ProductAssayFromNStages(alpha, feed_assay_mod,
 						     n_stage_enrich);
   double mod_waste_assay = WasteAssayFromNStages(alpha, feed_assay_mod,
-						 n_stage_waste);
+						 n_stage_waste, cut);
 
   std::cout << "alpha " << alpha << " feed " << feed_assay_mod << " nstage " << n_stage_enrich << " unrounded stages " << n_stages.first << std::endl;
   double pycode_mod_product_assay = 0.60085;
@@ -144,8 +144,9 @@ TEST(Enrich_Functions_Test, TestCascade) {
     EXPECT_NEAR(product_assay_s, pycode_product_assay_s, tol_assay);
     EXPECT_NEAR(product_s, pycode_product_s, tol_qty);
 
+    double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
     double n_mach_w = MachinesPerStage(alpha, delU, enrich_waste);
-    double strip_waste_assay = WasteAssayByAlpha(alpha, enrich_waste_assay);
+    double strip_waste_assay = WasteAssayByBeta(beta, enrich_waste_assay);
 
     // This AVERY EQN doesn't work for some reason
     //    double strip_waste = WastePerStripStage(alpha, enrich_waste_assay,
@@ -178,7 +179,8 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   std::vector<int> pycode_machines={59, 117, 175, 233, 291, 243, 194,
 				    146, 97, 49};
 
-  std::pair<double, double> n_stages = FindNStages(alpha, fa, pa, wa);
+  double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
+  std::pair<double, double> n_stages = FindNStages(alpha, beta, fa, pa, wa);
   std::vector<double> flows = CalcFeedFlows(n_stages, feed_c, cut);
 
   // if # Machines for the stage is within tol_num of an integer
