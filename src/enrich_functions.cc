@@ -87,7 +87,7 @@ double AlphaBySwu(double del_U, double feed, double cut, double M) {
 double BetaByAlphaAndCut(double alpha, double feed_assay, double cut){
   double product_assay = ProductAssayByAlpha(alpha, feed_assay);
   double waste_assay = (feed_assay - cut * product_assay) / (1 - cut);
-  return feed_assay/(1 - feed_assay) *(1 - waste_assay) / waste_assay;
+  return feed_assay/(1. - feed_assay) *(1. - waste_assay) / waste_assay;
 }
 
 
@@ -97,14 +97,14 @@ double ProductAssayByAlpha(double alpha, double feed_assay) {
   //    double ratio = (1.0 - feed_assay) / (alpha * feed_assay);
   //    return 1.0 / (ratio + 1.0);
   double ratio = alpha * feed_assay / (1.0 - feed_assay);
-  return ratio / (1 + ratio);
+  return ratio / (1. + ratio);
   
   //return alpha / ( alpha - 1 + 1 / feed_assay );
 }
 
 double WasteAssayByBeta(double beta, double feed_assay) {
-  double A = (feed_assay / (1 - feed_assay)) / beta;
-  return A / (1 + A);
+  double A = (feed_assay / (1. - feed_assay)) / beta;
+  return A / (1. + A);
 }
 
 // This equation can only be used in the limit where the separation factor
@@ -168,26 +168,30 @@ std::pair<int, int> FindNStages(double alpha, double beta, double feed_assay,
   return stages;
 }
 
-double ProductAssayFromNStages(double alpha, double feed_assay,
-                               double enrich_stages) {
-  double A =
-      (feed_assay / (1. - feed_assay)) * exp(enrich_stages * (alpha - 1.0));
-  double product_assay = A / (1. + A);
-  return product_assay;
+double ProductAssayFromNStages(double alpha, double beta, double feed_assay,
+                               double stages) {
+  if(stages == 0){
+    return ProductAssayByAlpha(alpha, feed_assay);
+  } else if (stages < 0) {
+    double stg_feed_assay = WasteAssayFromNStages(alpha, beta, feed_assay, stages +1);
+    return ProductAssayByAlpha(alpha, stg_feed_assay);
+  } else if (stages > 0){
+    double stg_feed_assay = ProductAssayFromNStages(alpha, beta, feed_assay, stages -1);
+    return ProductAssayByAlpha(alpha, stg_feed_assay);
+  }
 }
 
-double WasteAssayFromNStages(double alpha, double feed_assay,
-                             double strip_stages, double cut) {
-  
-  double stg_product_assay = ProductAssayFromNStages(alpha, feed_assay, strip_stages);
-  double stg_feed_assay = feed_assay;
-    if( strip_stages < 0 ){
-      stg_feed_assay = ProductAssayFromNStages(alpha, feed_assay, strip_stages +1);
-    } else if (strip_stages > 0) {
-      stg_feed_assay = WasteAssayFromNStages(alpha, feed_assay, strip_stages -1, cut);
-    }
-
-  return (stg_feed_assay - cut * stg_product_assay) / (1 - cut);
+double WasteAssayFromNStages(double alpha, double beta, double feed_assay,
+                             double stages) {
+  if(stages == 0){
+    return WasteAssayByBeta(beta, feed_assay);
+  } else if (stages < 0) {
+    double stg_feed_assay = WasteAssayFromNStages(alpha, beta, feed_assay, stages +1);
+    return WasteAssayByBeta(beta, stg_feed_assay);
+  } else if (stages > 0){
+    double stg_feed_assay = ProductAssayFromNStages(alpha, beta, feed_assay, stages -1);
+    return WasteAssayByBeta(beta, stg_feed_assay);
+  }
 }
 
 double MachinesPerStage(double alpha, double del_U, double stage_feed) {

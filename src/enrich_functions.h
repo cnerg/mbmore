@@ -55,12 +55,12 @@ std::pair<int, int> FindNStages(double alpha, double beta, double feed_assay,
                                 double product_assay, double Nwc);
 
 // Calculates the product assay after N enriching stages
-double ProductAssayFromNStages(double alpha, double feed_assay,
+double ProductAssayFromNStages(double alpha, double beta, double feed_assay,
                                double enrich_stages);
 
 // Calculates the assay of the waste after N stripping stages
-double WasteAssayFromNStages(double alpha, double feed_assay,
-                             double strip_stages, double cut);
+double WasteAssayFromNStages(double alpha, double beta, double feed_assay,
+                             double strip_stages);
 
 // Number of machines in a stage (either enrich or strip)
 // given the feed flow (stage_feed)
