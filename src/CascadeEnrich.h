@@ -180,7 +180,7 @@ class CascadeEnrich : public cyclus::Facility {
   const double eff = 1.0;            // typical efficiencies <0.6
   const double cut = 0.5;            // target for ideal cascade
 
-  const double secpermonth = 60*60*24*(365.25/12);
+  const double secpermonth = 60.*60.*24.*(365.25/12.);
 
   // Set to design_tails at beginning of simulation. Gets reset if
   // facility is used off-design
