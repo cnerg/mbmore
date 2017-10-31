@@ -111,10 +111,10 @@ TEST(Enrich_Functions_Test, TestCascade) {
   // (cascade optimized for natural uranium feed, now use 20% enriched
   double feed_assay_mod = 0.20;
 
-  double mod_product_assay = ProductAssayFromNStages(alpha, feed_assay_mod,
+  double mod_product_assay = ProductAssayFromNStages(alpha, beta, feed_assay_mod,
 						     n_stage_enrich);
-  double mod_waste_assay = WasteAssayFromNStages(alpha, feed_assay_mod,
-						 n_stage_waste, cut);
+  double mod_waste_assay = WasteAssayFromNStages(alpha, beta, feed_assay_mod,
+						 n_stage_waste);
 
   std::cout << "alpha " << alpha << " feed " << feed_assay_mod << " nstage " << n_stage_enrich << " unrounded stages " << n_stages.first << std::endl;
   double pycode_mod_product_assay = 0.60085;

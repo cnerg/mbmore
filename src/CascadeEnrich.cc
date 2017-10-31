@@ -76,18 +76,23 @@ void CascadeEnrich::EnterNotify() {
                     cut, max_centrifuges, n_stages);
 
   max_feed_flow = FlowPerMon(cascade_info.second);
-
+  std::cout << "max_feed_flow " << max_feed_flow << std::endl;
   std::vector<double> feed_flows;
   feed_flows = CalcFeedFlows(n_stages, FlowPerSec(max_feed_flow), cut);
 
   cascade_features = CalcStageFeatures(design_feed_assay, design_alpha,
                                        design_delU, cut, n_stages, feed_flows);
+  int machine_tot = 0;
   for (int i= 0; i < cascade_features.size(); i++){
-    std::cout << "stage " << i - n_strip_stages ;
+    machine_tot += cascade_features[i].first;
+    double assay = WasteAssayFromNStages(design_alpha, design_beta, design_feed_assay, i - n_strip_stages);
+    std::cout << "stage " << i - n_strip_stages;
+    std::cout << " centrifuges " << cascade_features[i].first;
     std::cout << " flow " << FlowPerMon(cascade_features[i].second);
-    std::cout << " ProductAssay " << ProductAssayFromNStages(design_alpha, design_feed_assay, i - n_strip_stages);
-    std::cout << " TailsAssay " << WasteAssayFromNStages(design_alpha, design_feed_assay, i- n_strip_stages, cut) << std::endl;
+    std::cout << " ProductAssay " << ProductAssayFromNStages(design_alpha, design_beta, design_feed_assay, i- n_strip_stages);
+    std::cout << " TailsAssay " << assay << std::endl;
   }
+  std::cout << "machine tot " << machine_tot << std::endl;
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
@@ -492,12 +497,12 @@ double CascadeEnrich::FeedAssay() {
 }
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
-  return ProductAssayFromNStages(design_alpha, design_feed_assay,
+  return ProductAssayFromNStages(design_alpha, design_beta, design_feed_assay,
                                  n_enrich_stages - 1);
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
-  return WasteAssayFromNStages(design_alpha, design_feed_assay,
-                               n_enrich_stages - 1, cut);
+  return WasteAssayFromNStages(design_alpha, design_beta, design_feed_assay,
+                               n_strip_stages);
 }
 double CascadeEnrich::ProductFlow(double feed_flow) {
   return feed_flow / max_feed_flow * FlowPerMon(cascade_features.back().second);
