@@ -181,7 +181,7 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
 
   double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
   std::pair<double, double> n_stages = FindNStages(alpha, beta, fa, pa, wa);
-  std::vector<double> flows = CalcFeedFlows(n_stages, feed_c, cut);
+  std::vector<double> flows = CalcFeedFlows(n_stages, feed_c, cut, fa, pa, wa);
 
   // if # Machines for the stage is within tol_num of an integer
   // then round down. Otherwise round up to the next integer machine to
@@ -199,7 +199,7 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   int max_centrifuges = 80;
   std::pair<int, double> design_params = DesignCascade(feed_c, alpha, delU,
 						       cut, max_centrifuges,
-						       n_stages);
+						       n_stages, fa, pa, wa);
   int py_tot_mach = 79;
   double py_opt_feed = 1.30116169899e-05;
   
@@ -210,7 +210,7 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   max_centrifuges = 1000;
   design_params = DesignCascade(feed_c, alpha, delU,
 				cut, max_centrifuges,
-				n_stages);
+				n_stages, fa, pa, wa);
   py_tot_mach = 986;
   py_opt_feed = 0.000172728;
   
