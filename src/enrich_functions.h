@@ -14,6 +14,42 @@ void dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipivot, double *b,
             int *ldb, int *info);
 }
 
+
+struct cascade_config {
+  centrifuges_config cent_config;
+  int stripping_stgs;
+  int enrich_stgs;
+  double feed_flow;
+  std::map< int, stage_config> stgs_config;
+};
+
+struct stg_config {
+  double cut;
+  double DU;
+  double alpha;
+  double beta;
+  double flow;
+  double feed_assay;
+  double product_assay;
+  double tail_assay;
+}
+
+
+struct centrifuges_config {
+  double waste_assay;
+  double v_a;
+  double height;
+  double diameter;
+  double feed;
+  double temp;
+  double eff;
+  double M;
+  double dM;
+  double x;
+  double flow_internal;
+}
+
+
 // Organizes bids by enrichment level of requested material
 bool SortBids(cyclus::Bid<cyclus::Material> *i,
               cyclus::Bid<cyclus::Material> *j);
@@ -21,9 +57,7 @@ bool SortBids(cyclus::Bid<cyclus::Material> *i,
 // Calculates the ideal separation energy for a single machine
 // as defined by the Raetz equation
 // (referenced in Glaser, Science and Global Security 2009)
-double CalcDelU(double v_a, double height, double diameter, double feed,
-                double temp, double cut, double eff, double M, double dM,
-                double x, double flow_internal);
+double CalcDelU(double cut, centrifuges_config centri_config);
 
 // Calculates the exponent for the energy distribution using ideal gas law
 // (component of multiple other equations)
@@ -37,16 +71,18 @@ double CalcV(double assay);
 // single machine (del_U has units of moles/sec)
 // Avery p 18
 double AlphaBySwu(double del_U, double feed, double cut, double M);
+
+// From Beta def in Glaser + Alpha def
 double BetaByAlphaAndCut(double alpha, double feed_assay, double cut);
 
 // Calculates the assay of the product given the assay
 // of the feed and the theoretical separation factor of the machine
-// Avery p 57
+// Glaser
 double ProductAssayByAlpha(double alpha, double feed_assay);
 
 // Calculates the assay of the waste given the assay
 // of the feed and the theoretical separation factor of the machine
-// Avery p 59 (per machine)
+// Glaser
 double WasteAssayByBeta(double beta, double feed_assay);
 
 // Calculates the number of stages needed in a cascade given the separation
@@ -104,7 +140,7 @@ double DelUByCascadeConfig(double product_assay, double waste_assay,
 // Solves system of linear eqns to determine steady state flow rates
 // in each stage of cascade
 std::vector<double> CalcFeedFlows(std::pair<int, int> n_st, double cascade_feed,
-                                  double cut);
+                                  double cut, double feed_assay, double product_assay, double tail_assay);
 
 // Determines the number of machines and product in each stage based
 // on the steady-state flows defined for the cascade.
@@ -118,8 +154,19 @@ int FindTotalMachines(std::vector<std::pair<int, double>> stage_info);
 std::pair<int, double> DesignCascade(double design_feed, double design_alpha,
                                      double design_delU, double cut,
                                      int max_centrifuges,
-                                     std::pair<int, int> n_stages);
+                                     std::pair<int, int> n_stages, double feed_assay, double product_assay, double tail_assay);
 
+cascade_enrichment Compute_Assay(cascade_config cascade_config,
+                                 double feed_assay, double precision);
+
+double Diff_enrichment(cascade_enrichment actual_enrichments,
+                       cascade_enrichment previous_enrichement);
+
+cascade_enrichment Update_enrichment(cascade_config cascade_config,
+                                     double feed_assay);
+
+double get_cut_for_ideal_stg(centrifuges_config cent_config, double feed_assay,
+                             double precision);
 }  // namespace mbmore
 
 #endif  //  MBMORE_SRC_ENRICH_FUNCTIONS_H_

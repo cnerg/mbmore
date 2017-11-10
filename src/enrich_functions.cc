@@ -18,12 +18,21 @@ double M_238 = 0.238;      // kg/mol
 // TODO:
 // annotate assumed units, Glaser paper reference
 
-double CalcDelU(double v_a, double height, double diameter, double feed,
-                double temp, double cut, double eff, double M_mol, double dM,
-                double x, double flow_internal) {
+double CalcDelU(double cut, centrifuges_config cent_config) {
   // Inputs that are effectively constants:
   // flow_internal = 2-4, x = pressure ratio, M = 0.352 kg/mol of UF6,
   // dM = 0.003 kg/mol diff between 235 and 238
+
+  double v_a = cent_condig.v_a;
+  double height = cent_condig.height;
+  double diameter = cent_condig.diameter;
+  double feed = cent_condig.feed;
+  double temp = cent_condig.temp;
+  double eff = cent_condig.eff;
+  double M = cent_condig.M;
+  double dM = cent_condig.dM;
+  double x = cent_condig.x;
+  double flow_internal = cent_condig.flow_internal;
 
   double a = diameter / 2.0;  // outer radius
 
@@ -69,7 +78,6 @@ double CalcDelU(double v_a, double height, double diameter, double feed,
 
   return del_U;
 }
-
 double CalcCTherm(double v_a, double temp, double dM) {
   double c_therm = (dM * (pow(v_a, 2))) / (2.0 * gas_const * temp);
   return c_therm;
@@ -84,12 +92,12 @@ double AlphaBySwu(double del_U, double feed, double cut, double M) {
   return alpha;
 }
 
-double BetaByAlphaAndCut(double alpha, double feed_assay, double cut){
+double BetaByAlphaAndCut(double alpha, double feed_assay, double cut) {
   double product_assay = ProductAssayByAlpha(alpha, feed_assay);
-  double waste_assay = (feed_assay - cut * product_assay) / (1 - cut);
-  return feed_assay/(1. - feed_assay) *(1. - waste_assay) / waste_assay;
-}
+  double waste_assay = (feed_assay - cut * product_assay) / (1. - cut);
 
+  return feed_assay / (1. - feed_assay) * (1. - waste_assay) / waste_assay;
+}
 
 // per machine
 double ProductAssayByAlpha(double alpha, double feed_assay) {
@@ -98,8 +106,8 @@ double ProductAssayByAlpha(double alpha, double feed_assay) {
   //    return 1.0 / (ratio + 1.0);
   double ratio = alpha * feed_assay / (1.0 - feed_assay);
   return ratio / (1. + ratio);
-  
-  //return alpha / ( alpha - 1 + 1 / feed_assay );
+
+  // return alpha / ( alpha - 1 + 1 / feed_assay );
 }
 
 double WasteAssayByBeta(double beta, double feed_assay) {
@@ -136,60 +144,85 @@ std::pair<double, double> StagesPerCascade(double alpha, double feed_assay,
 // Determine number of stages required to reach ideal cascade product assay
 // (requires integer number of stages, so output may exceed target assay)
 
-std::pair<int, int> FindNStages(double alpha, double beta, double feed_assay,
-                                double product_assay, double waste_assay) {
-  using std::pair;
+stg_config BuildIdealStg(double feed_assay, centrifuges_config cent_config, double precision){
 
+  stg_config stg;
+  stg.feed_assay = feed_assay;
+  stg.cut = get_cut_for_ideal_stg(cent_config, stg.feed_assay, precision);  
+  stg.DU = CalcDelU(stg.cut, cent_config);
+ 
+  // Ideal Case Alpha := Beta !!
+  stg.alpha = AlphaBySwu(stg.DU, stg.feed_assay);
+  stg.beta = BetaByAlphaAndCut(stg.alpha, stg.feed_assay, stg.cut);
+  
+  stg.product_assay = ProductAssayByAlpha(stg.alpha, stg.feed_assay);
+  stg.waste_assay = WasteAssayByBeta(stg.beta, stg.feed_assay);
+
+ return stg;
+}
+
+
+cascade_config FindNStages(double feed_assay, double product_assay,
+                                double waste_assay, centrifuges_config cent_config, double precision) {
+  using std::pair;
+  cascade_config stgs_cut_and_assay;
   int ideal_enrich_stage = 0;
   int ideal_strip_stage = 0;
-  double stage_feed_assay = feed_assay;
-  double stage_product_assay = feed_assay;
-  double stage_waste_assay = feed_assay;  // start w/waste of 1st enrich stage
+
+  // Initialisation of Feeding stage (I == 0)
+  stg_config stg = BuildIdealStg(feed_assay, cent_config, precision);
+  int stg_i = 0;
+  stgs_cut_and_assay.stgs_config[stg_i] = stg;
 
   // Calculate number of enriching stages
-  while (stage_product_assay < product_assay) {
-    stage_product_assay = ProductAssayByAlpha(alpha, stage_feed_assay);
-    if (ideal_enrich_stage == 0) {
-      stage_waste_assay = WasteAssayByBeta(beta, stage_feed_assay);
-    }
-    ideal_enrich_stage += 1;
-    stage_feed_assay = stage_product_assay;
+  while (this_stg.product_assay < product_assay) {
+    stg = BuildIdealStg(stg.product_assay, cent_config, precision);
+    stg_i++;
+    stgs_cut_and_assay.stgs_config[stg_i] = stg;
   }
+  stgs_cut_and_assay.enrich_stgs = stg_i+1;
+  
+  // reset
+  stg_i = 0;
+  stg = stgs_cut_and_assay.stgs_config[stg_i];
   // Calculate number of stripping stages
-  stage_feed_assay = stage_waste_assay;
-  while (stage_waste_assay > waste_assay) {
-    stage_waste_assay = WasteAssayByBeta(beta, stage_feed_assay);
-    ideal_strip_stage += 1;
-    stage_feed_assay = stage_waste_assay;
+  while (stg.waste_assay > waste_assay) {
+    stg = BuildIdealStg(stg.taiL_assay, cent_config, precision);
+    stg_i--;
+    stgs_cut_and_assay.stgs_config[stg_i] = stg;
   }
-
-  std::pair<int, int> stages =
-      std::make_pair(ideal_enrich_stage, ideal_strip_stage);
-  return stages;
+  stgs_cut_and_assay.strpping_stgs = -stg_i;
+  
+  return stgs_cut_and_assay;
 }
+
 
 double ProductAssayFromNStages(double alpha, double beta, double feed_assay,
                                double stages) {
-  if(stages == 0){
+  if (stages == 0) {
     return ProductAssayByAlpha(alpha, feed_assay);
   } else if (stages < 0) {
-    double stg_feed_assay = WasteAssayFromNStages(alpha, beta, feed_assay, stages +1);
+    double stg_feed_assay =
+        WasteAssayFromNStages(alpha, beta, feed_assay, stages + 1);
     return ProductAssayByAlpha(alpha, stg_feed_assay);
-  } else if (stages > 0){
-    double stg_feed_assay = ProductAssayFromNStages(alpha, beta, feed_assay, stages -1);
+  } else if (stages > 0) {
+    double stg_feed_assay =
+        ProductAssayFromNStages(alpha, beta, feed_assay, stages - 1);
     return ProductAssayByAlpha(alpha, stg_feed_assay);
   }
 }
 
 double WasteAssayFromNStages(double alpha, double beta, double feed_assay,
                              double stages) {
-  if(stages == 0){
+  if (stages == 0) {
     return WasteAssayByBeta(beta, feed_assay);
   } else if (stages < 0) {
-    double stg_feed_assay = WasteAssayFromNStages(alpha, beta, feed_assay, stages +1);
+    double stg_feed_assay =
+        WasteAssayFromNStages(alpha, beta, feed_assay, stages + 1);
     return WasteAssayByBeta(beta, stg_feed_assay);
-  } else if (stages > 0){
-    double stg_feed_assay = ProductAssayFromNStages(alpha, beta, feed_assay, stages -1);
+  } else if (stages > 0) {
+    double stg_feed_assay =
+        ProductAssayFromNStages(alpha, beta, feed_assay, stages - 1);
     return WasteAssayByBeta(beta, stg_feed_assay);
   }
 }
@@ -247,7 +280,8 @@ double DelUByCascadeConfig(double product_assay, double waste_assay,
 //  http://www.physics.utah.edu/~detar/phys6720/handouts/lapack.html
 //
 std::vector<double> CalcFeedFlows(std::pair<int, int> n_st, double cascade_feed,
-                                  double cut) {
+                                  double cut, double feed_assay,
+                                  double product_assay, double tails_assay) {
   // This is the Max # of stages in cascade. It cannot be passed in due to
   // how memory is allocated and so must be hardcoded. It's been chosen
   // to be much larger than it should ever need to be
@@ -259,11 +293,17 @@ std::vector<double> CalcFeedFlows(std::pair<int, int> n_st, double cascade_feed,
   int n_strip = n_st.second;
   // total number of stages
   int n_stages = n_st.first + n_st.second;
-  if (n_stages > max_stages){
-    std::cout << "To many stages in the cascade, can't calculated the thoerritical flows..." << std::endl;
+  if (n_stages > max_stages) {
+    std::cout << "To many stages in the cascade, can't calculated the "
+                 "thoerritical flows..."
+              << std::endl;
     exit(1);
   }
-
+  double product_flow =
+      cascade_feed * (feed_assay - tails_assay) / (product_assay - tails_assay);
+  double tails_flow = cascade_feed - product_flow;
+  // std::cout << "product_flow "<< product_flow << std::endl;
+  // std::cout << "waste_flow "<< tails_flow << std::endl;
   // LAPACK takes the external flow feeds as B, and then returns a modified
   // version of the same array now representing the solution flow rates.
 
@@ -296,6 +336,7 @@ std::vector<double> CalcFeedFlows(std::pair<int, int> n_st, double cascade_feed,
       if (col_idx != n_stages - 1) {
         flow_eqns[col_idx + 1][row_idx] = (1 - cut);
       }
+
       // Add the external feed for the cascade
       if (i == 0) {
         flows[0][row_idx] = -1 * cascade_feed;
@@ -403,10 +444,13 @@ int FindTotalMachines(std::vector<std::pair<int, double>> stage_info) {
 std::pair<int, double> DesignCascade(double design_feed, double design_alpha,
                                      double design_delU, double cut,
                                      int max_centrifuges,
-                                     std::pair<int, int> n_stages) {
+                                     std::pair<int, int> n_stages,
+                                     double feed_assay, double product_assay,
+                                     double tail_assay) {
   // Determine the ideal steady-state feed flows for this cascade design given
   // the maximum potential design feed rate
-  std::vector<double> feed_flows = CalcFeedFlows(n_stages, design_feed, cut);
+  std::vector<double> feed_flows = CalcFeedFlows(
+      n_stages, design_feed, cut, feed_assay, product_assay, tail_assay);
 
   std::vector<std::pair<int, double>> stage_info = CalcStageFeatures(
       design_feed, design_alpha, design_delU, cut, n_stages, feed_flows);
@@ -441,7 +485,8 @@ std::pair<int, double> DesignCascade(double design_feed, double design_alpha,
     ntries += 1;
     double last_feed = curr_feed;
     curr_feed *= step_size;
-    feed_flows = CalcFeedFlows(n_stages, curr_feed, cut);
+    feed_flows = CalcFeedFlows(n_stages, curr_feed, cut, feed_assay,
+                               product_assay, tail_assay);
     stage_info = CalcStageFeatures(curr_feed, design_alpha, design_delU, cut,
                                    n_stages, feed_flows);
     machines_needed = FindTotalMachines(stage_info);
@@ -467,7 +512,8 @@ std::pair<int, double> DesignCascade(double design_feed, double design_alpha,
       optimal_feed = last_feed;
       optimal_number = true;
     }
-    feed_flows = CalcFeedFlows(n_stages, optimal_feed, cut);
+    feed_flows = CalcFeedFlows(n_stages, optimal_feed, cut, feed_assay,
+                               product_assay, tail_assay);
     stage_info = CalcStageFeatures(optimal_feed, design_alpha, design_delU, cut,
                                    n_stages, feed_flows);
     machines_needed = FindTotalMachines(stage_info);
@@ -491,6 +537,126 @@ bool SortBids(cyclus::Bid<cyclus::Material>* i,
 
   return ((mq_i.mass(922350000) / mq_i.qty()) <=
           (mq_j.mass(922350000) / mq_j.qty()));
+}
+
+cascade_config Compute_Assay( cascade_config cascade_config, double feed_assay, double precision) {
+  
+  
+  cascade_config actual_enrichments = cascade_config;
+  cascade_config previous_enrichments;
+  int i = 0;
+  while (Diff_enrichment(actual_enrichments, previous_enrichments) >
+         precision) {
+    previous_enrichments = actual_enrichments;
+    actual_enrichments =
+        Update_enrichment(cascade_config, feed_assay);
+    i++;
+  }
+  return actual_enrichments;
+}
+
+double Diff_enrichment(cascade_config a_enrichments,
+                       cascade_config p_enrichments) {
+  if (p_enrichments.feed.size() == 0) {
+    return 100.;
+  }
+  double square_feed_diff = 0;
+  double square_product_diff = 0;
+  double square_waste_diff = 0;
+  srd::map< int, stg_config >::iterator it;
+  for (it = a_enrichments.stg_config.begin(); it != a_enrichments.stg_config.end(); it++) {
+    int i = it->first; 
+    square_feed_diff +=
+        pow(a_enrichments.stg_config[i].feed_assay - p_enrichment.stg_config[i].feed_assay, 2);
+    square_product_diff +=
+        pow(a_enrichments.stg_config[i].product_assay - p_enrichment.stg_config[i].product_assay, 2);
+    square_waste_diff +=
+        pow(a_enrichments.stg_config[i].tail_assay - p_enrichment.stg_config[i].tail_assay, 2);
+  }
+  return square_feed_diff + square_product_diff + square_waste_diff;
+}
+
+cascade_config Update_enrichment( cascade_config cascade_config, double feed_assay ) {
+  cascade_config updated_enrichment = cascade_config;
+  
+  double down_assay = 0;
+  double up_assay = 0;
+  double down_flow = 0;
+  double up_flow = 0;
+  
+   double stg_feed_flow = 0;
+  srd::map< int, stg_config >::iterator it;
+  for (it = cascade_config.stg_config.begin(); it != cascade_config.stg_config.end(); it++) {
+    int i = it->first; 
+    if (i == cascade_config.strpping_stgs) {  // last strip stage
+      down_assay = 0.;
+      down_flow = 0.;
+      up_assay = cascade_config.stg_config[i + 1].tail_assay;
+      up_flow = cascade_config.stg_config[i + 1].flow*(1-cascade_config.stg_config[1+1].cut);
+      stg_feed_flow = up_flow;
+    } else if (i < cascade_config.enrich_stgs ) {
+      down_assay = actual_enrichments.product[i - 1];
+      down_flow = cascade_features[i - 1].second;
+      up_assay = cascade_config.stg_config[i + 1].tail_assay;
+      up_flow = cascade_config.stg_config[i + 1].flow*(1-cascade_config.stg_config[1+1].cut);
+      stg_feed_flow = down_flow + up_flow;
+    } else {  // last enrichment stage
+      down_assay = cascade_config.stg_config[i - 1].product_assay;
+      down_flow = cascade_config.stg_config[i - 1].flow*cascade_config.stg_config[1 -1].cut;
+      up_assay = 0.;
+      up_flow = 0.;
+      stg_feed_flow = down_flow;
+    }
+
+    double stg_feed_assay =
+        (down_assay * down_flow + up_assay * up_flow) / (down_flow + up_flow);
+    if (i == n_stages.second) {  // add Feed flow in the entry stage
+      stg_feed_assay = (down_assay * down_flow + up_assay * up_flow +
+                        feed_assay * feed_flow) /
+                       (down_flow + up_flow + cascade_config.feed_flow);
+      stg_feed_flow = down_flow + up_flow + cascade_config.feed_flow;
+    }
+    updated_enrichment.cascade_config[i].beta = BetaByAlphaAndCut(updated_enrichment.cascade_config[i].alpha, stg_feed_assay, updated_enrichment.cascade_config[i].cut);
+    double stg_product_assay = ProductAssayByAlpha(updated_enrichment.cascade_config[i].alpha, stg_feed_assay);
+    double stg_waste_assay = WasteAssayByBeta(updated_enrichment.cascade_config[i].beta, stg_feed_assay);
+    updated_enrichment.cascade_config[i].feed_assay = stg_feed_assay;
+    updated_enrichment.cascade_config[i].product_assay = stg_product_assay;
+    updated_enrichment.cascade_config[i].tail_assay = stg_tail_assay;
+  }
+
+  return updated_enrichment;
+}
+
+double get_cut_for_ideal_stg(centrifuges_config cent_config, double feed_assay,
+                             double precision) {
+  double p_cut = 0.25;
+  double p_DU = CalcDelU(p_cut, cent_config);
+  double p_alpha = AlphaBySwu(p_DU, feed, p_cut, M);
+  double p_beta = BetaByAlphaAndCut(p_alpha, feed, p_cut);
+  double p_alpha_m_beta = p_alpha - p_beta;
+
+  double cut = 0.575;
+  double DU = CalcDelU(cut, cent_config);
+  double alpha = AlphaBySwu(DU, feed, cut, M);
+  double beta = BetaByAlphaAndCut(alpha, feed, cut);
+
+  while( abs(alpha - beta) > precision){
+    // a*cut +b =y
+    double alpha_m_beta = alpha - beta;
+
+    double a = (p_alpha_m_beta - alpha_m_beta) / (p_cut - cut);
+    double b = alpha_m_beta - cut * a;
+    p_cut = cut;
+    p_alpha = alpha;
+    p_beta = beta;
+    p_alpha_m_beta = alpha_m_beta;
+    // targeting alpha_m_beta = 0
+    cut = -b / a;
+    DU = CalcDelU(cut, cent_config);
+    alpha = AlphaBySwu(DU, feed, cut, M);
+    beta = BetaByAlphaAndCut(alpha, feed, cut);
+  }
+  return cut;
 }
 
 }  // namespace mbmore
