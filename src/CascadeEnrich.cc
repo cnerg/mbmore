@@ -50,89 +50,17 @@ std::string CascadeEnrich::str() {
 void CascadeEnrich::EnterNotify() {
   using cyclus::Material;
   cyclus::Facility::EnterNotify();
-  tails_assay = design_tails_assay;
-
-  // Calculate ideal machine performance
-  design_delU =
-      CalcDelU(centrifuge_velocity, height, diameter, Mg2kgPerSec(machine_feed),
-               temp, cut, eff, M, dM, x, flow_internal);
-  design_alpha = AlphaBySwu(design_delU, Mg2kgPerSec(machine_feed), cut, M);
-  std::cout << "alpha " << design_alpha << std::endl;
-  design_beta  = BetaByAlphaAndCut(design_alpha, design_feed_assay, cut);
-  std::cout << "beta " << design_beta << std::endl;
-  // Design ideal cascade based on target feed flow and product assay
-  std::pair<int, int> n_stages =
-      FindNStages(design_alpha, design_beta, design_feed_assay, design_product_assay,
-                  design_tails_assay);
-
-  // TODO DELETE THIS, STAGES ARE ALREADY INTS
-  // set as internal state variables
-  // int truncates but we need # of stages to assure target values,
-  // so if the number is 5.1 we need 6.
-  //  n_enrich_stages = int(n_stages.first) + 1;
-  //  n_strip_stages = int(n_stages.second) + 1;
-  n_enrich_stages = n_stages.first;
-  n_strip_stages = n_stages.second;
-  std::pair<int, double> cascade_info =
-      DesignCascade(FlowPerSec(design_feed_flow), design_alpha, design_delU,
-                    cut, max_centrifuges, n_stages, design_feed_assay, design_product_assay,              design_tails_assay);
-
-  max_feed_flow = FlowPerMon(cascade_info.second);
-  std::cout << "max_feed_flow " << max_feed_flow << std::endl;
-  std::vector<double> feed_flows;
-  feed_flows = CalcFeedFlows(n_stages, FlowPerSec(max_feed_flow), cut, design_feed_assay, design_product_assay, design_tails_assay);
-
-  cascade_features = CalcStageFeatures(design_feed_assay, design_alpha,
-                                       design_delU, cut, n_stages, feed_flows);
-  int machine_tot = 0;
-    std::stringstream ss;
-    std::stringstream ss_flow;
-    std::stringstream ss_flow2;
-
   
-  cascade_enrichment correct_enrichement = Compute_Assay(design_alpha, design_beta, FlowPerSec(max_feed_flow), design_feed_assay, cascade_features, n_stages, cut, 1e-31);
-  std::cout.precision(9);
-  for (int i= 0; i < cascade_features.size(); i++){
-    machine_tot += cascade_features[i].first;
-    double assay = WasteAssayFromNStages(design_alpha, design_beta, design_feed_assay, i - n_strip_stages);
-    double stg_feed_assay = 0;
-    int stages = i-n_strip_stages;
-    if(stages == 0){
-      stg_feed_assay = design_feed_assay;
-    } else if (stages < 0) {
-      stg_feed_assay = WasteAssayFromNStages(design_alpha, design_beta, design_feed_assay, stages +1);
-    } else if (stages > 0){
-      stg_feed_assay = ProductAssayFromNStages(design_alpha, design_beta, design_feed_assay, stages -1);
-    }
+  // Update Centrifuge paramter from the user input:
+  centrifuge.v_a = centrifuge_velocity;
+  centrifuge.height = height;
+  centrifuge.diameter= diameter;
+  centrifuge.feed = machine_feed;
+  centrifuge.temp = temp;
 
-    
-    std::cout << "stage " << i - n_strip_stages;
-    std::cout << " centrifuges " << cascade_features[i].first;
-    std::cout << " flow " << FlowPerMon(cascade_features[i].second);
-      if(i>0){
-    std::cout << " delta_flow " << FlowPerMon(cascade_features[i].second) - FlowPerMon(cascade_features[i-1].second);
-      }
-    std::cout << " ProductAssay " << ProductAssayFromNStages(design_alpha, design_beta, design_feed_assay, i- n_strip_stages);
-    std::cout << " TailsAssay " << assay;
-    std::cout << " FeedAssay " << stg_feed_assay;
-    std::cout << " ComputedFeedAssay " << cut*ProductAssayFromNStages(design_alpha, design_beta, design_feed_assay, i-n_strip_stages)+(1-cut)*assay << std::endl;
-
-  
-    ss << "stage " << i - n_strip_stages;
-    ss << " centrifuges " << cascade_features[i].first;
-    ss << " flow " << FlowPerMon(cascade_features[i].second);
-    ss << " ProductAssay " << correct_enrichement.product[i];
-    ss << " TailsAssay " << correct_enrichement.waste[i];
-    ss << " FeedAssay " <<correct_enrichement.feed[i] << std::endl; 
-  
-  }
-  std::cout << "machine tot " << machine_tot << std::endl;
-  std::cout << ss.rdbuf() << std::endl;
-  std::cout << ss_flow.rdbuf() << std::endl;
-  std::cout << ss_flow2.rdbuf() << std::endl;
-  std::cout << "F " << max_feed_flow*design_feed_assay;
-  std::cout << " P " << ProductAssayFromNStages(design_alpha, design_beta, design_feed_assay, cascade_features.size() -n_strip_stages-1)*FlowPerMon(cascade_features[cascade_features.size() -1].second);
-  std::cout << " W " << WasteAssayFromNStages(design_alpha, design_beta, design_feed_assay, -n_strip_stages)*FlowPerMon(cascade_features[0].second);
+  cascade = FindNumberIdealStages(design_feed_assay, design_product_assay, design_tails_assay, centrifuge, precision);
+  cascade = DesignCascade(cascade, FlowPerSec(design_feed_flow), max_centrifuges);
+  max_feed_flow = FlowPerMon(cascade.feed_flow);
   
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
@@ -538,12 +466,12 @@ double CascadeEnrich::FeedAssay() {
 }
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
-  return ProductAssayFromNStages(design_alpha, design_beta, design_feed_assay,
-                                 n_enrich_stages - 1);
+  cascade_config cascade_tmp = Update_enrichment(cascade, feed_assay);
+  return cascade_tmp.stgs_config[cascade_tmp.stgs_config.size()-1].product_assay;
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
-  return WasteAssayFromNStages(design_alpha, design_beta, design_feed_assay,
-                               n_strip_stages);
+  cascade_config cascade_tmp = Update_enrichment(cascade, feed_assay); 
+  return cascade_tmp.stgs_config[cascade_tmp.stgs_config.size()-1].tail_assay;
 }
 double CascadeEnrich::ProductFlow(double feed_flow) {
   return feed_flow / max_feed_flow * FlowPerMon(cascade_features.back().second);

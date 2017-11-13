@@ -35,10 +35,10 @@ namespace mbmore {
     const double waste_assay = 0.001;
     const double feed_c = 739 / (30.4 * 24 * 60 * 60); // kg/month -> kg/sec
     const double product_c = 77 / (30.4 * 24 * 60 * 60); // kg/month -> kg/sec
+    centrifuge_config centrifuge;
 
     //del U=7.0323281e-08 alpha=1.16321
-    double delU = CalcDelU(v_a, height, diameter, feed_m, temp, cut, eff,
-			   M, dM, x, flow_internal);
+    double delU = CalcDelU(cut, centrifuge);
     
     double alpha = AlphaBySwu(delU, feed_m, cut, M);    
     const double tol_assay = 1e-5;
@@ -62,7 +62,7 @@ TEST(Enrich_Functions_Test, TestAssays) {
   double n_stages = 5;
   double pycode_w_assay = 0.00095311 ;
 
-  double cpp_w_assay = WasteAssayFromNStages(cur_alpha, cur_f_assay, n_stages, cut);
+  double cpp_w_assay = TailAssayFromNStages(cur_alpha, cur_f_assay, n_stages, cut);
   
   EXPECT_NEAR(cpp_w_assay, pycode_w_assay, tol);
 
@@ -92,17 +92,15 @@ TEST(Enrich_Functions_Test, TestCascade) {
   double pycode_n_mach = 25990.392;
   EXPECT_NEAR(n_machines, pycode_n_mach, tol_num);
   double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
-  std::pair<double, double> n_stages = FindNStages(alpha, beta, feed_assay,
-						   product_assay,
-						   waste_assay);
+  cascade_config cascade = FindNumberIdealStages(feed_assay, product_assay, waste_assay, centrifuge, 1e-8);
   int pycode_n_enrich_stage = 11;
   int pycode_n_strip_stage = 13;
 
  
   //  int n_stage_enrich = (int) n_stages.first + 1;  // Round up to next integer
   //  int n_stage_waste = (int) n_stages.second + 1;  // Round up to next integer
-  int n_stage_enrich = n_stages.first;
-  int n_stage_waste = n_stages.second;
+  int n_stage_enrich = cascade.enrich_stgs;
+  int n_stage_waste = cascade.stripping_stgs;
 
   EXPECT_EQ(n_stage_enrich, pycode_n_enrich_stage);
   EXPECT_EQ(n_stage_waste, pycode_n_strip_stage);
@@ -113,10 +111,10 @@ TEST(Enrich_Functions_Test, TestCascade) {
 
   double mod_product_assay = ProductAssayFromNStages(alpha, beta, feed_assay_mod,
 						     n_stage_enrich);
-  double mod_waste_assay = WasteAssayFromNStages(alpha, beta, feed_assay_mod,
+  double mod_waste_assay = TailAssayFromNStages(alpha, beta, feed_assay_mod,
 						 n_stage_waste);
 
-  std::cout << "alpha " << alpha << " feed " << feed_assay_mod << " nstage " << n_stage_enrich << " unrounded stages " << n_stages.first << std::endl;
+  std::cout << "alpha " << alpha << " feed " << feed_assay_mod << " nstage " << n_stage_enrich + n_stage_waste << " unrounded stages " << n_stage_enrich << std::endl;
   double pycode_mod_product_assay = 0.60085;
   double pycode_mod_waste_assay = 0.0290846;
   EXPECT_NEAR(mod_product_assay, pycode_mod_product_assay, tol_assay);
@@ -146,7 +144,7 @@ TEST(Enrich_Functions_Test, TestCascade) {
 
     double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
     double n_mach_w = MachinesPerStage(alpha, delU, enrich_waste);
-    double strip_waste_assay = WasteAssayByBeta(beta, enrich_waste_assay);
+    double strip_waste_assay = TailAssayByBeta(beta, enrich_waste_assay);
 
     // This AVERY EQN doesn't work for some reason
     //    double strip_waste = WastePerStripStage(alpha, enrich_waste_assay,
@@ -180,42 +178,37 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
 				    146, 97, 49};
 
   double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
-  std::pair<double, double> n_stages = FindNStages(alpha, beta, fa, pa, wa);
-  std::vector<double> flows = CalcFeedFlows(n_stages, feed_c, cut, fa, pa, wa);
+  cascade_config cascade = FindNumberIdealStages(fa, pa, wa, centrifuge);
+  cascade = CalcFeedFlows(cascade);
 
   // if # Machines for the stage is within tol_num of an integer
   // then round down. Otherwise round up to the next integer machine to
   // preserve steady-state flow calculations.
-  std::vector<std::pair<int, double>> stage_info =
-    CalcStageFeatures(fa, alpha, delU, cut, n_stages, flows);
+  cascade = CalcStageFeatures(cascade);
 
   for (int i = 0; i < pycode_flows.size(); i++){
-    EXPECT_NEAR(flows[i], pycode_flows[i], tol_num);
-    int nmach = stage_info[i].first;
+    EXPECT_NEAR(cascade.stgs_config[i].flow, pycode_flows[i], tol_num);
+    int nmach = cascade.stgs_config[i-cascade.stripping_stgs].n_machines;
     EXPECT_EQ(nmach, pycode_machines[i]);
   }
 
   // not enough machines
   int max_centrifuges = 80;
-  std::pair<int, double> design_params = DesignCascade(feed_c, alpha, delU,
-						       cut, max_centrifuges,
-						       n_stages, fa, pa, wa);
+  cascade = DesignCascade(cascade, feed_c, max_centrifuges);
   int py_tot_mach = 79;
   double py_opt_feed = 1.30116169899e-05;
   
-  EXPECT_EQ(py_tot_mach, design_params.first);
-  EXPECT_NEAR(py_opt_feed, design_params.second, tol_qty);
+  EXPECT_EQ(py_tot_mach, cascade.stripping_stgs + cascade.enrich_stgs);
+  EXPECT_NEAR(py_opt_feed, cascade.feed_flow, tol_qty);
   
   // more machines than requested capacity
   max_centrifuges = 1000;
-  design_params = DesignCascade(feed_c, alpha, delU,
-				cut, max_centrifuges,
-				n_stages, fa, pa, wa);
+  cascade = DesignCascade(cascade, feed_c,max_centrifuges);
   py_tot_mach = 986;
   py_opt_feed = 0.000172728;
   
-  EXPECT_EQ(py_tot_mach, design_params.first);
-  EXPECT_NEAR(py_opt_feed, design_params.second, tol_qty);
+  EXPECT_EQ(py_tot_mach, cascade.stripping_stgs + cascade.enrich_stgs);
+  EXPECT_NEAR(py_opt_feed, cascade.feed_flow, tol_qty);
   
 }
   

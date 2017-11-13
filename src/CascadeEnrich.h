@@ -5,6 +5,7 @@
 
 #include "cyclus.h"
 #include "sim_init.h"
+#include "enrich_functions.h"
 
 /*
 Working with cycamore Develop build:  3ada148442de636d
@@ -172,27 +173,18 @@ class CascadeEnrich : public cyclus::Facility {
 
   // Not physical constants but fixed assumptions for a cascade separating
   // out U235 from U238 in UF6 gas
-  const double M = 0.352;   // kg/mol UF6
-  const double dM = 0.003;  // kg/mol U238 - U235
-  const double x = 1000;    // Pressure ratio (Glaser)
-
-  const double flow_internal = 2.0;  // can vary from 2-4
-  const double eff = 1.0;            // typical efficiencies <0.6
-  const double cut = 0.5;            // target for ideal cascade
-
+//group all the characteristic of a centrifuges
+  centrifuge_config centrifuge;
+  cascade_config cascade;
+  double precision = 1e-31;
+  
+  
   const double secpermonth = 60.*60.*24.*(365.25/12.);
 
   // Set to design_tails at beginning of simulation. Gets reset if
   // facility is used off-design
   double tails_assay;
 
-  // These state variables are constrained by the design input params at
-  // the start of the simulation:
-
-  // Set by max feed for an individual machine
-  double design_delU;
-  double design_alpha;
-  double design_beta;
 
   // Set by design assays (feed, product, tails)
   int n_enrich_stages;

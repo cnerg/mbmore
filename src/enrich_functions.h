@@ -14,40 +14,46 @@ void dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipivot, double *b,
             int *ldb, int *info);
 }
 
-
-struct cascade_config {
-  centrifuges_config cent_config;
-  int stripping_stgs;
-  int enrich_stgs;
-  double feed_flow;
-  std::map< int, stage_config> stgs_config;
+//group all the characteristic of a centrifuges
+struct centrifuge_config {
+  double v_a = 485;
+  double height = 0.5;
+  double diameter = 0.15;
+  double feed = 100;
+  double temp = 320;
+  double eff = 1.0;
+  double M = 0.352;
+  double dM = 0.003;
+  double x = 1000;
+  double flow_internal = 2.0;
 };
 
+// group all the characteristic of a stage
 struct stg_config {
   double cut;
   double DU;
   double alpha;
   double beta;
   double flow;
+
+  double n_machines;
+
   double feed_assay;
   double product_assay;
   double tail_assay;
-}
+};
 
 
-struct centrifuges_config {
-  double waste_assay;
-  double v_a;
-  double height;
-  double diameter;
-  double feed;
-  double temp;
-  double eff;
-  double M;
-  double dM;
-  double x;
-  double flow_internal;
-}
+//group charateristic of a full cascade
+struct cascade_config {
+  centrifuge_config cent_config;
+  int stripping_stgs;
+  int enrich_stgs;
+  double feed_flow;
+  std::map< int, stg_config> stgs_config;
+};
+
+
 
 
 // Organizes bids by enrichment level of requested material
@@ -57,7 +63,7 @@ bool SortBids(cyclus::Bid<cyclus::Material> *i,
 // Calculates the ideal separation energy for a single machine
 // as defined by the Raetz equation
 // (referenced in Glaser, Science and Global Security 2009)
-double CalcDelU(double cut, centrifuges_config centri_config);
+double CalcDelU(double cut, centrifuge_config centri_config);
 
 // Calculates the exponent for the energy distribution using ideal gas law
 // (component of multiple other equations)
@@ -83,19 +89,21 @@ double ProductAssayByAlpha(double alpha, double feed_assay);
 // Calculates the assay of the waste given the assay
 // of the feed and the theoretical separation factor of the machine
 // Glaser
-double WasteAssayByBeta(double beta, double feed_assay);
+double TailAssayByBeta(double beta, double feed_assay);
 
 // Calculates the number of stages needed in a cascade given the separation
 // potential of a single centrifuge and the material assays
-std::pair<int, int> FindNStages(double alpha, double beta, double feed_assay,
-                                double product_assay, double Nwc);
+cascade_config FindNumberIdealStages(double feed_assay, double product_assay,
+                                     double waste_assay,
+                                     centrifuge_config cent_config,
+                                     double precision = 1e-9); 
 
 // Calculates the product assay after N enriching stages
 double ProductAssayFromNStages(double alpha, double beta, double feed_assay,
                                double enrich_stages);
 
 // Calculates the assay of the waste after N stripping stages
-double WasteAssayFromNStages(double alpha, double beta, double feed_assay,
+double TailAssayFromNStages(double alpha, double beta, double feed_assay,
                              double strip_stages);
 
 // Number of machines in a stage (either enrich or strip)
@@ -139,33 +147,27 @@ double DelUByCascadeConfig(double product_assay, double waste_assay,
 
 // Solves system of linear eqns to determine steady state flow rates
 // in each stage of cascade
-std::vector<double> CalcFeedFlows(std::pair<int, int> n_st, double cascade_feed,
-                                  double cut, double feed_assay, double product_assay, double tail_assay);
+cascade_config CalcFeedFlows(cascade_config cascade);
 
 // Determines the number of machines and product in each stage based
 // on the steady-state flows defined for the cascade.
-std::vector<std::pair<int, double>> CalcStageFeatures(
-    double feed_assay, double alpha, double del_U, double cut,
-    std::pair<int, int> n_st, std::vector<double> feed_flow);
+cascade_config CalcStageFeatures(cascade_config cascade);
 
 // Determine total number of machines in the cascade from machines per stage
-int FindTotalMachines(std::vector<std::pair<int, double>> stage_info);
+int FindTotalMachines(cascade_config cascade);
 
-std::pair<int, double> DesignCascade(double design_feed, double design_alpha,
-                                     double design_delU, double cut,
-                                     int max_centrifuges,
-                                     std::pair<int, int> n_stages, double feed_assay, double product_assay, double tail_assay);
+cascade_config DesignCascade(cascade_config cascade, double max_feed, int max_centrifuges);
 
-cascade_enrichment Compute_Assay(cascade_config cascade_config,
+cascade_config Compute_Assay(cascade_config cascade_config,
                                  double feed_assay, double precision);
 
-double Diff_enrichment(cascade_enrichment actual_enrichments,
-                       cascade_enrichment previous_enrichement);
+double Diff_enrichment(cascade_config actual_enrichments,
+                       cascade_config previous_enrichement);
 
-cascade_enrichment Update_enrichment(cascade_config cascade_config,
+cascade_config Update_enrichment(cascade_config cascade,
                                      double feed_assay);
 
-double get_cut_for_ideal_stg(centrifuges_config cent_config, double feed_assay,
+double get_cut_for_ideal_stg(centrifuge_config cent_config, double feed_assay,
                              double precision);
 }  // namespace mbmore
 
