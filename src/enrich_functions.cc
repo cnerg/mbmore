@@ -44,7 +44,7 @@ double CalcDelU(double v_a, double height, double diameter, double feed,
   // Converting from molecular mass to atomic mass (assuming U238)
   // Warning: This assumption is only valid at low enrichment
   // TODO: EXPLICITLY CALCULATE ATOMIC MASS GIVEN FEED ASSAY
-  double C1 = (2.0 * M_PI * (D_rho*M_238/M_mol) / (log(r_2 / r_1)));
+  double C1 = (2.0 * M_PI * (D_rho * M_238 / M_mol) / (log(r_2 / r_1)));
   //  double C1 = (2.0 * M_PI * D_rho / (log(r_2 / r_1)));
   double A_p = C1 * (1.0 / feed) *
                (cut / ((1.0 + flow_internal) * (1.0 - cut + flow_internal)));
@@ -162,16 +162,23 @@ std::pair<int, int> FindNStages(double alpha, double feed_assay,
 double ProductAssayFromNStages(double alpha, double feed_assay,
                                double enrich_stages) {
   double A =
-      (feed_assay / (1 - feed_assay)) * exp(enrich_stages * (alpha - 1.0));
-  double product_assay = A / (1 + A);
+      (feed_assay / (1. - feed_assay)) * exp(enrich_stages * (alpha - 1.0));
+  double product_assay = A / (1. + A);
   return product_assay;
 }
 
 double WasteAssayFromNStages(double alpha, double feed_assay,
                              double strip_stages) {
-  return 1 /
-         (1 +
-          ((1 - feed_assay) / feed_assay) * exp(strip_stages * (alpha - 1.0)));
+  if(strip_stages == 0){
+    return WasteAssayByAlpha(alpha, feed_assay);
+  } else if (strip_stages < 0) {
+    double stg_feed_assay = WasteAssayFromNStages(alpha, feed_assay, strip_stages +1);
+    return WasteAssayByAlpha(alpha, stg_feed_assay);
+    
+  } else if (strip_stages > 0){
+    double stg_feed_assay = ProductAssayFromNStages(alpha, feed_assay, strip_stages -1);
+    return WasteAssayByAlpha(alpha, stg_feed_assay);
+  }
 }
 
 double MachinesPerStage(double alpha, double del_U, double stage_feed) {
@@ -233,9 +240,16 @@ std::vector<double> CalcFeedFlows(std::pair<int, int> n_st, double cascade_feed,
   // to be much larger than it should ever need to be
   int max_stages = 100;
 
+  // Number of enrich stages
   int n_enrich = n_st.first;
+  // NUmber of stripping stages
   int n_strip = n_st.second;
+  // total number of stages
   int n_stages = n_st.first + n_st.second;
+  if (n_stages > max_stages){
+    std::cout << "To many stages in the cascade, can't calculated the thoerritical flows..." << std::endl;
+    exit(1);
+  }
 
   // LAPACK takes the external flow feeds as B, and then returns a modified
   // version of the same array now representing the solution flow rates.
@@ -301,7 +315,6 @@ std::vector<double> CalcFeedFlows(std::pair<int, int> n_st, double cascade_feed,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determine number of machines in each stage of the cascade, and total
 // output flow from each stage
-
 std::vector<std::pair<int, double>> CalcStageFeatures(
     double feed_assay, double alpha, double del_U, double cut,
     std::pair<int, int> n_st, std::vector<double> feed_flow) {
@@ -374,8 +387,7 @@ int FindTotalMachines(std::vector<std::pair<int, double>> stage_info) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::pair<int, double> DesignCascade(double design_feed,
-				     double design_alpha,
+std::pair<int, double> DesignCascade(double design_feed, double design_alpha,
                                      double design_delU, double cut,
                                      int max_centrifuges,
                                      std::pair<int, int> n_stages) {
