@@ -19,7 +19,7 @@ struct centrifuge_config {
   double v_a = 485;
   double height = 0.5;
   double diameter = 0.15;
-  double feed = 100;
+  double feed = 15. / 1000. / 1000.;
   double temp = 320;
   double eff = 1.0;
   double M = 0.352;
@@ -47,8 +47,8 @@ struct stg_config {
 //group charateristic of a full cascade
 struct cascade_config {
   centrifuge_config cent_config;
-  int stripping_stgs;
-  int enrich_stgs;
+  int stripping_stgs = 0;
+  int enrich_stgs = 0;
   double feed_flow;
   std::map< int, stg_config> stgs_config;
 };
@@ -141,7 +141,7 @@ double MachinesPerCascade(double del_U_machine, double product_assay,
 // being used in optimal configuration, as defined by the non-optimal
 // assays and flow rates of the cascade
 // ????
-double DelUByCascadeConfig(double product_assay, double waste_assay,
+double DelUByCascade(double product_assay, double waste_assay,
                            double product_flow, double waste_flow,
                            double feed_assay);
 
