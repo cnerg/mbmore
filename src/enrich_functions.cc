@@ -182,7 +182,6 @@ cascade_config FindNumberIdealStages(double feed_assay, double product_assay,
     stgs_cut_and_assay.stgs_config[stg_i] = stg;
   }
   stgs_cut_and_assay.enrich_stgs = stg_i + 1;
-  std::cout << "stgs_cut_and_assay.enrich_stgs " << stgs_cut_and_assay.enrich_stgs << std::endl;
   // reset
   stg_i = 0;
   stg = stgs_cut_and_assay.stgs_config[stg_i];
@@ -215,7 +214,6 @@ double ProductAssayFromNStages(double alpha, double beta, double feed_assay,
 
 double TailAssayFromNStages(double alpha, double beta, double feed_assay,
                             double stages) {
-  std::cout << stages << std::endl;
   if (stages == 0) {
     return TailAssayByBeta(beta, feed_assay);
   } else if (stages < 0) {
@@ -302,7 +300,6 @@ cascade_config CalcFeedFlows(cascade_config cascade) {
     exit(1);
   }
 
-  std::cout << "size flow 1 " << cascade.stgs_config.size() << std::endl;
   // Build Array with pointers
   double flow_eqns[max_stages][max_stages];
   double flows[1][max_stages];
@@ -339,7 +336,6 @@ cascade_config CalcFeedFlows(cascade_config cascade) {
       }
     }
   }
-  std::cout << "size flow 2 " << cascade.stgs_config.size() << std::endl;
 
   // LAPACK solver variables
   int nrhs = 1;          // 1 column solution
@@ -356,21 +352,17 @@ cascade_config CalcFeedFlows(cascade_config cascade) {
   if (info != 0) {
     std::cerr << "LAPACK linear solver dgesv returned error " << info << "\n";
   }
-  std::cout << "size flow 3 " << cascade.stgs_config.size() << std::endl;
 
   for (int i = 0; i < n_stages; i++) {
     int stg_i = i - n_strip;
-      std::cout << "stg_i " << stg_i << " " << flows[0][i] << std::endl;
     cascade.stgs_config[stg_i].flow = flows[0][i];
   }
-  std::cout << "size flow " << cascade.stgs_config.size() << std::endl;
   return cascade;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determine number of machines in each stage of the cascade, and total
 // output flow from each stage
 cascade_config CalcStageFeatures(cascade_config cascade) {
-  std::cout << "in Featuer " << cascade.stgs_config.size() << std::endl;
   double machine_tol = 0.01;
   int n_enrich = cascade.enrich_stgs;
   int n_strip = cascade.stripping_stgs;
@@ -475,9 +467,7 @@ double Diff_enrichment(cascade_config a_enrichments,
     square_waste_diff += pow(a_enrichments.stgs_config[i].tail_assay -
                                  p_enrichments.stgs_config[i].tail_assay,
                              2);
-  std::cout << "ON " << i<< " " << square_feed_diff << " " << square_product_diff << " " << square_waste_diff << std::endl;
   }
-  std::cout << "ON " << square_feed_diff + square_product_diff + square_waste_diff << std::endl;
   return square_feed_diff + square_product_diff + square_waste_diff;
 }
 

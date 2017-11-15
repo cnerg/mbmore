@@ -94,7 +94,6 @@ TEST(Enrich_Functions_Test, TestCascade) {
                                                  waste_assay, centrifuge, 1e-8);
   int pycode_n_enrich_stage = 11;
   int pycode_n_strip_stage = 11;
-  std::cout << "size find " << cascade.stgs_config.size() << std::endl;
   //  int n_stage_enrich = (int) n_stages.first + 1;  // Round up to next
   //  integer
   //  int n_stage_waste = (int) n_stages.second + 1;  // Round up to next
@@ -108,18 +107,12 @@ TEST(Enrich_Functions_Test, TestCascade) {
   // Now test assays when cascade is modified away from ideal design
   // (cascade optimized for natural uranium feed, now use 20% enriched
   double feed_assay_mod = 0.20;
-  std::cout << "size find " << cascade.stgs_config.size() << std::endl;
   cascade_config cascade_ = DesignCascade(cascade, feed_c, 1000000);
-  std::cout << "size design " << cascade_.stgs_config.size() << std::endl;
   cascade_config cascade_non_ideal = Compute_Assay(cascade_, feed_assay_mod, 1e-17);
-  std::cout << "size Assay " << cascade_non_ideal.stgs_config.size() << std::endl;
 
   double mod_product_assay = cascade_non_ideal.stgs_config[n_stage_enrich-1].product_assay ;
   double mod_waste_assay = cascade_non_ideal.stgs_config[-n_stage_waste].product_assay;
 
-  std::cout << "alpha " << alpha << " feed " << feed_assay_mod << " nstage "
-            << n_stage_enrich + n_stage_waste << " unrounded stages "
-            << n_stage_enrich << std::endl;
   double pycode_mod_product_assay = 0.60537;
   double pycode_mod_waste_assay = 0.0290846;
   EXPECT_NEAR(mod_product_assay, pycode_mod_product_assay, tol_assay);
