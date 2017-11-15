@@ -478,7 +478,7 @@ cascade_config Update_enrichment(cascade_config cascade, double feed_assay) {
   double up_assay = 0;
   double down_flow = 0;
   double up_flow = 0;
-
+  std::cout << feed_assay << " IN p assay " << cascade.stgs_config[cascade.enrich_stgs-1].product_assay << std::endl;
   double stg_feed_flow = 0;
   std::map<int, stg_config>::iterator it;
   for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end();
@@ -511,9 +511,15 @@ cascade_config Update_enrichment(cascade_config cascade, double feed_assay) {
     double stg_feed_assay =
         (down_assay * down_flow + up_assay * up_flow) / (down_flow + up_flow);
     if (i == 0) {  // add Feed flow in the entry stage
+      
+      std::cout << cascade.feed_flow << std::endl;
+      std::cout << down_flow << std::endl;
+      std::cout << up_flow << std::endl;
+
       stg_feed_assay = (down_assay * down_flow + up_assay * up_flow +
                         feed_assay * cascade.feed_flow) /
                        (down_flow + up_flow + cascade.feed_flow);
+      std::cout << "stg_feed_assay " << stg_feed_assay << std::endl;
       stg_feed_flow = down_flow + up_flow + cascade.feed_flow;
     }
     double alpha = updated_enrichment.stgs_config[i].alpha;
@@ -527,6 +533,7 @@ cascade_config Update_enrichment(cascade_config cascade, double feed_assay) {
     updated_enrichment.stgs_config[i].product_assay = stg_product_assay;
     updated_enrichment.stgs_config[i].tail_assay = stg_tail_assay;
   }
+  std::cout << "Out p assay " << updated_enrichment.stgs_config[cascade.enrich_stgs-1].product_assay << std::endl;
 
   return updated_enrichment;
 }
