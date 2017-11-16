@@ -87,7 +87,7 @@ TEST_F(CascadeEnrichTest, RequestQty) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST_F(CascadeEnrichTest, CheckFLowConstraint) {
+TEST_F(CascadeEnrichTest, CheckFlowConstraint) {
   // Tests that request for enrichment that exceeds the SWU constraint
   // fulfilled only up to the available SWU.
   // Also confirms that initial_feed flag works.
@@ -119,7 +119,7 @@ TEST_F(CascadeEnrichTest, CheckFLowConstraint) {
   Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
 
   EXPECT_EQ(1.0, qr.rows.size());
-  EXPECT_NEAR(73, m->quantity(), 0.1)
+  EXPECT_NEAR(10, m->quantity(), 0.1)
       << "traded quantity differ from flow contraints";
 }
 
@@ -134,7 +134,8 @@ TEST_F(CascadeEnrichTest, CheckCapConstraint) {
       "   <product_commod>enr_u</product_commod> "
       "   <tails_commod>tails</tails_commod> "
       "   <tails_assay>0.003</tails_assay> "
-      "   <initial_feed>200</initial_feed> ";
+      "   <initial_feed>200</initial_feed> "
+      "   <design_feed_flow>50</design_feed_flow> ";
 
   int simdur = 1;
 
@@ -154,7 +155,7 @@ TEST_F(CascadeEnrichTest, CheckCapConstraint) {
   Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
 
   EXPECT_EQ(1.0, qr.rows.size());
-  EXPECT_NEAR(4.1, m->quantity(), 0.01)
+  EXPECT_NEAR(5.831, m->quantity(), 0.01)
       << "traded quantity exceeds capacity constraint";
 }
 

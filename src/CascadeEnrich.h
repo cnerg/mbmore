@@ -192,7 +192,6 @@ class CascadeEnrich : public cyclus::Facility {
 
   // Set by maximum allowable centrifuges
   double max_feed_flow;
-  std::vector<std::pair<int, double>> cascade_features;
   double ProductAssay(double feed_assay);
   double ProductFlow(double feed_flow);
   double TailsAssay(double feed_assay);
