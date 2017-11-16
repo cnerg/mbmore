@@ -107,10 +107,13 @@ TEST(Enrich_Functions_Test, TestCascade) {
   // (cascade optimized for natural uranium feed, now use 20% enriched
   double feed_assay_mod = 0.20;
   cascade_config cascade_ = DesignCascade(cascade, feed_c, 1000000);
-  cascade_config cascade_non_ideal = Compute_Assay(cascade_, feed_assay_mod, 1e-31);
+  cascade_config cascade_non_ideal =
+      Compute_Assay(cascade_, feed_assay_mod, 1e-31);
 
-  double mod_product_assay = cascade_non_ideal.stgs_config[n_stage_enrich-1].product_assay ;
-  double mod_waste_assay = cascade_non_ideal.stgs_config[-n_stage_waste].product_assay;
+  double mod_product_assay =
+      cascade_non_ideal.stgs_config[n_stage_enrich - 1].product_assay;
+  double mod_waste_assay =
+      cascade_non_ideal.stgs_config[-n_stage_waste].product_assay;
 
   double pycode_mod_product_assay = 0.59495;
   double pycode_mod_waste_assay = 0.04081;
@@ -174,7 +177,7 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
   cascade_config cascade = FindNumberIdealStages(fa, pa, wa, centrifuge);
   cascade = DesignCascade(cascade, feed_c, 1000000);
-  
+
   for (int i = 0; i < pycode_flows.size(); i++) {
     EXPECT_NEAR(cascade.stgs_config[i].flow, pycode_flows[i], tol_num);
     int nmach = cascade.stgs_config[i - cascade.stripping_stgs].n_machines;

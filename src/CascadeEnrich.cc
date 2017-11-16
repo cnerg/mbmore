@@ -459,7 +459,7 @@ double CascadeEnrich::TailsAssay(double feed_assay) {
 
 double CascadeEnrich::ProductFlow(double feed_flow) {
   double feed_ratio = feed_flow / max_feed_flow;
-  stg_config last_stg = cascade.stgs_config[cascade.enrich_stgs-1];
+  stg_config last_stg = cascade.stgs_config[cascade.enrich_stgs - 1];
   double product_flow = last_stg.flow * last_stg.cut;
   return feed_ratio * FlowPerMon(product_flow);
 }
