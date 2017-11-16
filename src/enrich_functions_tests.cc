@@ -89,11 +89,10 @@ TEST(Enrich_Functions_Test, TestCascade) {
 
   double pycode_n_mach = 25990.392;
   EXPECT_NEAR(n_machines, pycode_n_mach, tol_num);
-  double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
   cascade_config cascade = FindNumberIdealStages(feed_assay, product_assay,
                                                  waste_assay, centrifuge, 1e-8);
   int pycode_n_enrich_stage = 11;
-  int pycode_n_strip_stage = 11;
+  int pycode_n_strip_stage = 12;
   //  int n_stage_enrich = (int) n_stages.first + 1;  // Round up to next
   //  integer
   //  int n_stage_waste = (int) n_stages.second + 1;  // Round up to next
@@ -108,13 +107,13 @@ TEST(Enrich_Functions_Test, TestCascade) {
   // (cascade optimized for natural uranium feed, now use 20% enriched
   double feed_assay_mod = 0.20;
   cascade_config cascade_ = DesignCascade(cascade, feed_c, 1000000);
-  cascade_config cascade_non_ideal = Compute_Assay(cascade_, feed_assay_mod, 1e-17);
+  cascade_config cascade_non_ideal = Compute_Assay(cascade_, feed_assay_mod, 1e-31);
 
   double mod_product_assay = cascade_non_ideal.stgs_config[n_stage_enrich-1].product_assay ;
   double mod_waste_assay = cascade_non_ideal.stgs_config[-n_stage_waste].product_assay;
 
-  double pycode_mod_product_assay = 0.60537;
-  double pycode_mod_waste_assay = 0.0290846;
+  double pycode_mod_product_assay = 0.56997;
+  double pycode_mod_waste_assay = 0.04396;
   EXPECT_NEAR(mod_product_assay, pycode_mod_product_assay, tol_assay);
   EXPECT_NEAR(mod_waste_assay, pycode_mod_waste_assay, tol_assay);
 }
@@ -142,7 +141,7 @@ TEST(Enrich_Functions_Test, TestStages) {
 
   double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
   double n_mach_w = MachinesPerStage(alpha, delU, enrich_waste);
-  double strip_waste_assay = TailAssayByBeta(beta, enrich_waste_assay);
+  double strip_waste_assay = TailAssayByBeta(alpha, enrich_waste_assay);
 
   // This AVERY EQN doesn't work for some reason
   //    double strip_waste = WastePerStripStage(alpha, enrich_waste_assay,
@@ -169,18 +168,13 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
       0.00030693, 0.00061387, 0.0009208,  0.00122774, 0.00153467,
       0.00127889, 0.00102311, 0.00076734, 0.00051156, 0.00025578};
 
-  std::vector<int> pycode_machines = {59,  117, 175, 233, 291,
-                                      243, 194, 146, 97,  49};
+  std::vector<int> pycode_machines = {75,  140, 197, 247, 291,
+                                      228, 173, 123, 78,  37};
 
   double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
   cascade_config cascade = FindNumberIdealStages(fa, pa, wa, centrifuge);
-  cascade = CalcFeedFlows(cascade);
-
-  // if # Machines for the stage is within tol_num of an integer
-  // then round down. Otherwise round up to the next integer machine to
-  // preserve steady-state flow calculations.
-  cascade = CalcStageFeatures(cascade);
-
+  cascade = DesignCascade(cascade, feed_c, 1000000);
+  
   for (int i = 0; i < pycode_flows.size(); i++) {
     EXPECT_NEAR(cascade.stgs_config[i].flow, pycode_flows[i], tol_num);
     int nmach = cascade.stgs_config[i - cascade.stripping_stgs].n_machines;
@@ -193,16 +187,16 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   int py_tot_mach = 79;
   double py_opt_feed = 1.30116169899e-05;
 
-  EXPECT_EQ(py_tot_mach, cascade.stripping_stgs + cascade.enrich_stgs);
+  EXPECT_EQ(py_tot_mach, FindTotalMachines(cascade));
   EXPECT_NEAR(py_opt_feed, cascade.feed_flow, tol_qty);
 
   // more machines than requested capacity
   max_centrifuges = 1000;
   cascade = DesignCascade(cascade, feed_c, max_centrifuges);
-  py_tot_mach = 986;
-  py_opt_feed = 0.000172728;
+  py_tot_mach = 1000;
+  py_opt_feed = 0.0001771;
 
-  EXPECT_EQ(py_tot_mach, cascade.stripping_stgs + cascade.enrich_stgs);
+  EXPECT_EQ(py_tot_mach, FindTotalMachines(cascade));
   EXPECT_NEAR(py_opt_feed, cascade.feed_flow, tol_qty);
 }
 

@@ -80,7 +80,7 @@ double AlphaBySwu(double del_U, double feed, double cut, double M);
 
 // From Beta def in Glaser + Alpha def
 double BetaByAlphaAndCut(double alpha, double feed_assay, double cut);
-
+double CutByAalphaBeta(double alpha, double beta, double feed_assay);
 // Calculates the assay of the product given the assay
 // of the feed and the theoretical separation factor of the machine
 // Glaser
@@ -93,10 +93,13 @@ double TailAssayByBeta(double beta, double feed_assay);
 
 // Calculates the number of stages needed in a cascade given the separation
 // potential of a single centrifuge and the material assays
+stg_config BuildIdealStg(double feed_assay, centrifuge_config cent_config,
+                         double du = -1, double alpha = -1, double precision = 1e-16);
+
 cascade_config FindNumberIdealStages(double feed_assay, double product_assay,
                                      double waste_assay,
                                      centrifuge_config cent_config,
-                                     double precision = 1e-9); 
+                                     double precision = 1e-16); 
 
 // Calculates the product assay after N enriching stages
 double ProductAssayFromNStages(double alpha, double beta, double feed_assay,
@@ -168,7 +171,7 @@ cascade_config Update_enrichment(cascade_config cascade,
                                      double feed_assay);
 
 double get_cut_for_ideal_stg(centrifuge_config cent_config, double feed_assay,
-                             double precision);
+                             double precision = 1e-16);
 }  // namespace mbmore
 
 #endif  //  MBMORE_SRC_ENRICH_FUNCTIONS_H_
