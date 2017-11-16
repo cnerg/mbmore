@@ -13,7 +13,7 @@ namespace mbmore {
 double D_rho = 2.2e-5;     // kg/m/s
 double gas_const = 8.314;  // J/K/mol
 double M_238 = 0.238;      // kg/mol
-double secpermonth = 60.*60.*24.*(365.25/12.);
+double secpermonth = 60. * 60. * 24. * (365.25 / 12.);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TODO:
 // annotate assumed units, Glaser paper reference
@@ -98,13 +98,12 @@ double BetaByAlphaAndCut(double alpha, double feed_assay, double cut) {
   return feed_assay / (1. - feed_assay) * (1. - waste_assay) / waste_assay;
 }
 
-double CutByAalphaBeta(double alpha, double beta, double feed_assay){
-  double product_assay  = ProductAssayByAlpha(alpha, feed_assay);
-  double tail_assay  = TailAssayByBeta(beta, feed_assay);
+double CutByAalphaBeta(double alpha, double beta, double feed_assay) {
+  double product_assay = ProductAssayByAlpha(alpha, feed_assay);
+  double tail_assay = TailAssayByBeta(beta, feed_assay);
 
-  return (feed_assay - tail_assay)/(product_assay - tail_assay);
+  return (feed_assay - tail_assay) / (product_assay - tail_assay);
 }
-
 
 // per machine
 double ProductAssayByAlpha(double alpha, double feed_assay) {
@@ -189,7 +188,8 @@ cascade_config FindNumberIdealStages(double feed_assay, double product_assay,
   double ref_du = stgs_cut_and_assay.stgs_config[0].DU;
   // Calculate number of enriching stages
   while (stg.product_assay < product_assay) {
-    stg = BuildIdealStg(stg.product_assay, cent_config, ref_du, ref_alpha, precision);
+    stg = BuildIdealStg(stg.product_assay, cent_config, ref_du, ref_alpha,
+                        precision);
     stg_i++;
     stgs_cut_and_assay.stgs_config[stg_i] = stg;
   }
@@ -199,7 +199,8 @@ cascade_config FindNumberIdealStages(double feed_assay, double product_assay,
   stg = stgs_cut_and_assay.stgs_config[stg_i];
   // Calculate number of stripping stages
   while (stg.tail_assay > waste_assay) {
-    stg = BuildIdealStg(stg.tail_assay, cent_config, ref_du, ref_alpha, precision);
+    stg = BuildIdealStg(stg.tail_assay, cent_config, ref_du, ref_alpha,
+                        precision);
     stg_i--;
     stgs_cut_and_assay.stgs_config[stg_i] = stg;
   }
@@ -312,12 +313,15 @@ cascade_config CalcFeedFlows(cascade_config cascade) {
     exit(1);
   }
   double feed_assay = cascade.stgs_config[0].feed_assay;
-  double product_assay = cascade.stgs_config[cascade.enrich_stgs-1].product_assay;
+  double product_assay =
+      cascade.stgs_config[cascade.enrich_stgs - 1].product_assay;
   double tail_assay = cascade.stgs_config[-cascade.stripping_stgs].tail_assay;
-  
-  double feed_flow = cascade.feed_flow;   
-  double product_flow = feed_flow * (feed_assay - tail_assay)/(product_assay - tail_assay); 
-  double tail_flow = product_flow * (product_assay - feed_assay)/(feed_assay - tail_assay);
+
+  double feed_flow = cascade.feed_flow;
+  double product_flow =
+      feed_flow * (feed_assay - tail_assay) / (product_assay - tail_assay);
+  double tail_flow =
+      product_flow * (product_assay - feed_assay) / (feed_assay - tail_assay);
 
   // Build Array with pointers
   double flow_eqns[max_stages][max_stages];
@@ -343,10 +347,11 @@ cascade_config CalcFeedFlows(cascade_config cascade) {
       int col_idx = n_strip + stg_i;
       flow_eqns[col_idx][row_idx] = -1.;
       if (row_idx != 0) {
-        flow_eqns[col_idx - 1][row_idx] = cascade.stgs_config[stg_i-1].cut;
+        flow_eqns[col_idx - 1][row_idx] = cascade.stgs_config[stg_i - 1].cut;
       }
       if (row_idx != n_stages - 1) {
-        flow_eqns[col_idx + 1][row_idx] = (1-cascade.stgs_config[stg_i+1].cut);
+        flow_eqns[col_idx + 1][row_idx] =
+            (1 - cascade.stgs_config[stg_i + 1].cut);
       }
 
       // Add the external feed for the cascade
@@ -432,7 +437,7 @@ cascade_config DesignCascade(cascade_config cascade, double max_feed,
   int machines_needed = FindTotalMachines(max_feed_cascade);
   double max_feed_from_machine = max_feed;
   while (machines_needed > max_centrifuges) {
-    double scaling_ratio = (double) machines_needed / (double)max_centrifuges;
+    double scaling_ratio = (double)machines_needed / (double)max_centrifuges;
     max_feed_from_machine = max_feed_from_machine / scaling_ratio;
     cascade.feed_flow = max_feed_from_machine;
     max_feed_cascade = CalcFeedFlows(cascade);
