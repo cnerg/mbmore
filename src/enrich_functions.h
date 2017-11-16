@@ -14,7 +14,7 @@ void dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipivot, double *b,
             int *ldb, int *info);
 }
 
-//group all the characteristic of a centrifuges
+// group all the characteristic of a centrifuges
 struct centrifuge_config {
   double v_a = 485;
   double height = 0.5;
@@ -43,18 +43,14 @@ struct stg_config {
   double tail_assay;
 };
 
-
-//group charateristic of a full cascade
+// group charateristic of a full cascade
 struct cascade_config {
   centrifuge_config cent_config;
   int stripping_stgs = 0;
   int enrich_stgs = 0;
   double feed_flow;
-  std::map< int, stg_config> stgs_config;
+  std::map<int, stg_config> stgs_config;
 };
-
-
-
 
 // Organizes bids by enrichment level of requested material
 bool SortBids(cyclus::Bid<cyclus::Material> *i,
@@ -94,12 +90,13 @@ double TailAssayByBeta(double beta, double feed_assay);
 // Calculates the number of stages needed in a cascade given the separation
 // potential of a single centrifuge and the material assays
 stg_config BuildIdealStg(double feed_assay, centrifuge_config cent_config,
-                         double du = -1, double alpha = -1, double precision = 1e-16);
+                         double du = -1, double alpha = -1,
+                         double precision = 1e-16);
 
 cascade_config FindNumberIdealStages(double feed_assay, double product_assay,
                                      double waste_assay,
                                      centrifuge_config cent_config,
-                                     double precision = 1e-16); 
+                                     double precision = 1e-16);
 
 // Calculates the product assay after N enriching stages
 double ProductAssayFromNStages(double alpha, double beta, double feed_assay,
@@ -107,7 +104,7 @@ double ProductAssayFromNStages(double alpha, double beta, double feed_assay,
 
 // Calculates the assay of the waste after N stripping stages
 double TailAssayFromNStages(double alpha, double beta, double feed_assay,
-                             double strip_stages);
+                            double strip_stages);
 
 // Number of machines in a stage (either enrich or strip)
 // given the feed flow (stage_feed)
@@ -145,8 +142,7 @@ double MachinesPerCascade(double del_U_machine, double product_assay,
 // assays and flow rates of the cascade
 // ????
 double DelUByCascade(double product_assay, double waste_assay,
-                           double product_flow, double waste_flow,
-                           double feed_assay);
+                     double product_flow, double waste_flow, double feed_assay);
 
 // Solves system of linear eqns to determine steady state flow rates
 // in each stage of cascade
@@ -159,16 +155,16 @@ cascade_config CalcStageFeatures(cascade_config cascade);
 // Determine total number of machines in the cascade from machines per stage
 int FindTotalMachines(cascade_config cascade);
 
-cascade_config DesignCascade(cascade_config cascade, double max_feed, int max_centrifuges);
+cascade_config DesignCascade(cascade_config cascade, double max_feed,
+                             int max_centrifuges);
 
-cascade_config Compute_Assay(cascade_config cascade_config,
-                                 double feed_assay, double precision);
+cascade_config Compute_Assay(cascade_config cascade_config, double feed_assay,
+                             double precision);
 
 double Diff_enrichment(cascade_config actual_enrichments,
                        cascade_config previous_enrichement);
 
-cascade_config Update_enrichment(cascade_config cascade,
-                                     double feed_assay);
+cascade_config Update_enrichment(cascade_config cascade, double feed_assay);
 
 double get_cut_for_ideal_stg(centrifuge_config cent_config, double feed_assay,
                              double precision = 1e-16);

@@ -20,9 +20,9 @@ using cyclus::Material;
 
 namespace mbmore {
 
-namespace cascadenrichtest{
+namespace cascadenrichtest {
 
-  Composition::Ptr c_nou235() {
+Composition::Ptr c_nou235() {
   cyclus::CompMap m;
   m[922380000] = 1.0;
   return Composition::CreateFromMass(m);
@@ -158,7 +158,6 @@ TEST_F(CascadeEnrichTest, CheckCapConstraint) {
   EXPECT_NEAR(5.831, m->quantity(), 0.01)
       << "traded quantity exceeds capacity constraint";
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST_F(CascadeEnrichTest, TradeTails) {
