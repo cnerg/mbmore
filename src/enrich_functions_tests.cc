@@ -112,8 +112,8 @@ TEST(Enrich_Functions_Test, TestCascade) {
   double mod_product_assay = cascade_non_ideal.stgs_config[n_stage_enrich-1].product_assay ;
   double mod_waste_assay = cascade_non_ideal.stgs_config[-n_stage_waste].product_assay;
 
-  double pycode_mod_product_assay = 0.56997;
-  double pycode_mod_waste_assay = 0.04396;
+  double pycode_mod_product_assay = 0.59495;
+  double pycode_mod_waste_assay = 0.04081;
   EXPECT_NEAR(mod_product_assay, pycode_mod_product_assay, tol_assay);
   EXPECT_NEAR(mod_waste_assay, pycode_mod_waste_assay, tol_assay);
 }
@@ -168,8 +168,8 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
       0.00030693, 0.00061387, 0.0009208,  0.00122774, 0.00153467,
       0.00127889, 0.00102311, 0.00076734, 0.00051156, 0.00025578};
 
-  std::vector<int> pycode_machines = {75,  140, 197, 247, 291,
-                                      228, 173, 123, 78,  37};
+  std::vector<int> pycode_machines = {80,  149, 210, 264, 312,
+                                      241, 180, 127, 80,  38};
 
   double beta = BetaByAlphaAndCut(alpha, feed_assay, cut);
   cascade_config cascade = FindNumberIdealStages(fa, pa, wa, centrifuge);
@@ -184,7 +184,7 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   // not enough machines
   int max_centrifuges = 80;
   cascade = DesignCascade(cascade, feed_c, max_centrifuges);
-  int py_tot_mach = 79;
+  int py_tot_mach = 80;
   double py_opt_feed = 1.30116169899e-05;
 
   EXPECT_EQ(py_tot_mach, FindTotalMachines(cascade));
@@ -193,8 +193,8 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
   // more machines than requested capacity
   max_centrifuges = 1000;
   cascade = DesignCascade(cascade, feed_c, max_centrifuges);
-  py_tot_mach = 1000;
-  py_opt_feed = 0.0001771;
+  py_tot_mach = 999;
+  py_opt_feed = 0.0001667;
 
   EXPECT_EQ(py_tot_mach, FindTotalMachines(cascade));
   EXPECT_NEAR(py_opt_feed, cascade.feed_flow, tol_qty);

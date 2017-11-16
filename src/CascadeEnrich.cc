@@ -63,12 +63,6 @@ void CascadeEnrich::EnterNotify() {
   cascade =
       DesignCascade(cascade, FlowPerSec(design_feed_flow), max_centrifuges);
   max_feed_flow = FlowPerMon(cascade.feed_flow);
-  std::cout << "P "<< FlowPerMon(cascade.stgs_config[cascade.enrich_stgs -1].flow *cascade.stgs_config[cascade.enrich_stgs -1].cut) << std::endl;
-  std::cout << cascade.stgs_config[cascade.enrich_stgs -1].product_assay << std::endl;
-  std::cout << "T " << FlowPerMon(cascade.stgs_config[-cascade.stripping_stgs].flow *(1- cascade.stgs_config[cascade.enrich_stgs -1].cut)) << std::endl;
-  std::cout << cascade.stgs_config[-cascade.stripping_stgs].tail_assay << std::endl;
-  std::cout << "F " << FlowPerMon(cascade.feed_flow) << std::endl;
-  std::cout << design_feed_assay << std::endl;
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
@@ -281,10 +275,8 @@ CascadeEnrich::GetMatlBids(
     nucs.insert(922380000);
     double u_frac = mq.mass_frac(nucs);
     double cor_feed_qty = feed_qty * u_frac;
-    std::cout << "cor_feed_qty " << cor_feed_qty << " feed_qty " << feed_qty << " ufrac " << u_frac << std::endl;
     double production_capacity =
         ProductFlow(std::min(cor_feed_qty, max_feed_flow));
-    std::cout << "production_capacity " << production_capacity << std::endl;
     cyclus::CapacityConstraint<Material> production_contraint(
         production_capacity);
     commod_port->AddConstraint(production_contraint);
@@ -348,33 +340,22 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   double product_assay = ProductAssay(FeedAssay());
   double max_product_mass = ProductFlow(max_feed_flow);
 
-  std::cout << "max_product_mass " << max_product_mass << std::endl;
-  std::cout << "max_feed_flow " << max_feed_flow << std::endl;
   double feed_qty = qty / max_product_mass * max_feed_flow;
 
   double tails_assay = TailsAssay(FeedAssay());
   double tails_mass = TailsFlow(feed_qty);
-  std::cout << "in ENR" << std::endl;
   // Determine the composition of the natural uranium
   // (ie. U-235+U-238/TotalMass)
   double pop_qty = inventory.quantity();
   Material::Ptr natu_matl = inventory.Pop(pop_qty, cyclus::eps_rsrc());
   inventory.Push(natu_matl);
-  std::cout << "in ENR 1" << std::endl;
 
   cyclus::toolkit::MatQuery mq(natu_matl);
   std::set<cyclus::Nuc> nucs;
   nucs.insert(922350000);
   nucs.insert(922380000);
   double natu_frac = mq.mass_frac(nucs);
-  std::cout << "natu_frac " << natu_frac << std::endl;
   double feed_req = feed_qty / natu_frac;
-  std::cout << "feed_req " << feed_req << std::endl;
-  std::cout << "qty " << qty << std::endl;
-  std::cout << "in ENR 2" << std::endl;
-  std::cout << "FeedAssay " << FeedAssay() << std::endl;
-  std::cout << "ProductAssay " << ProductAssay(FeedAssay()) << std::endl;
-  std::cout << "TailsAssay " << TailsAssay(FeedAssay()) << std::endl;
   // pop amount from inventory and blob it into one material
   Material::Ptr r;
   try {
@@ -390,17 +371,14 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
        << inventory.quantity();
     throw cyclus::ValueError(Agent::InformErrorMsg(ss.str()));
   }
-  std::cout << "in ENR 3" << std::endl;
 
   // "enrich" it, but pull out the composition and quantity we require from the
   // blob
   cyclus::Composition::Ptr comp = mat->comp();
   Material::Ptr response = r->ExtractComp(qty, comp);
   tails.Push(r);
-  std::cout << "in ENR 4" << std::endl;
 
   RecordEnrichment_(feed_req);
-  std::cout << "in ENR 5" << std::endl;
 
   LOG(cyclus::LEV_INFO5, "EnrFac") << prototype()
                                    << " has performed an enrichment: ";
@@ -412,7 +390,6 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Qty: " << tails_mass;
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Assay: " << tails_assay * 100;
 
-  std::cout << "out ENR" << std::endl;
   return response;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -476,7 +453,6 @@ double CascadeEnrich::ProductAssay(double feed_assay) {
   return cascade_tmp.stgs_config[cascade_tmp.enrich_stgs - 1].product_assay;
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
-  std::cout << "feed_assay in FA "<< feed_assay << std::endl;
   cascade_config cascade_tmp = Update_enrichment(cascade, feed_assay);
   return cascade_tmp.stgs_config[-cascade_tmp.stripping_stgs].tail_assay;
 }
@@ -485,8 +461,6 @@ double CascadeEnrich::ProductFlow(double feed_flow) {
   double feed_ratio = feed_flow / max_feed_flow;
   stg_config last_stg = cascade.stgs_config[cascade.enrich_stgs-1];
   double product_flow = last_stg.flow * last_stg.cut;
-  std::cout << "product_flow " << FlowPerMon(product_flow) << std::endl;
-  std::cout << "feed_ratio " <<  feed_ratio << std::endl;
   return feed_ratio * FlowPerMon(product_flow);
 }
 
