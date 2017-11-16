@@ -159,54 +159,6 @@ TEST_F(CascadeEnrichTest, CheckCapConstraint) {
       << "traded quantity exceeds capacity constraint";
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST_F(CascadeEnrichTest, RequestEnrich) {
-  // this tests verifies that requests for output material exceeding
-  // the maximum allowed enrichment are not fulfilled.
-
-  std::string config =
-      "   <feed_commod>natu</feed_commod> "
-      "   <feed_recipe>natu1</feed_recipe> "
-      "   <product_commod>enr_u</product_commod> "
-      "   <tails_commod>tails</tails_commod> "
-      "   <tails_assay>0.003</tails_assay> "
-      "   <max_enrich>0.20</max_enrich> ";
-
-  int simdur = 2;
-  cyclus::MockSim sim(cyclus::AgentSpec(":mbmore:CascadeEnrich"), config,
-                      simdur);
-  sim.AddRecipe("natu1", cascadenrichtest::c_natu1());
-  sim.AddRecipe("leu", cascadenrichtest::c_leu());
-  sim.AddRecipe("heu", cascadenrichtest::c_heu());
-
-  sim.AddSource("natu").recipe("natu1").Finalize();
-  sim.AddSink("enr_u").recipe("leu").capacity(1.0).Finalize();
-  sim.AddSink("enr_u").recipe("heu").Finalize();
-
-  int id = sim.Run();
-
-  std::vector<Cond> conds;
-  conds.push_back(Cond("Commodity", "==", std::string("enr_u")));
-  QueryResult qr = sim.db().Query("Transactions", &conds);
-  Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
-
-  // Should be only one transaction out of the EF,
-  // and it should be 1kg of LEU
-  EXPECT_EQ(1.0, qr.rows.size());
-  EXPECT_NEAR(1.0, m->quantity(), 0.01)
-      << "Not providing the requested quantity";
-
-  CompMap got = m->comp()->mass();
-  CompMap want = cascadenrichtest::c_leu()->mass();
-  cyclus::compmath::Normalize(&got);
-  cyclus::compmath::Normalize(&want);
-
-  CompMap::iterator it;
-  for (it = want.begin(); it != want.end(); ++it) {
-    EXPECT_DOUBLE_EQ(it->second, got[it->first])
-        << "nuclide qty off: " << pyne::nucname::name(it->first);
-  }
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST_F(CascadeEnrichTest, TradeTails) {
@@ -270,7 +222,8 @@ TEST_F(CascadeEnrichTest, TailsQty) {
   QueryResult qr = sim.db().Query("Transactions", &conds);
   Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
 
-  // Should be 2 tails transactions, one from each LEU sink, each 4.084kg.
+  // Should be 2 tails transactions, one from each LEU sink, each 3.787453kg.
+  // (1* (0.0403193-0.00271456) / (0.0071-0.00271456) -1)/2. = 3.787453
   EXPECT_EQ(2, qr.rows.size());
 
   cyclus::SqlStatement::Ptr stmt = sim.db().db().Prepare(
@@ -280,7 +233,7 @@ TEST_F(CascadeEnrichTest, TailsQty) {
 
   stmt->BindText(1, "tails");
   stmt->Step();
-  EXPECT_NEAR(8.168, stmt->GetDouble(0), 0.01)
+  EXPECT_NEAR(7.575, stmt->GetDouble(0), 0.01)
       << "Not providing the requested quantity";
 }
 
@@ -314,7 +267,7 @@ TEST_F(CascadeEnrichTest, BidPrefs) {
   QueryResult qr = sim.db().Query("Transactions", &conds);
 
   // should trade only with #2 since it has higher U235
-  EXPECT_EQ(2, qr.rows.size());
+  EXPECT_EQ(1, qr.rows.size());
 
   Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
   CompMap got = m->comp()->mass();
@@ -422,7 +375,7 @@ void CascadeEnrichTest::InitParameters() {
 
   tails_assay = 0.002;
   swu_capacity = 100;  //**
-  inv_size = 5;
+  inv_size = 105.5;
 
   reserves = 105.5;
 }
@@ -520,113 +473,6 @@ TEST_F(CascadeEnrichTest, ValidReq) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST_F(CascadeEnrichTest, Enrich) {
-  // this test asks the facility to enrich a material that results in an amount
-  // of natural uranium required that is exactly its inventory level. that
-  // inventory will be comprised of two materials to test the manifest/absorb
-  // strategy employed in Enrich_.
-  using cyclus::CompMap;
-  using cyclus::Material;
-  using cyclus::toolkit::MatQuery;
-  using cyclus::Composition;
-  using cyclus::toolkit::Assays;
-  using cyclus::toolkit::UraniumAssay;
-  using cyclus::toolkit::SwuRequired;
-  using cyclus::toolkit::FeedQty;
-
-  double qty = 5;               // kg
-  double product_assay = 0.05;  // of 5 w/o enriched U
-  cyclus::CompMap v;
-  v[922350000] = product_assay;
-  v[922380000] = 1 - product_assay;
-  // target qty need not be = to request qty
-  Material::Ptr target = cyclus::Material::CreateUntracked(
-      qty + 10, cyclus::Composition::CreateFromMass(v));
-
-  Assays assays(feed_assay, UraniumAssay(target), tails_assay);
-  double swu_req = SwuRequired(qty, assays);
-  double natu_req = FeedQty(qty, assays);
-  double tails_qty = TailsQty(qty, assays);
-
-  double swu_cap = swu_req * 5;
-  src_facility->SetMaxInventorySize(natu_req);
-  DoAddMat(GetMat(natu_req / 2));
-  DoAddMat(GetMat(natu_req / 2));
-
-  Material::Ptr response;
-  EXPECT_NO_THROW(response = DoEnrich(target, qty));
-  EXPECT_DOUBLE_EQ(src_facility->Tails().quantity(), tails_qty);
-
-  MatQuery q(response);
-  EXPECT_EQ(response->quantity(), qty);
-  EXPECT_EQ(q.mass_frac(922350000), product_assay);
-  EXPECT_EQ(q.mass_frac(922380000), 1 - product_assay);
-
-  // test too much natu request
-  DoAddMat(GetMat(natu_req - 1));
-  EXPECT_THROW(response = DoEnrich(target, qty), cyclus::Error);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST_F(CascadeEnrichTest, Response) {
-  // this test asks the facility to respond to multiple requests for enriched
-  // uranium. two requests are provided, whose total equals the swu capacity of
-  // the facility while not exceeding its inventory capacity (that's taken care
-  // of in the Enrich tests).
-  //
-  // note that response quantity and quality need not be tested, because they
-  // are covered by the Enrich and RequestEnrich tests
-  using cyclus::Bid;
-  using cyclus::CompMap;
-  using cyclus::Material;
-  using cyclus::Request;
-  using cyclus::Trade;
-  using cyclus::toolkit::Assays;
-  using cyclus::toolkit::FeedQty;
-  using cyclus::toolkit::SwuRequired;
-  using cyclus::toolkit::UraniumAssay;
-
-  // problem set up
-  std::vector<cyclus::Trade<cyclus::Material> > trades;
-  std::vector<
-      std::pair<cyclus::Trade<cyclus::Material>, cyclus::Material::Ptr> >
-      responses;
-
-  double qty = 5;  // kg
-  double trade_qty = qty / 3;
-  double product_assay = 0.05;  // of 5 w/o enriched U
-
-  cyclus::CompMap v;
-  v[922350000] = product_assay;
-  v[922380000] = 1 - product_assay;
-  // target qty need not be = to request qty
-  Material::Ptr target = cyclus::Material::CreateUntracked(
-      qty + 10, cyclus::Composition::CreateFromMass(v));
-
-  Assays assays(feed_assay, UraniumAssay(target), tails_assay);
-  double swu_req = SwuRequired(qty, assays);
-  double natu_req = FeedQty(qty, assays);
-
-  src_facility->SetMaxInventorySize(natu_req * 4);  // not capacitated by nat
-  src_facility->GetMatlTrades(trades, responses);
-
-  // set up state
-  DoAddMat(GetMat(natu_req * 2));
-
-  src_facility->GetMatlTrades(trades, responses);
-
-  Request<Material>* req =
-      Request<Material>::Create(target, trader, product_commod);
-  Bid<Material>* bid = Bid<Material>::Create(req, target, src_facility);
-  Trade<Material> trade(req, bid, trade_qty);
-  trades.push_back(trade);
-
-  // 2 trades, SWU = SWU cap
-  trades.push_back(trade);
-  responses.clear();
-  EXPECT_NO_THROW(src_facility->GetMatlTrades(trades, responses));
-  EXPECT_EQ(responses.size(), 2);
-}
 
 }  // namespace cycamore
 
