@@ -8,11 +8,6 @@
 
 namespace mbmore {
 
-// LAPACK solver for system of linear equations
-extern "C" {
-void dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipivot, double *b,
-            int *ldb, int *info);
-}
 
 // group all the characteristic of a centrifuges
 struct centrifuge_config {
@@ -72,11 +67,6 @@ double CalcV(double assay);
 // Calculates the separations factor given the ideal separation energy of a
 // single machine (del_U has units of moles/sec)
 // Avery p 18
-double AlphaBySwu(double del_U, double feed, double cut, double M);
-
-// From Beta def in Glaser + Alpha def
-double BetaByAlphaAndCut(double alpha, double feed_assay, double cut);
-double CutByAalphaBeta(double alpha, double beta, double feed_assay);
 // Calculates the assay of the product given the assay
 // of the feed and the theoretical separation factor of the machine
 // Glaser
