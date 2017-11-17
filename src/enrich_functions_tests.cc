@@ -93,9 +93,6 @@ TEST(Enrich_Functions_Test, TestCascade) {
                                                  waste_assay, centrifuge, 1e-8);
   int pycode_n_enrich_stage = 11;
   int pycode_n_strip_stage = 12;
-  //  int n_stage_enrich = (int) n_stages.first + 1;  // Round up to next
-  //  integer
-  //  int n_stage_waste = (int) n_stages.second + 1;  // Round up to next
   //  integer
   int n_stage_enrich = cascade.enrich_stgs;
   int n_stage_waste = cascade.stripping_stgs;
@@ -116,8 +113,9 @@ TEST(Enrich_Functions_Test, TestCascade) {
       cascade_non_ideal.stgs_config[-n_stage_waste].product_assay;
 
   double pycode_mod_product_assay = 0.59495;
-  double pycode_mod_waste_assay = 0.04081;
   EXPECT_NEAR(mod_product_assay, pycode_mod_product_assay, tol_assay);
+
+  double pycode_mod_waste_assay = 0.04081;
   EXPECT_NEAR(mod_waste_assay, pycode_mod_waste_assay, tol_assay);
 }
 
@@ -146,17 +144,11 @@ TEST(Enrich_Functions_Test, TestStages) {
   double n_mach_w = MachinesPerStage(alpha, delU, enrich_waste);
   double strip_waste_assay = TailAssayByBeta(alpha, enrich_waste_assay);
 
-  // This AVERY EQN doesn't work for some reason
-  //    double strip_waste = WastePerStripStage(alpha, enrich_waste_assay,
-  //					    strip_waste_assay, enrich_waste);
-
   double pycode_n_mach_w = 26.6127;
   double pycode_waste_assay_s = 0.005117;
-  //    double pycode_waste_s = 8.60660553717e-05;
 
   EXPECT_NEAR(n_mach_w, pycode_n_mach_w, tol_num);
   EXPECT_NEAR(strip_waste_assay, pycode_waste_assay_s, tol_assay);
-  //    EXPECT_NEAR(strip_waste, pycode_waste_s, tol_qty);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -201,6 +193,46 @@ TEST(Enrich_Functions_Test, TestCascadeDesign) {
 
   EXPECT_EQ(py_tot_mach, FindTotalMachines(cascade));
   EXPECT_NEAR(py_opt_feed, cascade.feed_flow, tol_qty);
+}
+
+TEST(Enrich_Functions_Test, TestUpdateAssay) {
+  double fa = 0.10;
+  double pa = 0.20;
+  double wa = 0.05;
+
+  cascade_config cascade = FindNumberIdealStages(fa, pa, wa, centrifuge);
+  cascade = DesignCascade(cascade, feed_c, 100);
+  double product_assay =
+      cascade.stgs_config[cascade.enrich_stgs - 1].product_assay;
+  double tail_assay = cascade.stgs_config[-cascade.stripping_stgs].tail_assay;
+  double product_flow = cascade.stgs_config[cascade.enrich_stgs - 1].flow *
+                        cascade.stgs_config[cascade.enrich_stgs - 1].cut;
+  double tail_flow = cascade.stgs_config[-cascade.stripping_stgs].flow *
+                     (1 - cascade.stgs_config[-cascade.stripping_stgs].cut);
+
+  double feed_from_assay =
+      product_flow * (product_assay - tail_assay) / (fa - tail_assay);
+  double tail_from_assay =
+      product_flow * (product_assay - fa) / (fa - tail_assay);
+
+  EXPECT_NEAR(cascade.feed_flow, feed_from_assay, 1e-3);
+  EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
+
+  fa = 0.2;
+  cascade = Compute_Assay(cascade, fa, 1e-17);
+  product_assay = cascade.stgs_config[cascade.enrich_stgs - 1].product_assay;
+  tail_assay = cascade.stgs_config[-cascade.stripping_stgs].tail_assay;
+  product_flow = cascade.stgs_config[cascade.enrich_stgs - 1].flow *
+                 cascade.stgs_config[cascade.enrich_stgs - 1].cut;
+  tail_flow = cascade.stgs_config[-cascade.stripping_stgs].flow *
+              (1 - cascade.stgs_config[-cascade.stripping_stgs].cut);
+  feed_from_assay =
+      product_flow * (product_assay - tail_assay) / (fa - tail_assay);
+  tail_from_assay =
+      product_flow * (product_assay - fa) / (fa - tail_assay);
+
+  EXPECT_NEAR(cascade.feed_flow, feed_from_assay, 1e-3);
+  EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
 }
 
 }  // namespace enrichfunctiontests
