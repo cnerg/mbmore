@@ -1,8 +1,5 @@
 // Implements the CascadeEnrich class
-#include "CascadeEnrich.h"
-#include "behavior_functions.h"
-#include "enrich_functions.h"
-#include "sim_init.h"
+#include "CascadeConfig.h"
 
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
@@ -13,465 +10,188 @@
 
 namespace mbmore {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
-    : cyclus::Facility(ctx),
-      feed_recipe(""),
-      max_centrifuges(),
-      design_feed_assay(),
-      design_product_assay(),
-      design_tails_assay(),
-      centrifuge_velocity(485.0),
-      temp(320.0),
-      height(0.5),
-      diameter(0.15),
-      machine_feed(15),
-      max_enrich(1),
-      design_feed_flow(100),
-      feed_commod(""),
-      product_commod(""),
-      tails_commod(""),
-      order_prefs(true) {}
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CascadeEnrich::~CascadeEnrich() {}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string CascadeEnrich::str() {
-  std::stringstream ss;
-  ss << cyclus::Facility::str() << " with enrichment facility parameters:"
-     << " * Tails assay: " << tails_assay << " * Feed assay: " << FeedAssay()
-     << " * Input cyclus::Commodity: " << feed_commod
-     << " * Output cyclus::Commodity: " << product_commod
-     << " * Tails cyclus::Commodity: " << tails_commod;
-  return ss.str();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::EnterNotify() {
-  using cyclus::Material;
-  cyclus::Facility::EnterNotify();
-
-  // Update Centrifuge paramter from the user input:
-  centrifuge.v_a = centrifuge_velocity;
-  centrifuge.height = height;
-  centrifuge.diameter = diameter;
-  centrifuge.feed = machine_feed / 1000 / 1000;
-  centrifuge.temp = temp;
-
-  cascade = FindNumberIdealStages(design_feed_assay, design_product_assay,
-                                  design_tails_assay, centrifuge, precision);
-  cascade =
-      DesignCascade(cascade, FlowPerSec(design_feed_flow), max_centrifuges);
-  max_feed_flow = FlowPerMon(cascade.feed_flow);
-  if (max_feed_inventory > 0) {
-    inventory.capacity(max_feed_inventory);
-  }
-  if (initial_feed > 0) {
-    inventory.Push(Material::Create(this, initial_feed,
-                                    context()->GetRecipe(feed_recipe)));
-  }
-  LOG(cyclus::LEV_DEBUG2, "EnrFac") << "CascadeEnrich "
-                                    << " entering the simuluation: ";
-  LOG(cyclus::LEV_DEBUG2, "EnrFac") << str();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::Tick() {}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::Tock() {
-  using cyclus::toolkit::RecordTimeSeries;
-
-  LOG(cyclus::LEV_INFO4, "EnrFac") << prototype() << " used "
-                                   << intra_timestep_feed_ << " feed";
-  RecordTimeSeries<cyclus::toolkit::ENRICH_FEED>(this, intra_timestep_feed_);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::set<cyclus::RequestPortfolio<cyclus::Material>::Ptr>
-CascadeEnrich::GetMatlRequests() {
-  using cyclus::Material;
-  using cyclus::RequestPortfolio;
-  using cyclus::Request;
-
-  std::set<RequestPortfolio<Material>::Ptr> ports;
-  RequestPortfolio<Material>::Ptr port(new RequestPortfolio<Material>());
-  Material::Ptr mat = Request_();
-  double amt = mat->quantity();
-
-  if (amt > cyclus::eps_rsrc()) {
-    port->AddRequest(mat, this, feed_commod);
-    ports.insert(port);
+  CascadeConfig::CascadeConfig() {}
+  
+  CascadeConfig(double f_assay, double p_assay, double t_assay, double max_feed_flow,
+                int max_centrifuge){
+    
+    double feed_assay = f_assay;
+    double product_assay = p_assay;
+    double tail_assay = t_assay;
+    
+    double feed_flow = max_feed_flow;
+    int n_centrifuge = max_centrifuge;
+    
+    BuildIdealCascade(feed_assay, product_assay, tail_assay);
+    DesignCascade(max_feed_flow, max_centrifuge) 
+  
   }
 
-  return ports;
-}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Sort offers of input material to have higher preference for more
-//  U-235 content
-void CascadeEnrich::AdjustMatlPrefs(
-    cyclus::PrefMap<cyclus::Material>::type& prefs) {
-  using cyclus::Bid;
-  using cyclus::Material;
-  using cyclus::Request;
+// Calculate steady-state flow rates into each stage
+// Linear system of equations in form AX = B, where A is nxn square matrix
+// of linear equations for the flow rates of each stage and B are the external
+// feeds for the stage. External feed is zero for all stages accept cascade
+// feed stage (F_0) stages start with last strip stage [-2, -1, 0, 1, 2]
+//  http://www.physics.utah.edu/~detar/phys6720/handouts/lapack.html
+//
+void CasacdeConfig::CalcFeedFlows() {
+  // This is the Max # of stages in  It cannot be passed in due to
+  // how memory is allocated and so must be hardcoded. It's been chosen
+  // to be much larger than it should ever need to be
 
-  if (order_prefs == false) {
-    return;
+  // total number of stages
+  int n_stages = n_enrich + n_strip;
+  int max_stages = n_stages;
+  if (n_stages > max_stages) {
+    std::cout << "To many stages in the  can't calculated the "
+                 "thoerritical flows..."
+              << std::endl;
+    exit(1);
   }
-  cyclus::PrefMap<cyclus::Material>::type::iterator reqit;
+  double feed_assay = stgs_config[0].feed_assay;
+  double product_assay =
+      stgs_config[enrich_stgs - 1].product_assay;
+  double tail_assay = stgs_config[-stripping_stgs].tail_assay;
 
-  // Loop over all requests
-  for (reqit = prefs.begin(); reqit != prefs.end(); ++reqit) {
-    std::vector<Bid<Material>*> bids_vector;
-    std::map<Bid<Material>*, double>::iterator mit;
-    for (mit = reqit->second.begin(); mit != reqit->second.end(); ++mit) {
-      Bid<Material>* bid = mit->first;
-      bids_vector.push_back(bid);
+  double product_flow =
+      feed_flow * (feed_assay - tail_assay) / (product_assay - tail_assay);
+  double tail_flow =
+      product_flow * (product_assay - feed_assay) / (feed_assay - tail_assay);
+
+  // Build Array with pointers
+  double flow_eqns[max_stages][max_stages];
+  double flows[1][max_stages];
+
+  // build matrix of equations in this pattern
+  // [[ -1, 1-cut,    0,     0,      0]       [[0]
+  //  [cut,    -1, 1-cut,    0,      0]        [0]
+  //  [  0,   cut,    -1, 1-cut,     0]  * X = [-1*feed]
+  //  [  0,     0,   cut,    -1, 1-cut]        [0]
+  //  [  0,     0,     0,   cut,    -1]]       [0]]
+  //
+  for (int row_idx = 0; row_idx < max_stages; row_idx++) {
+    // fill the array with zeros, then update individual elements as nonzero
+    flows[0][row_idx] = 0;
+    for (int fill_idx = 0; fill_idx < max_stages; fill_idx++) {
+      flow_eqns[fill_idx][row_idx] = 0;
     }
-
-    std::sort(bids_vector.begin(), bids_vector.end(), SortBids);
-
-    // Assign preferences to the sorted vector
-    double n_bids = bids_vector.size();
-    bool u235_mass = 0;
-
-    for (int bidit = 0; bidit < bids_vector.size(); bidit++) {
-      int new_pref = bidit + 10;
-
-      // For any bids with U-235 qty=0, set pref to zero.
-      if (!u235_mass) {
-        cyclus::Material::Ptr mat = bids_vector[bidit]->offer();
-        cyclus::toolkit::MatQuery mq(mat);
-        if (mq.mass(922350000) == 0) {
-          new_pref = -1;
-        } else {
-          u235_mass = true;
-        }
+    // Required do to the artificial 'Max Stages' defn. Only calculate
+    // non-zero matrix elements where stages really exist.
+    if (row_idx < n_stages) {
+      int stg_i = row_idx - n_strip;
+      int col_idx = n_strip + stg_i;
+      flow_eqns[col_idx][row_idx] = -1.;
+      if (row_idx != 0) {
+        flow_eqns[col_idx - 1][row_idx] = stgs_config[stg_i - 1].cut;
       }
-      (reqit->second)[bids_vector[bidit]] = new_pref;
-    }  // each bid
-  }    // each Material Request
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::AcceptMatlTrades(
-    const std::vector<std::pair<cyclus::Trade<cyclus::Material>,
-                                cyclus::Material::Ptr>>& responses) {
-  // see
-  // http://stackoverflow.com/questions/5181183/boostshared-ptr-and-inheritance
-  std::vector<std::pair<cyclus::Trade<cyclus::Material>,
-                        cyclus::Material::Ptr>>::const_iterator it;
-  for (it = responses.begin(); it != responses.end(); ++it) {
-    AddMat_(it->second);
-  }
-}
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::AddMat_(cyclus::Material::Ptr mat) {
-  // Elements and isotopes other than U-235, U-238 are sent directly to tails
-  cyclus::CompMap cm = mat->comp()->atom();
-  bool extra_u = false;
-  bool other_elem = false;
-  for (cyclus::CompMap::const_iterator it = cm.begin(); it != cm.end(); ++it) {
-    if (pyne::nucname::znum(it->first) == 92) {
-      if (pyne::nucname::anum(it->first) != 235 &&
-          pyne::nucname::anum(it->first) != 238 && it->second > 0) {
-        extra_u = true;
+      if (row_idx != n_stages - 1) {
+        flow_eqns[col_idx + 1][row_idx] =
+            (1 - stgs_config[stg_i + 1].cut);
       }
-    } else if (it->second > 0) {
-      other_elem = true;
-    }
-  }
-  if (extra_u) {
-    cyclus::Warn<cyclus::VALUE_WARNING>(
-        "More than 2 isotopes of U.  "
-        "Istopes other than U-235, U-238 are sent directly to tails.");
-  }
-  if (other_elem) {
-    cyclus::Warn<cyclus::VALUE_WARNING>(
-        "Non-uranium elements are "
-        "sent directly to tails.");
-  }
 
-  LOG(cyclus::LEV_INFO5, "EnrFac") << prototype() << " is initially holding "
-                                   << inventory.quantity() << " total.";
-
-  try {
-    inventory.Push(mat);
-  } catch (cyclus::Error& e) {
-    e.msg(Agent::InformErrorMsg(e.msg()));
-    throw e;
-  }
-
-  LOG(cyclus::LEV_INFO5, "EnrFac")
-      << prototype() << " added " << mat->quantity() << " of " << feed_commod
-      << " to its inventory, which is holding " << inventory.quantity()
-      << " total.";
-}
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr>
-CascadeEnrich::GetMatlBids(
-    cyclus::CommodMap<cyclus::Material>::type& out_requests) {
-  using cyclus::Bid;
-  using cyclus::BidPortfolio;
-  using cyclus::CapacityConstraint;
-  using cyclus::Converter;
-  using cyclus::Material;
-  using cyclus::Request;
-  using cyclus::toolkit::MatVec;
-
-  std::set<BidPortfolio<Material>::Ptr> ports;
-
-  if ((out_requests.count(tails_commod) > 0) && (tails.quantity() > 0)) {
-    BidPortfolio<Material>::Ptr tails_port(new BidPortfolio<Material>());
-
-    std::vector<Request<Material>*>& tails_requests =
-        out_requests[tails_commod];
-    std::vector<Request<Material>*>::iterator it;
-    for (it = tails_requests.begin(); it != tails_requests.end(); ++it) {
-      // offer bids for all tails material, keeping discrete quantities
-      // to preserve possible variation in composition
-      MatVec mats = tails.PopN(tails.count());
-      tails.Push(mats);
-      for (int k = 0; k < mats.size(); k++) {
-        Material::Ptr m = mats[k];
-        Request<Material>* req = *it;
-        tails_port->AddBid(req, m, this);
+      // Add the external feed for the cascade
+      if (stg_i == 0) {
+        flows[0][row_idx] = -1. * feed_flow;
       }
+      /*if (stg_i == -n_strip){
+        flows[0][row_idx] = 1. * tail_flow;
+      }
+      if (stg_i == n_enrich-1){
+        flows[0][row_idx] = 1. * product_flow;
+      }*/
     }
-    // overbidding (bidding on every offer)
-    // add an overall capacity constraint
-    CapacityConstraint<Material> tails_constraint(tails.quantity());
-    tails_port->AddConstraint(tails_constraint);
-    LOG(cyclus::LEV_INFO5, "EnrFac") << prototype()
-                                     << " adding tails capacity constraint of "
-                                     << tails.capacity();
-    ports.insert(tails_port);
   }
 
-  if ((out_requests.count(product_commod) > 0) && (inventory.quantity() > 0)) {
-    BidPortfolio<Material>::Ptr commod_port(new BidPortfolio<Material>());
+  // LAPACK solver variables
+  int nrhs = 1;          // 1 column solution
+  int lda = max_stages;  // must be >= MAX(1,N)
+  int ldb = max_stages;  // must be >= MAX(1,N)
+  int ipiv[max_stages];
+  int info;
 
-    std::vector<Request<Material>*>& commod_requests =
-        out_requests[product_commod];
-    std::vector<Request<Material>*>::iterator it;
-    for (it = commod_requests.begin(); it != commod_requests.end(); ++it) {
-      Request<Material>* req = *it;
-      Material::Ptr offer = Offer_(req->target());
-      // The offer might not match the required enrichment ! it just produce
-      // what it can according to the cascade configuration and the feed asays
-      commod_port->AddBid(req, offer, this);
-    }
+  // Solve the linear system
+  dgesv_(&n_stages, &nrhs, &flow_eqns[0][0], &lda, ipiv, &flows[0][0], &ldb,
+         &info);
 
-    // overbidding (bidding on every offer)
-    // add an overall production capacity constraint
-
-    // correct the actual inventory quantity by the amount of Uranium in it...
-    double feed_qty = inventory.quantity();
-    Material::Ptr natu_matl = inventory.Pop(feed_qty, cyclus::eps_rsrc());
-    inventory.Push(natu_matl);
-    cyclus::toolkit::MatQuery mq(natu_matl);
-    std::set<cyclus::Nuc> nucs;
-    nucs.insert(922350000);
-    nucs.insert(922380000);
-    double u_frac = mq.mass_frac(nucs);
-    double cor_feed_qty = feed_qty * u_frac;
-    double production_capacity =
-        ProductFlow(std::min(cor_feed_qty, max_feed_flow));
-    cyclus::CapacityConstraint<Material> production_contraint(
-        production_capacity);
-    commod_port->AddConstraint(production_contraint);
-    LOG(cyclus::LEV_INFO5, "EnrFac")
-        << prototype() << " adding production capacity constraint of "
-        << production_capacity;
-
-    ports.insert(commod_port);
-  }
-  return ports;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::GetMatlTrades(
-    const std::vector<cyclus::Trade<cyclus::Material>>& trades,
-    std::vector<std::pair<cyclus::Trade<cyclus::Material>,
-                          cyclus::Material::Ptr>>& responses) {
-  using cyclus::Material;
-  using cyclus::Trade;
-
-  intra_timestep_feed_ = 0;
-  std::vector<Trade<Material>>::const_iterator it;
-  for (it = trades.begin(); it != trades.end(); ++it) {
-    double qty = it->amt;
-    std::string commod_type = it->bid->request()->commodity();
-    Material::Ptr response;
-    // Figure out whether material is tails or enriched,
-    // if tails then make transfer of material
-    if (commod_type == tails_commod) {
-      LOG(cyclus::LEV_INFO5, "EnrFac")
-          << prototype() << " just received an order"
-          << " for " << it->amt << " of " << tails_commod;
-      double pop_qty = std::min(qty, tails.quantity());
-      response = tails.Pop(pop_qty, cyclus::eps_rsrc());
-    } else {
-      LOG(cyclus::LEV_INFO5, "EnrFac")
-          << prototype() << " just received an order"
-          << " for " << it->amt << " of " << product_commod;
-      response = Enrich_(it->bid->offer(), qty);
-    }
-    responses.push_back(std::make_pair(*it, response));
+  // Check for success
+  if (info != 0) {
+    std::cerr << "LAPACK linear solver dgesv returned error " << info << "\n";
   }
 
-  if (cyclus::IsNegative(tails.quantity())) {
-    std::stringstream ss;
-    ss << "is being asked to provide more than its current inventory.";
-    throw cyclus::ValueError(Agent::InformErrorMsg(ss.str()));
+  for (int i = 0; i < n_stages; i++) {
+    int stg_i = i - n_strip;
+    stgs_config[stg_i].flow = flows[0][i];
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
-                                             double qty) {
-  using cyclus::Material;
-  using cyclus::ResCast;
-  using cyclus::toolkit::Assays;
-  using cyclus::toolkit::UraniumAssay;
-  using cyclus::toolkit::FeedQty;
-  using cyclus::toolkit::TailsQty;
-  // get enrichment parameters
-  double product_assay = ProductAssay(FeedAssay());
-  double max_product_mass = ProductFlow(max_feed_flow);
+void CascadeConfig::BuildIdealCascade(double feed_assay, double product_assay,
+                                     double waste_assay,
+                                     double precision) {
+  map<int, StageConfig> ideal_stgs;
+  int ideal_enrich_stage = 0;
+  int ideal_strip_stage = 0;
 
-  double feed_qty = qty / max_product_mass * max_feed_flow;
-
-  double tails_assay = TailsAssay(FeedAssay());
-  double tails_mass = TailsFlow(feed_qty);
-  // Determine the composition of the natural uranium
-  // (ie. U-235+U-238/TotalMass)
-  double pop_qty = inventory.quantity();
-  Material::Ptr natu_matl = inventory.Pop(pop_qty, cyclus::eps_rsrc());
-  inventory.Push(natu_matl);
-
-  cyclus::toolkit::MatQuery mq(natu_matl);
-  std::set<cyclus::Nuc> nucs;
-  nucs.insert(922350000);
-  nucs.insert(922380000);
-  double natu_frac = mq.mass_frac(nucs);
-  double feed_req = feed_qty / natu_frac;
-  // pop amount from inventory and blob it into one material
-  Material::Ptr r;
-  try {
-    // required so popping doesn't take out too much
-    if (cyclus::AlmostEq(feed_req, inventory.quantity())) {
-      r = cyclus::toolkit::Squash(inventory.PopN(inventory.count()));
-    } else {
-      r = inventory.Pop(feed_req, cyclus::eps_rsrc());
-    }
-  } catch (cyclus::Error& e) {
-    std::stringstream ss;
-    ss << " tried to remove " << feed_req << " from its inventory of size "
-       << inventory.quantity();
-    throw cyclus::ValueError(Agent::InformErrorMsg(ss.str()));
+  // Initialisation of Feeding stage (I == 0)
+  StageConfig stg = BuildIdealStg(feed_assay, centrifuge, -1, -1, precision);
+  int stg_i = 0;
+  ideal_stgs[stg_i] = stg;
+  double ref_alpha = ideal_stgs[0].alpha;
+  double ref_du = ideal_stgs[0].DU;
+  // Calculate number of enriching stages
+  while (stg.product_assay < product_assay) {
+    stg = BuildIdealStg(stg.product_assay, ref_du, ref_alpha,
+                        precision);
+    stg_i++;
+    ideal_stgs[stg_i] = stg;
   }
-
-  // "enrich" it, but pull out the composition and quantity we require from the
-  // blob
-  cyclus::Composition::Ptr comp = mat->comp();
-  Material::Ptr response = r->ExtractComp(qty, comp);
-  tails.Push(r);
-
-  RecordEnrichment_(feed_req);
-
-  LOG(cyclus::LEV_INFO5, "EnrFac") << prototype()
-                                   << " has performed an enrichment: ";
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Qty: " << feed_req;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Assay: " << FeedAssay() * 100;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Product Qty: " << qty;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Product Assay: "
-                                   << product_assay * 100;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Qty: " << tails_mass;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Tails Assay: " << tails_assay * 100;
-
-  return response;
-}
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CascadeEnrich::RecordEnrichment_(double natural_u) {
-  using cyclus::Context;
-  using cyclus::Agent;
-
-  LOG(cyclus::LEV_DEBUG1, "EnrFac") << prototype()
-                                    << " has enriched a material:";
-  LOG(cyclus::LEV_DEBUG1, "EnrFac") << "  * Amount: " << natural_u;
-
-  Context* ctx = Agent::context();
-  ctx->NewDatum("Enrichments")
-      ->AddVal("ID", id())
-      ->AddVal("Time", ctx->time())
-      ->AddVal("Natural_Uranium", natural_u)
-      ->Record();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-cyclus::Material::Ptr CascadeEnrich::Request_() {
-  double qty = std::max(0.0, inventory.capacity() - inventory.quantity());
-  return cyclus::Material::CreateUntracked(qty,
-                                           context()->GetRecipe(feed_recipe));
-}
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-cyclus::Material::Ptr CascadeEnrich::Offer_(cyclus::Material::Ptr mat) {
-  double feed_assay = FeedAssay();
-  double product_assay = ProductAssay(feed_assay);
-
-  cyclus::CompMap comp;
-  comp[922350000] = product_assay;
-  comp[922380000] = 1 - product_assay;
-
-  return cyclus::Material::CreateUntracked(
-      mat->quantity(), cyclus::Composition::CreateFromMass(comp));
-}
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
-  cyclus::toolkit::MatQuery q(mat);
-  double u235 = q.atom_frac(922350000);
-  double u238 = q.atom_frac(922380000);
-  return (u238 > 0 && u235 / (u235 + u238) > tails_assay);
-}
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-double CascadeEnrich::FeedAssay() {
-  using cyclus::Material;
-
-  if (inventory.empty()) {
-    return 0;
+  n_enrich = stg_i + 1;
+  // reset
+  stg_i = 0;
+  stg = ideal_stgs[stg_i];
+  // Calculate number of stripping stages
+  while (stg.tail_assay > waste_assay) {
+    stg = BuildIdealStg(stg.tail_assay, centrifuge, ref_du, ref_alpha,
+                        precision);
+    stg_i--;
+    ideal_stgs[stg_i] = stg;
   }
-  double pop_qty = inventory.quantity();
-  cyclus::Material::Ptr fission_matl =
-      inventory.Pop(pop_qty, cyclus::eps_rsrc());
-  inventory.Push(fission_matl);
-  return cyclus::toolkit::UraniumAssay(fission_matl);
+  n_strip = -stg_i;
+
+  stgs_config = ideal_stgs;
+
 }
 
-double CascadeEnrich::ProductAssay(double feed_assay) {
-  cascade_config cascade_tmp = Update_enrichment(cascade, feed_assay);
-  return cascade_tmp.stgs_config[cascade_tmp.enrich_stgs - 1].product_assay;
-}
-double CascadeEnrich::TailsAssay(double feed_assay) {
-  cascade_config cascade_tmp = Update_enrichment(cascade, feed_assay);
-  return cascade_tmp.stgs_config[-cascade_tmp.stripping_stgs].tail_assay;
+
+
+void DesignCascade(double max_feed, int max_centrifuges) {
+  // Determine the ideal steady-state feed flows for this cascade design given
+  // the maximum potential design feed rate
+  feed_flow = max_feed;
+  CalcFeedFlows();
+  CalcStageFeatures(max_feed_cascade);
+
+  // Do design parameters require more centrifuges than what is available?
+  int machines_needed = FindTotalMachines();
+  double max_feed_from_machine = max_feed;
+  while (machines_needed > max_centrifuges) {
+    double scaling_ratio = (double)machines_needed / (double)max_centrifuges;
+    max_feed_from_machine = max_feed_from_machine / scaling_ratio;
+    feed_flow = max_feed_from_machine;
+    CalcFeedFlows();
+    CalcStageFeatures();
+    machines_needed = FindTotalMachines();
+  }
+  
+  n_machines = machines_needed;
+  return max_feed_cascade;
 }
 
-double CascadeEnrich::ProductFlow(double feed_flow) {
-  double feed_ratio = feed_flow / max_feed_flow;
-  stg_config last_stg = cascade.stgs_config[cascade.enrich_stgs - 1];
-  double product_flow = last_stg.flow * last_stg.cut;
-  return feed_ratio * FlowPerMon(product_flow);
-}
 
-double CascadeEnrich::TailsFlow(double feed_flow) {
-  // this assume mass flow conservation
-  return feed_flow - ProductFlow(feed_flow);
-}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-extern "C" cyclus::Agent* ConstructCascadeEnrich(cyclus::Context* ctx) {
-  return new CascadeEnrich(ctx);
-}
+
+
+
+
 
 }  // namespace mbmore
