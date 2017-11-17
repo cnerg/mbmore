@@ -10,22 +10,20 @@
 
 namespace mbmore {
 
-  CascadeConfig::CascadeConfig() {}
-  
-  CascadeConfig(double f_assay, double p_assay, double t_assay, double max_feed_flow,
-                int max_centrifuge){
-    
-    double feed_assay = f_assay;
-    double product_assay = p_assay;
-    double tail_assay = t_assay;
-    
-    double feed_flow = max_feed_flow;
-    int n_centrifuge = max_centrifuge;
-    
-    BuildIdealCascade(feed_assay, product_assay, tail_assay);
-    DesignCascade(max_feed_flow, max_centrifuge) 
-  
-  }
+CascadeConfig::CascadeConfig() {}
+
+CascadeConfig(double f_assay, double p_assay, double t_assay,
+              double max_feed_flow, int max_centrifuge) {
+  double feed_assay = f_assay;
+  double product_assay = p_assay;
+  double tail_assay = t_assay;
+
+  double feed_flow = max_feed_flow;
+  int n_centrifuge = max_centrifuge;
+
+  BuildIdealCascade(feed_assay, product_assay, tail_assay);
+  DesignCascade(max_feed_flow, max_centrifuge)
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Calculate steady-state flow rates into each stage
@@ -50,8 +48,7 @@ void CasacdeConfig::CalcFeedFlows() {
     exit(1);
   }
   double feed_assay = stgs_config[0].feed_assay;
-  double product_assay =
-      stgs_config[enrich_stgs - 1].product_assay;
+  double product_assay = stgs_config[enrich_stgs - 1].product_assay;
   double tail_assay = stgs_config[-stripping_stgs].tail_assay;
 
   double product_flow =
@@ -86,8 +83,7 @@ void CasacdeConfig::CalcFeedFlows() {
         flow_eqns[col_idx - 1][row_idx] = stgs_config[stg_i - 1].cut;
       }
       if (row_idx != n_stages - 1) {
-        flow_eqns[col_idx + 1][row_idx] =
-            (1 - stgs_config[stg_i + 1].cut);
+        flow_eqns[col_idx + 1][row_idx] = (1 - stgs_config[stg_i + 1].cut);
       }
 
       // Add the external feed for the cascade
@@ -126,8 +122,7 @@ void CasacdeConfig::CalcFeedFlows() {
 }
 
 void CascadeConfig::BuildIdealCascade(double feed_assay, double product_assay,
-                                     double waste_assay,
-                                     double precision) {
+                                      double waste_assay, double precision) {
   map<int, StageConfig> ideal_stgs;
   int ideal_enrich_stage = 0;
   int ideal_strip_stage = 0;
@@ -140,8 +135,7 @@ void CascadeConfig::BuildIdealCascade(double feed_assay, double product_assay,
   double ref_du = ideal_stgs[0].DU;
   // Calculate number of enriching stages
   while (stg.product_assay < product_assay) {
-    stg = BuildIdealStg(stg.product_assay, ref_du, ref_alpha,
-                        precision);
+    stg = BuildIdealStg(stg.product_assay, ref_du, ref_alpha, precision);
     stg_i++;
     ideal_stgs[stg_i] = stg;
   }
@@ -151,18 +145,15 @@ void CascadeConfig::BuildIdealCascade(double feed_assay, double product_assay,
   stg = ideal_stgs[stg_i];
   // Calculate number of stripping stages
   while (stg.tail_assay > waste_assay) {
-    stg = BuildIdealStg(stg.tail_assay, centrifuge, ref_du, ref_alpha,
-                        precision);
+    stg =
+        BuildIdealStg(stg.tail_assay, centrifuge, ref_du, ref_alpha, precision);
     stg_i--;
     ideal_stgs[stg_i] = stg;
   }
   n_strip = -stg_i;
 
   stgs_config = ideal_stgs;
-
 }
-
-
 
 void DesignCascade(double max_feed, int max_centrifuges) {
   // Determine the ideal steady-state feed flows for this cascade design given
@@ -182,16 +173,9 @@ void DesignCascade(double max_feed, int max_centrifuges) {
     CalcStageFeatures();
     machines_needed = FindTotalMachines();
   }
-  
+
   n_machines = machines_needed;
   return max_feed_cascade;
 }
-
-
-
-
-
-
-
 
 }  // namespace mbmore
