@@ -21,11 +21,11 @@ struct centrifuge_config {
   double diameter = 0.15;
   double feed = 15. / 1000. / 1000.;
   double temp = 320;
-  double eff = 1.0;
-  double M = 0.352;
+  double eff = 0.564;
+  double M = 0.352l;
   double dM = 0.003;
   double x = 1000;
-  double flow_internal = 2.0;
+  double flow_internal = 1.92;
 };
 
 // group all the characteristic of a stage
