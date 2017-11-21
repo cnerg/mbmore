@@ -39,8 +39,13 @@ double CalcDelU(double cut, centrifuge_config cent_config) {
   // Glaser 2009 says operationally it ranges from 0.96-0.99
   double r_2 = 0.975 * a;
 
-  double r_12 = std::sqrt(
+  double r_12 = 0;
+  if (v_a > 380){
+    r_12 = std::sqrt(
       1.0 - (2.0 * gas_const * temp * (log(x)) / M_mol / (pow(v_a, 2))));
+  } else {
+    r_12 = 0.534;
+  }
   double r_1 = r_2 * r_12;  // withdrawl radius for ligher isotope
 
   // Glaser eqn 12
@@ -74,7 +79,6 @@ double CalcDelU(double cut, centrifuge_config cent_config) {
       0.5 * cut * (1.0 - cut) * (pow(C_therm, 2)) * C_scale *
       pow(((bracket1 * (1 - exp1)) + (bracket2 * (1 - exp2))), 2);  // kg/s
   double del_U = feed * major_term * eff;                           // kg/s
-
   return del_U;
 }
 double CalcCTherm(double v_a, double temp, double dM) {
