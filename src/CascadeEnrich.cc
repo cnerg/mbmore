@@ -63,6 +63,17 @@ void CascadeEnrich::EnterNotify() {
   cascade =
       DesignCascade(cascade, FlowPerSec(design_feed_flow), max_centrifuges);
   max_feed_flow = FlowPerMon(cascade.feed_flow);
+  std::cout << "Delta U " << cascade.stgs_config[0].DU << std::endl;
+  std::cout << "max_feed_flow " << max_feed_flow << std::endl;
+  std::cout << "n_centrifuges " << FindTotalMachines(cascade)  << std::endl;
+  std::cout << "n_strip" << cascade.stripping_stgs  << std::endl;
+  std::cout << "n_enrich" << cascade.enrich_stgs << std::endl;
+  std::cout << std::endl << std::endl << " cascade geom " << std::endl;
+  std::map<int, stg_config>::iterator it;
+  for( it = cascade.stgs_config.begin(); it != cascade.stgs_config.end(); it++){
+    std::cout << "stg: " <<it->first << " machines: " << it->second.n_machines <<std::endl;
+  }
+  
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
