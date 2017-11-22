@@ -71,7 +71,8 @@ void CascadeEnrich::EnterNotify() {
   std::cout << std::endl << std::endl << " cascade geom " << std::endl;
   std::map<int, stg_config>::iterator it;
   for( it = cascade.stgs_config.begin(); it != cascade.stgs_config.end(); it++){
-    std::cout << "stg: " <<it->first << " machines: " << it->second.n_machines <<std::endl;
+    std::cout << "stg: " <<it->first << " machines: " << it->second.n_machines;
+    std::cout << " Prod flow " << FlowPerMon(it->second.flow)*it->second.cut <<std::endl;
   }
   
   if (max_feed_inventory > 0) {
@@ -460,11 +461,11 @@ double CascadeEnrich::FeedAssay() {
 }
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
-  cascade_config cascade_tmp = Update_enrichment(cascade, feed_assay);
+  cascade_config cascade_tmp = Compute_Assay(cascade, feed_assay);
   return cascade_tmp.stgs_config[cascade_tmp.enrich_stgs - 1].product_assay;
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
-  cascade_config cascade_tmp = Update_enrichment(cascade, feed_assay);
+  cascade_config cascade_tmp = Compute_Assay(cascade, feed_assay);
   return cascade_tmp.stgs_config[-cascade_tmp.stripping_stgs].tail_assay;
 }
 
