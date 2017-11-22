@@ -159,7 +159,7 @@ cascade_config DesignCascade(cascade_config cascade, double max_feed,
                              int max_centrifuges);
 
 cascade_config Compute_Assay(cascade_config cascade_config, double feed_assay,
-                             double precision);
+                             double precision = 1e-16);
 
 double Diff_enrichment(cascade_config actual_enrichments,
                        cascade_config previous_enrichement);
