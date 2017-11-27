@@ -2,6 +2,11 @@
 #define MBMORE_SRC_CASCADE_ENRICH_H_
 
 #include <string>
+#include <map>
+
+#include "CentrifugeConfig.h"
+#include "StageConfig.h"
+
 
 namespace mbmore {
 
@@ -11,24 +16,24 @@ void dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipivot, double *b,
             int *ldb, int *info);
 }
 
-class CascadeConfig : {
+class CascadeConfig {
  public:
   CascadeConfig();
   CascadeConfig(double f_assay, double p_assay, double t_assay,
                 double max_feed_flow, int max_centrifuge);
   void BuildIdealCascade(double f_assay, double p_assay, double w_assay,
                          double precision = 1e-16);
-
+  int FindTotalMachines();
   void CalcFeedFlows();
   void CalcStageFeatures();
   void DesignCascade(double max_feed, int max_centrifuges);
-  CascadeConfig Compute_Assay(cascade_config cascade_config, double feed_assay,
+  CascadeConfig Compute_Assay(double feed_assay,
                               double precision);
 
   double Diff_enrichment(CascadeConfig actual_enrichments,
                          CascadeConfig previous_enrichement);
 
-  std::map<int, stg_config> Update_enrichment(cascade_config cascade,
+  std::map<int, StageConfig> Update_enrichment(CascadeConfig cascade,
                                               double feed_assay);
 
   // Number of machines in the cascade given the target feed rate and target
@@ -40,7 +45,7 @@ class CascadeConfig : {
 
  private:
   CentrifugeConfig centrifuge;
-  std::map<int, stg_config> stgs_config;
+  std::map<int, StageConfig> stgs_config;
 
   int n_machines;
   int n_enrich;
