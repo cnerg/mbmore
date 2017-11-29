@@ -1,33 +1,32 @@
-#ifndef MBMORE_SRC_STAGE_ENRICH_H_
-#define MBMORE_SRC_STAGE_ENRICH_H_
+#ifndef MBMORE_SRC_STAGE_H_
+#define MBMORE_SRC_STAGE_H_
 
 #include <string>
 #include "CentrifugeConfig.h"
 
 namespace mbmore {
-
+class CascadeConfig;
 
 class StageConfig {
+  friend CascadeConfig;
+
  public:
-  StageConfig();
+  StageConfig() {;}
 
   void BuildIdealStg(double f_assay, double precision = 1e-16);
   double CutForIdealStg(double f_assay, double precision = 1e-16);
-  
+
   double AlphaByDU();
-  
+
   double BetaByAlphaAndCut();
   double CutByAalphaBeta();
-  
+
   double ProductAssay();
   double TailAssay();
-  
+
   double MachinesPerStage();
   double ProductPerEnrStage();
 
-
-  
-  
   // Calculates the V(N_x) term for enrichment eqns where N_x is the assay
   // of isotope x
 
@@ -46,7 +45,6 @@ class StageConfig {
   double tail_assay;
 };
 
-
 }  // namespace mbmore
 
-#endif  // MBMORE_SRC_STAGE_ENRICH_H_
+#endif  // MBMORE_SRC_STAGE_H_
