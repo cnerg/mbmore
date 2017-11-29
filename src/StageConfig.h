@@ -12,6 +12,7 @@ class StageConfig {
 
  public:
   StageConfig() {;}
+  StageConfig(double f_assay, double feed_flow, double precision, double cut = -1, double DU = -1, double alpha = -1); 
 
   void BuildIdealStg(double f_assay, double precision = 1e-16);
   double CutForIdealStg(double f_assay, double precision = 1e-16);
@@ -31,13 +32,14 @@ class StageConfig {
   // of isotope x
 
   CentrifugeConfig centrifuge;
+  double precision;
 
   double cut;
   double DU;
   double alpha;
   double beta;
   double feed_flow;
-
+  
   double n_machines;
 
   double feed_assay;
