@@ -29,6 +29,26 @@ CentrifugeConfig::CentrifugeConfig() {
   secpermonth = 60. * 60. * 24. * (365.25 / 12.);
 }
 
+CentrifugeConfig::CentrifugeConfig(double v_a_, double h_, double d_, double feed_, double T_,
+                   double eff_, double M_, double dM_, double x_, double i_flow_){
+  v_a = v_a_;
+  height = h_;
+  diameter = d_;
+  feed = feed_;
+  temp = T_;
+
+  eff = eff_;
+  x = x_;
+  flow_internal = i_flow_;
+
+  M = M_;
+  dM = dM_;
+  D_rho = 2.2e-5;     // kg/m/s
+  gas_const = 8.314;  // J/K/mol
+  M_238 = 0.238;      // kg/mol
+  secpermonth = 60. * 60. * 24. * (365.25 / 12.);
+}
+
 double CentrifugeConfig::ComputeDeltaU(double cut) {
   // Inputs that are effectively constants:
 
