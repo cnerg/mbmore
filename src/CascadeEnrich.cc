@@ -1,7 +1,6 @@
 // Implements the CascadeEnrich class
 #include "CascadeEnrich.h"
 #include "behavior_functions.h"
-#include "enrich_functions.h"
 #include "sim_init.h"
 
 #include <algorithm>
@@ -50,7 +49,7 @@ std::string CascadeEnrich::str() {
 void CascadeEnrich::EnterNotify() {
   using cyclus::Material;
   cyclus::Facility::EnterNotify();
-
+  centrifuge = CentrifugeConfig();
   // Update Centrifuge paramter from the user input:
   centrifuge.v_a = centrifuge_velocity;
   centrifuge.height = height;
@@ -58,23 +57,10 @@ void CascadeEnrich::EnterNotify() {
   centrifuge.feed = machine_feed / 1000 / 1000;
   centrifuge.temp = temp;
 
-  cascade = FindNumberIdealStages(design_feed_assay, design_product_assay,
-                                  design_tails_assay, centrifuge, precision);
-  cascade =
-      DesignCascade(cascade, FlowPerSec(design_feed_flow), max_centrifuges);
-  max_feed_flow = FlowPerMon(cascade.feed_flow);
-  std::cout << "Delta U " << cascade.stgs_config[0].DU << std::endl;
-  std::cout << "max_feed_flow " << max_feed_flow << std::endl;
-  std::cout << "n_centrifuges " << FindTotalMachines(cascade)  << std::endl;
-  std::cout << "n_strip" << cascade.stripping_stgs  << std::endl;
-  std::cout << "n_enrich" << cascade.enrich_stgs << std::endl;
-  std::cout << std::endl << std::endl << " cascade geom " << std::endl;
-  std::map<int, stg_config>::iterator it;
-  for( it = cascade.stgs_config.begin(); it != cascade.stgs_config.end(); it++){
-    std::cout << "stg: " <<it->first << " machines: " << it->second.n_machines;
-    std::cout << " Prod flow " << FlowPerMon(it->second.flow)*it->second.cut <<std::endl;
-  }
-  
+  cascade.centrifuge = centrifuge;
+  cascade.BuildIdealCascade(design_feed_assay, design_product_assay, design_tails_assay, precision);
+  cascade.DesignCascade(FlowPerSec(design_feed_flow), max_centrifuges);
+  max_feed_flow = FlowPerMon(cascade.FeedFlow());
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
@@ -461,18 +447,18 @@ double CascadeEnrich::FeedAssay() {
 }
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
-  cascade_config cascade_tmp = Compute_Assay(cascade, feed_assay);
-  return cascade_tmp.stgs_config[cascade_tmp.enrich_stgs - 1].product_assay;
+  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision);
+  return cascade_tmp.stgs_config[cascade_tmp.n_enrich - 1].product_assay;
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
-  cascade_config cascade_tmp = Compute_Assay(cascade, feed_assay);
-  return cascade_tmp.stgs_config[-cascade_tmp.stripping_stgs].tail_assay;
+  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision);
+  return cascade_tmp.stgs_config[-cascade_tmp.n_strip].tail_assay;
 }
 
 double CascadeEnrich::ProductFlow(double feed_flow) {
   double feed_ratio = feed_flow / max_feed_flow;
-  stg_config last_stg = cascade.stgs_config[cascade.enrich_stgs - 1];
-  double product_flow = last_stg.flow * last_stg.cut;
+  StageConfig last_stg = cascade.stgs_config[cascade.n_enrich - 1];
+  double product_flow = last_stg.feed_flow * last_stg.cut;
   return feed_ratio * FlowPerMon(product_flow);
 }
 

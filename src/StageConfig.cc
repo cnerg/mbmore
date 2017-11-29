@@ -10,8 +10,6 @@
 
 namespace mbmore {
 
-  StageConfig::StageConfig() {}
-
 double StageConfig::CutForIdealStg(double f_assay, double precision) {
   feed_assay = f_assay;
   double p_cut = 0.01;
