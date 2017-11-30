@@ -41,7 +41,6 @@ CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM, x,
 // del U=7.0323281e-08 alpha=1.16321
 double delU = centrifuge.ComputeDeltaU(cut);
 
-
 const double tol_assay = 1e-5;
 const double tol_qty = 1e-6;
 const double tol_num = 1e-2;
@@ -73,9 +72,9 @@ TEST(StageConfig_Test, TestAssays) {
 TEST(StageConfig_Test, TestSWU) {
   double pycode_U = 7.03232816847e-08;
   double tol = 1e-9;
-  
+
   StageConfig stage(feed_assay, feed_m, 1e-16, cut, delU, -1);
-  
+
   double pycode_alpha = 1.16321;
   double tol_alpha = 1e-2;
   EXPECT_NEAR(stage.alpha, pycode_alpha, tol_alpha);
@@ -86,7 +85,7 @@ TEST(StageConfig_Test, TestSWU) {
 // based on the design params for the cascade
 TEST(StageConfig_Test, TestStages) {
   StageConfig stage(feed_assay, feed_c, 1e-16, cut, delU, -1);
-  
+
   double product_assay_s = stage.ProductAssay();
   double n_mach_e = stage.MachinesPerStage();
   double product_s = stage.ProductPerEnrStage();
@@ -113,7 +112,6 @@ TEST(StageConfig_Test, TestStages) {
   EXPECT_NEAR(n_mach_w, pycode_n_mach_w, tol_num);
   EXPECT_NEAR(strip_waste_assay, pycode_waste_assay_s, tol_assay);
 }
-
 
 }  // namespace enrichfunctiontests
 }  // namespace mbmore
