@@ -57,9 +57,9 @@ void CascadeEnrich::EnterNotify() {
   centrifuge.feed = machine_feed / 1000 / 1000;
   centrifuge.temp = temp;
 
-  cascade.centrifuge = centrifuge;
-  cascade.BuildIdealCascade(design_feed_assay, design_product_assay, design_tails_assay, precision);
-  cascade.DesignCascade(FlowPerSec(design_feed_flow), max_centrifuges);
+  cascade = CascadeConfig(centrifuge, design_feed_assay, design_product_assay,
+                            design_tails_assay, FlowPerSec(design_feed_flow),
+                            max_centrifuges, precision);
   max_feed_flow = FlowPerMon(cascade.FeedFlow());
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
