@@ -12,8 +12,11 @@
 
 namespace mbmore {
 
-CascadeConfig::CascadeConfig(double f_assay, double p_assay, double t_assay,
-                             double max_feed_flow, int max_centrifuge) {
+CascadeConfig::CascadeConfig(CentrifugeConfig centrifuge_, double f_assay,
+                             double p_assay, double t_assay,
+                             double max_feed_flow, int max_centrifuge,
+                             double precision) {
+  centrifuge = centrifuge_;
   feed_assay = f_assay;
   design_product_assay = p_assay;
   design_tail_assay = t_assay;
@@ -21,7 +24,7 @@ CascadeConfig::CascadeConfig(double f_assay, double p_assay, double t_assay,
   feed_flow = max_feed_flow;
   n_machines = max_centrifuge;
 
-  BuildIdealCascade(f_assay, p_assay, t_assay);
+  BuildIdealCascade(f_assay, p_assay, t_assay, precision);
   DesignCascade(max_feed_flow, max_centrifuge);
 }
 
@@ -138,6 +141,7 @@ void CascadeConfig::BuildIdealCascade(double f_assay, double product_assay,
   double ref_alpha = ideal_stgs[0].alpha;
   double ref_du = ideal_stgs[0].DU;
   // Calculate number of enriching stages
+
   while (stg.product_assay < product_assay) {
     stg.BuildIdealStg(stg.product_assay, precision);
     stg_i++;

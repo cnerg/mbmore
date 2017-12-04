@@ -7,6 +7,8 @@
 #include <limits>
 #include <sstream>
 #include <vector>
+#include <iostream>
+
 
 namespace mbmore {
 
@@ -37,16 +39,14 @@ StageConfig::StageConfig(double f_assay, double feed_, double precision_,
 
 double StageConfig::CutForIdealStg(double f_assay, double precision) {
   feed_assay = f_assay;
-  double p_cut = 0.01;
-  StageConfig p_stg = (*this);
-  p_stg.centrifuge.ComputeDeltaU(p_cut);
-
-  double p_alpha = p_stg.AlphaByDU();
-  double p_beta = p_stg.BetaByAlphaAndCut();
+  double p_cut = cut = 0.1;
+  (*this).DU = centrifuge.ComputeDeltaU(cut);
+  double p_alpha = AlphaByDU();
+  double p_beta = BetaByAlphaAndCut();
   double p_alpha_m_beta = p_alpha - p_beta;
 
-  cut = 0.99;
-  DU = centrifuge.ComputeDeltaU(cut);
+  cut = 0.9;
+  (*this).DU = centrifuge.ComputeDeltaU(cut);
   AlphaByDU();
   BetaByAlphaAndCut();
   while (std::abs(alpha - beta) > precision) {
@@ -54,11 +54,9 @@ double StageConfig::CutForIdealStg(double f_assay, double precision) {
     double alpha_m_beta = alpha - beta;
     double a = (p_alpha_m_beta - alpha_m_beta) / (p_cut - cut);
     double b = alpha_m_beta - cut * a;
-
     // old = new
-    p_stg = (*this);
     p_alpha_m_beta = alpha_m_beta;
-
+    p_cut = cut;
     // targeting alpha_m_beta = 0
     cut = -b / a;
     DU = centrifuge.ComputeDeltaU(cut);
@@ -105,7 +103,6 @@ double StageConfig::CutByAalphaBeta() {
 
 void StageConfig::BuildIdealStg(double f_assay, double precision) {
   feed_assay = f_assay;
-
   if (DU == -1 || alpha == -1) {
     cut = CutForIdealStg(feed_assay, precision);
     DU = centrifuge.ComputeDeltaU(cut);

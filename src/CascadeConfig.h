@@ -17,8 +17,8 @@ void dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipivot, double *b,
 class CascadeConfig {
  public:
   CascadeConfig() { ; }
-  CascadeConfig(double f_assay, double p_assay, double t_assay,
-                double max_feed_flow, int max_centrifuge);
+  CascadeConfig(CentrifugeConfig centrifuge, double f_assay, double p_assay, double t_assay,
+                double max_feed_flow, int max_centrifuge, double precision = 1e-16);
   void BuildIdealCascade(double f_assay, double p_assay, double w_assay,
                          double precision = 1e-16);
   int FindTotalMachines();
@@ -27,12 +27,6 @@ class CascadeConfig {
   void DesignCascade(double max_feed, int max_centrifuges);
   CascadeConfig Compute_Assay(double feed_assay, double precision);
 
-  // Number of machines in the cascade given the target feed rate and target
-  // assays and flow rates
-  // Avery 62
-  double MachinesPerCascade(double del_U_machine, double product_assay,
-                            double waste_assay, double feed_flow,
-                            double product_flow);
 
   double FeedFlow() { return feed_flow; }
   CentrifugeConfig centrifuge;
