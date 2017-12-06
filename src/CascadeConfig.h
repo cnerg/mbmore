@@ -17,16 +17,16 @@ void dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipivot, double *b,
 class CascadeConfig {
  public:
   CascadeConfig() { ; }
-  CascadeConfig(CentrifugeConfig centrifuge, double f_assay, double p_assay, double t_assay,
-                double max_feed_flow, int max_centrifuge, double precision = 1e-16);
+  CascadeConfig(CentrifugeConfig centrifuge, double f_assay, double p_assay,
+                double t_assay, double max_feed_flow, int max_centrifuge,
+                double precision = 1e-8);
   void BuildIdealCascade(double f_assay, double p_assay, double w_assay,
-                         double precision = 1e-16);
+                         double precision = 1e-8);
   int FindTotalMachines();
   void CalcFeedFlows();
   void CalcStageFeatures();
   void DesignCascade(double max_feed, int max_centrifuges);
   CascadeConfig Compute_Assay(double feed_assay, double precision);
-
 
   double FeedFlow() { return feed_flow; }
   CentrifugeConfig centrifuge;
