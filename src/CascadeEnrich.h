@@ -5,7 +5,8 @@
 
 #include "cyclus.h"
 #include "sim_init.h"
-#include "enrich_functions.h"
+#include "CascadeConfig.h"
+#include "CentrifugeConfig.h"
 
 /*
 Working with cycamore Develop build:  3ada148442de636d
@@ -174,9 +175,9 @@ class CascadeEnrich : public cyclus::Facility {
   // Not physical constants but fixed assumptions for a cascade separating
   // out U235 from U238 in UF6 gas
 //group all the characteristic of a centrifuges
-  centrifuge_config centrifuge;
-  cascade_config cascade;
-  double precision = 1e-31;
+  CentrifugeConfig centrifuge;
+  CascadeConfig cascade;
+  double precision = 1e-16;
   
   
   const double secpermonth = 60.*60.*24.*(365.25/12.);

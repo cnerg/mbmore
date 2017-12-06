@@ -3,9 +3,12 @@
 
 #include <string>
 #include <vector>
+#include "cyclus.h"
 
 namespace mbmore {
 
+bool SortBids(cyclus::Bid<cyclus::Material>* i,
+              cyclus::Bid<cyclus::Material>* j); 
 // returns true every X interval (ie every 5th timestep)
 bool EveryXTimestep(int curr_time, int interval);
 
