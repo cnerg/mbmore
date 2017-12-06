@@ -14,8 +14,8 @@ class StageConfig {
   StageConfig() {;}
   StageConfig(double f_assay, double feed_flow, double precision, double cut = -1, double DU = -1, double alpha = -1); 
 
-  void BuildIdealStg(double f_assay, double precision = 1e-16);
-  double CutForIdealStg(double f_assay, double precision = 1e-16);
+  void BuildIdealStg(double f_assay, double precision = 1e-8);
+  double CutForIdealStg(double f_assay, double precision = 1e-8);
 
   double AlphaByDU();
 

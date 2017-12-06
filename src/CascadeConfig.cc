@@ -163,30 +163,32 @@ void CascadeConfig::BuildIdealCascade(double f_assay, double product_assay,
 }
 void CascadeConfig::CalcStageFeatures() {
   double machine_tol = 0.01;
-  int n_enrich = n_enrich;
-  int n_strip = n_strip;
   int n_stages = n_enrich + n_strip;
+  
 
   for (int i = 0; i < n_stages; i++) {
     int curr_stage = i - n_strip;
-    double stage_feed = stgs_config[curr_stage].feed_flow;
-    double alpha = stgs_config[curr_stage].alpha;
-    double DU = stgs_config[curr_stage].DU;
-    double n_mach_exact = stgs_config[curr_stage].MachinesPerStage();
+    std::map<int,StageConfig>::iterator it = stgs_config.find(curr_stage);
+    if(it == stgs_config.end()){
+      std::cout << "Bad Stage number"<< std::endl;
+      exit(1);
+    }
+    double n_mach_exact = it->second.MachinesPerStage();
     // unless the ideal number of machines is Very close to an integer value,
     // round up to next integer to preserve steady-state flow balance
     int n_mach = (int)n_mach_exact;
     if (std::abs(n_mach_exact - n_mach) > machine_tol) {
       n_mach = int(n_mach_exact) + 1;
     }
-    stgs_config[curr_stage].n_machines = n_mach;
+    it->second.n_machines = n_mach;
   }
 }
 
 int CascadeConfig::FindTotalMachines() {
   int machines = 0;
-  for (int i = -n_strip; i < n_enrich; i++) {
-    machines += stgs_config[i].n_machines;
+  std::map<int,StageConfig>::iterator it;
+  for (it = stgs_config.begin(); it != stgs_config.end(); it++) {
+    machines += it->second.n_machines;
   }
   return machines;
 }
@@ -209,30 +211,29 @@ void CascadeConfig::DesignCascade(double max_feed, int max_centrifuges) {
     CalcStageFeatures();
     machines_needed = FindTotalMachines();
   }
-
   n_machines = machines_needed;
 }
 
 CascadeConfig CascadeConfig::Compute_Assay(double f_assay, double precision) {
   CascadeConfig cascade = (*this);
   // Initialiase Feeding stage
-  cascade.stgs_config[0].feed_assay = f_assay;
-  cascade.stgs_config[0].ProductAssay();
-  cascade.stgs_config[0].TailAssay();
-  // Propagate initialisation to enriching stages
-  for (int i = 1; i < cascade.n_enrich; i++) {
-    cascade.stgs_config[i].feed_assay =
-        cascade.stgs_config[i - 1].product_assay;
-    cascade.stgs_config[i].ProductAssay();
-    cascade.stgs_config[i].TailAssay();
+  std::map<int, StageConfig>::iterator it = cascade.stgs_config.find(0);
+  it->second.feed_assay = f_assay;
+  it->second.ProductAssay();
+  it->second.TailAssay();
+  // Propagate initialisation to all stages
+  for (it = stgs_config.begin(); it != stgs_config.end(); it++) {
+    std::map<int,StageConfig>::iterator it2 = cascade.stgs_config.find(it->first);
+    if (it->first > 0) {
+      it2->second.feed_assay = cascade.stgs_config[it->first - 1].product_assay;
+    } else if (it->first < 0) {
+      it2->second.feed_assay = cascade.stgs_config[it->first + 1].tail_assay;
+    }
+    if (it2->first != 0) {
+      it2->second.ProductAssay();
+      it2->second.TailAssay();
+    }
   }
-  // then to stripping stages
-  for (int i = 1; i < cascade.n_strip; i++) {
-    cascade.stgs_config[-i].feed_assay = cascade.stgs_config[-i + 1].tail_assay;
-    cascade.stgs_config[-i].ProductAssay();
-    cascade.stgs_config[-i].TailAssay();
-  }
-
   // Looping to get the equilibrium
   CascadeConfig actual_enrichments = cascade;
   CascadeConfig previous_enrichments;
@@ -257,15 +258,16 @@ double CascadeConfig::Diff_enrichment(CascadeConfig a_enrichments,
   for (it = a_enrichments.stgs_config.begin();
        it != a_enrichments.stgs_config.end(); it++) {
     int i = it->first;
-    square_feed_diff += pow(a_enrichments.stgs_config[i].feed_assay -
-                                p_enrichments.stgs_config[i].feed_assay,
-                            2);
-    square_product_diff += pow(a_enrichments.stgs_config[i].product_assay -
-                                   p_enrichments.stgs_config[i].product_assay,
-                               2);
-    square_waste_diff += pow(a_enrichments.stgs_config[i].tail_assay -
-                                 p_enrichments.stgs_config[i].tail_assay,
-                             2);
+    std::map<int, StageConfig>::iterator it2 =
+        p_enrichments.stgs_config.find(it->first);
+    if (it2 != p_enrichments.stgs_config.end()) {
+      square_feed_diff +=
+          pow(it->second.feed_assay - it2->second.feed_assay, 2);
+      square_product_diff +=
+          pow(it->second.product_assay - it2->second.product_assay, 2);
+      square_waste_diff +=
+          pow(it->second.tail_assay - it2->second.tail_assay, 2);
+    }
   }
   return square_feed_diff + square_product_diff + square_waste_diff;
 }
@@ -286,28 +288,22 @@ std::map<int, StageConfig> CascadeConfig::Update_enrichment(
   for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end();
        it++) {
     int i = it->first;
-    if (i == cascade.n_strip) {  // last strip stage
-      down_assay = 0.;
-      down_flow = 0.;
-      up_assay = cascade.stgs_config[i + 1].tail_assay;
-      up_flow = cascade.stgs_config[i + 1].feed_flow *
-                (1 - cascade.stgs_config[1 + 1].cut);
-      stg_feed_flow = up_flow;
-    } else if (i < cascade.n_enrich - 1) {
-      down_assay = cascade.stgs_config[i - 1].product_assay;
-      down_flow =
-          cascade.stgs_config[i - 1].feed_flow * cascade.stgs_config[1 + 1].cut;
-      up_assay = cascade.stgs_config[i + 1].tail_assay;
-      up_flow = cascade.stgs_config[i + 1].feed_flow *
-                (1 - cascade.stgs_config[1 + 1].cut);
-      stg_feed_flow = down_flow + up_flow;
-    } else {  // last enrichment stage
-      down_assay = cascade.stgs_config[i - 1].product_assay;
-      down_flow =
-          cascade.stgs_config[i - 1].feed_flow * cascade.stgs_config[1 - 1].cut;
-      up_assay = 0.;
-      up_flow = 0.;
-      stg_feed_flow = down_flow;
+    std::map<int, StageConfig>::iterator it_up =
+        cascade.stgs_config.find(i + 1);
+    std::map<int, StageConfig>::iterator it_down =
+        cascade.stgs_config.find(i - 1);
+    down_assay = 0;
+    up_assay = 0;
+    down_flow = 0;
+    up_flow = 0;
+
+    if (it_down != cascade.stgs_config.end()) {
+      down_assay = it_down->second.product_assay;
+      down_flow = it_down->second.feed_flow * it_down->second.cut;
+    }
+    if (it_up != cascade.stgs_config.end()) {
+      up_assay = it_up->second.tail_assay;
+      up_flow = it_up->second.feed_flow * (1 - it_up->second.cut);
     }
 
     // Mix the Product and the Tail to have the correct Feed Assay
@@ -320,13 +316,16 @@ std::map<int, StageConfig> CascadeConfig::Update_enrichment(
       stg_feed_flow = down_flow + up_flow + cascade.feed_flow;
     }
 
+    std::map<int, StageConfig>::iterator it_new =
+        updated_enrichment.stgs_config.find(i);
+
     // Update Stage feed assay
-    updated_enrichment.stgs_config[i].feed_assay = stg_f_assay;
+    it_new->second.feed_assay = stg_f_assay;
     // Update Beta values (from feed) -- Alpha & Cut are cte
-    updated_enrichment.stgs_config[i].BetaByAlphaAndCut();
+    it_new->second.BetaByAlphaAndCut();
     // Recompute Product Assay and Tail Assay
-    updated_enrichment.stgs_config[i].ProductAssay();
-    updated_enrichment.stgs_config[i].TailAssay();
+    it_new->second.ProductAssay();
+    it_new->second.TailAssay();
   }
 
   return updated_enrichment.stgs_config;

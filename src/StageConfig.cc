@@ -8,7 +8,7 @@
 #include <sstream>
 #include <vector>
 #include <iostream>
-
+#include <iomanip>
 
 namespace mbmore {
 
@@ -44,7 +44,6 @@ double StageConfig::CutForIdealStg(double f_assay, double precision) {
   double p_alpha = AlphaByDU();
   double p_beta = BetaByAlphaAndCut();
   double p_alpha_m_beta = p_alpha - p_beta;
-
   cut = 0.9;
   (*this).DU = centrifuge.ComputeDeltaU(cut);
   AlphaByDU();
