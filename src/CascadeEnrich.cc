@@ -58,9 +58,20 @@ void CascadeEnrich::EnterNotify() {
   centrifuge.temp = temp;
 
   cascade = CascadeConfig(centrifuge, design_feed_assay, design_product_assay,
-                            design_tails_assay, FlowPerSec(design_feed_flow),
-                            max_centrifuges, precision);
+                          design_tails_assay, FlowPerSec(design_feed_flow),
+                          max_centrifuges, precision);
   max_feed_flow = FlowPerMon(cascade.FeedFlow());
+
+  std::map<int, StageConfig>::iterator it;
+  for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end();
+       it++) {
+    std::cout << "stg " << it->first;
+    std::cout << " FA: " << it->second.feed_assay;
+    std::cout << " PA: " << it->second.product_assay;
+    std::cout << " TA: " << it->second.tail_assay;
+    std::cout << " feed_flow: " << it->second.feed_flow;
+    std::cout << std::endl;
+  }
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
@@ -372,8 +383,10 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
 
   // "enrich" it, but pull out the composition and quantity we require from the
   // blob
+  std::cout << "avant " << std::endl;
   cyclus::Composition::Ptr comp = mat->comp();
   Material::Ptr response = r->ExtractComp(qty, comp);
+  std::cout << "apres " << std::endl;
   tails.Push(r);
 
   RecordEnrichment_(feed_req);
@@ -448,16 +461,16 @@ double CascadeEnrich::FeedAssay() {
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
   CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision);
-  return cascade_tmp.stgs_config[cascade_tmp.n_enrich - 1].product_assay;
+  return cascade_tmp.stgs_config.rbegin()->second.product_assay;
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
   CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision);
-  return cascade_tmp.stgs_config[-cascade_tmp.n_strip].tail_assay;
+  return cascade_tmp.stgs_config.begin()->second.tail_assay;
 }
 
 double CascadeEnrich::ProductFlow(double feed_flow) {
   double feed_ratio = feed_flow / max_feed_flow;
-  StageConfig last_stg = cascade.stgs_config[cascade.n_enrich - 1];
+  StageConfig last_stg = cascade.stgs_config.rbegin()->second;
   double product_flow = last_stg.feed_flow * last_stg.cut;
   return feed_ratio * FlowPerMon(product_flow);
 }
