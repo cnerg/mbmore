@@ -74,10 +74,10 @@ TEST(Cascade_Test, TestCascade) {
   double mod_waste_assay =
       cascade_non_ideal.stgs_config[-n_stage_waste].product_assay;
 
-  double pycode_mod_product_assay = 0.59495;
+  double pycode_mod_product_assay = 0.8189;
   EXPECT_NEAR(mod_product_assay, pycode_mod_product_assay, tol_assay);
 
-  double pycode_mod_waste_assay = 0.04081;
+  double pycode_mod_waste_assay = 0.11198;
   EXPECT_NEAR(mod_waste_assay, pycode_mod_waste_assay, tol_assay);
 }
 

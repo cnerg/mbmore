@@ -383,10 +383,8 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
 
   // "enrich" it, but pull out the composition and quantity we require from the
   // blob
-  std::cout << "avant " << std::endl;
   cyclus::Composition::Ptr comp = mat->comp();
   Material::Ptr response = r->ExtractComp(qty, comp);
-  std::cout << "apres " << std::endl;
   tails.Push(r);
 
   RecordEnrichment_(feed_req);
