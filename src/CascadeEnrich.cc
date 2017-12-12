@@ -445,7 +445,7 @@ cyclus::Material::Ptr CascadeEnrich::Offer_(cyclus::Material::Ptr mat) {
   comp[922380000] = 1 - product_assay;
 
   return cyclus::Material::CreateUntracked(
-      mat->quantity(), cyclus::Composition::CreateFromMass(comp));
+      mat->quantity(), cyclus::Composition::CreateFromAtom(comp));
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
