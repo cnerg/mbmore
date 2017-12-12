@@ -23,7 +23,7 @@ CascadeConfig::CascadeConfig(CentrifugeConfig centrifuge_, double f_assay,
 
   feed_flow = max_feed_flow;
   n_machines = max_centrifuge;
-
+  std::cout << "fa " << f_assay << " pa " << p_assay << " ta " << t_assay << std::endl;
   BuildIdealCascade(f_assay, p_assay, t_assay, precision);
   DesignCascade(max_feed_flow, max_centrifuge);
 }
@@ -133,8 +133,9 @@ void CascadeConfig::BuildIdealCascade(double f_assay, double product_assay,
   ideal_stgs[stg_i] = stg;
   double ref_alpha = ideal_stgs[0].alpha;
   double ref_du = ideal_stgs[0].DU;
+  std::cout << "a " << ref_alpha << " du " << ref_du << std::endl;
+  std::cout << "pa " << stg.product_assay << std::endl;
   // Calculate number of enriching stages
-
   while (stg.product_assay < product_assay) {
     stg.BuildIdealStg(stg.product_assay, precision);
     stg_i++;
@@ -151,7 +152,7 @@ void CascadeConfig::BuildIdealCascade(double f_assay, double product_assay,
     ideal_stgs.insert(std::make_pair(stg_i, stg));
   }
   n_strip = -stg_i;
-
+  std::cout << "N_stage " << n_enrich + n_strip << std::endl;
   stgs_config = ideal_stgs;
 }
 void CascadeConfig::CalcStageFeatures() {
