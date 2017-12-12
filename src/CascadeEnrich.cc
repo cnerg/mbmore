@@ -38,7 +38,7 @@ CascadeEnrich::~CascadeEnrich() {}
 std::string CascadeEnrich::str() {
   std::stringstream ss;
   ss << cyclus::Facility::str() << " with enrichment facility parameters:"
-     << " * Tails assay: " << tails_assay << " * Feed assay: " << FeedAssay()
+     << " * Tails assay: " << design_tails_assay << " * Feed assay: " << design_feed_assay
      << " * Input cyclus::Commodity: " << feed_commod
      << " * Output cyclus::Commodity: " << product_commod
      << " * Tails cyclus::Commodity: " << tails_commod;
@@ -58,9 +58,20 @@ void CascadeEnrich::EnterNotify() {
   centrifuge.temp = temp;
 
   cascade = CascadeConfig(centrifuge, design_feed_assay, design_product_assay,
-                            design_tails_assay, FlowPerSec(design_feed_flow),
-                            max_centrifuges, precision);
+                          design_tails_assay, FlowPerSec(design_feed_flow),
+                          max_centrifuges, precision);
   max_feed_flow = FlowPerMon(cascade.FeedFlow());
+
+  std::map<int, StageConfig>::iterator it;
+  for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end();
+       it++) {
+    std::cout << "stg " << it->first;
+    std::cout << " FA: " << it->second.feed_assay;
+    std::cout << " PA: " << it->second.product_assay;
+    std::cout << " TA: " << it->second.tail_assay;
+    std::cout << " feed_flow: " << it->second.feed_flow;
+    std::cout << std::endl;
+  }
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
@@ -335,12 +346,13 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   using cyclus::toolkit::FeedQty;
   using cyclus::toolkit::TailsQty;
   // get enrichment parameters
-  double product_assay = ProductAssay(FeedAssay());
   double max_product_mass = ProductFlow(max_feed_flow);
-
   double feed_qty = qty / max_product_mass * max_feed_flow;
+  double feed_assay = FeedAssay(feed_qty);
+  double product_assay = ProductAssay(feed_assay);
 
-  double tails_assay = TailsAssay(FeedAssay());
+
+  double tails_assay = TailsAssay(FeedAssay(feed_qty));
   double tails_mass = TailsFlow(feed_qty);
   // Determine the composition of the natural uranium
   // (ie. U-235+U-238/TotalMass)
@@ -381,7 +393,7 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   LOG(cyclus::LEV_INFO5, "EnrFac") << prototype()
                                    << " has performed an enrichment: ";
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Qty: " << feed_req;
-  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Assay: " << FeedAssay() * 100;
+  LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Feed Assay: " << feed_assay * 100;
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Product Qty: " << qty;
   LOG(cyclus::LEV_INFO5, "EnrFac") << "   * Product Assay: "
                                    << product_assay * 100;
@@ -415,7 +427,7 @@ cyclus::Material::Ptr CascadeEnrich::Request_() {
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 cyclus::Material::Ptr CascadeEnrich::Offer_(cyclus::Material::Ptr mat) {
-  double feed_assay = FeedAssay();
+  double feed_assay = FeedAssay(mat->quantity());
   double product_assay = ProductAssay(feed_assay);
 
   cyclus::CompMap comp;
@@ -423,7 +435,7 @@ cyclus::Material::Ptr CascadeEnrich::Offer_(cyclus::Material::Ptr mat) {
   comp[922380000] = 1 - product_assay;
 
   return cyclus::Material::CreateUntracked(
-      mat->quantity(), cyclus::Composition::CreateFromMass(comp));
+      mat->quantity(), cyclus::Composition::CreateFromAtom(comp));
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
@@ -433,31 +445,32 @@ bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
   return (u238 > 0 && u235 / (u235 + u238) > tails_assay);
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-double CascadeEnrich::FeedAssay() {
+double CascadeEnrich::FeedAssay(double quantity) {
   using cyclus::Material;
 
   if (inventory.empty()) {
     return 0;
   }
-  double pop_qty = inventory.quantity();
+  double pop_qty = std::min(inventory.quantity(), quantity);
   cyclus::Material::Ptr fission_matl =
       inventory.Pop(pop_qty, cyclus::eps_rsrc());
   inventory.Push(fission_matl);
+
   return cyclus::toolkit::UraniumAssay(fission_matl);
 }
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
   CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision);
-  return cascade_tmp.stgs_config[cascade_tmp.n_enrich - 1].product_assay;
+  return cascade_tmp.stgs_config.rbegin()->second.product_assay;
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
   CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision);
-  return cascade_tmp.stgs_config[-cascade_tmp.n_strip].tail_assay;
+  return cascade_tmp.stgs_config.begin()->second.tail_assay;
 }
 
 double CascadeEnrich::ProductFlow(double feed_flow) {
   double feed_ratio = feed_flow / max_feed_flow;
-  StageConfig last_stg = cascade.stgs_config[cascade.n_enrich - 1];
+  StageConfig last_stg = cascade.stgs_config.rbegin()->second;
   double product_flow = last_stg.feed_flow * last_stg.cut;
   return feed_ratio * FlowPerMon(product_flow);
 }

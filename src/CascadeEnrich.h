@@ -147,7 +147,7 @@ class CascadeEnrich : public cyclus::Facility {
 
  private:
   ///  @brief calculates the feed assay based on the unenriched inventory
-  double FeedAssay();
+  double FeedAssay(double quantity);
 
 
   ///   @brief adds a material into the natural uranium inventory
@@ -177,7 +177,7 @@ class CascadeEnrich : public cyclus::Facility {
 //group all the characteristic of a centrifuges
   CentrifugeConfig centrifuge;
   CascadeConfig cascade;
-  double precision = 1e-16;
+  double precision = 1e-8;
   
   
   const double secpermonth = 60.*60.*24.*(365.25/12.);
