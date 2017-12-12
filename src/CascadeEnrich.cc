@@ -72,16 +72,6 @@ void CascadeEnrich::EnterNotify() {
     std::cout << " feed_flow: " << it->second.feed_flow;
     std::cout << std::endl;
   }
-  CascadeConfig csd_test = cascade.Compute_Assay(design_feed_assay, precision);
-  for (it = csd_test.stgs_config.begin(); it != csd_test.stgs_config.end();
-       it++) {
-    std::cout << "stg " << it->first;
-    std::cout << " FA: " << it->second.feed_assay;
-    std::cout << " PA: " << it->second.product_assay;
-    std::cout << " TA: " << it->second.tail_assay;
-    std::cout << " feed_flow: " << it->second.feed_flow;
-    std::cout << std::endl;
-  }
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
