@@ -70,6 +70,9 @@ void CascadeEnrich::EnterNotify() {
     std::cout << " PA: " << it->second.product_assay;
     std::cout << " TA: " << it->second.tail_assay;
     std::cout << " feed_flow: " << it->second.feed_flow;
+    std::cout << " cut: " << it->second.cut;
+    std::cout << " alpha: " << it->second.alpha;
+    std::cout << " beta: " << it->second.beta;
     std::cout << std::endl;
   }
   if (max_feed_inventory > 0) {
