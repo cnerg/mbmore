@@ -41,13 +41,11 @@ double StageConfig::CutForIdealStg(double f_assay, double precision) {
   feed_assay = f_assay;
   double p_cut = cut = 0.1;
   (*this).DU = centrifuge.ComputeDeltaU(cut);
-  std::cout << "DU 1 " << DU << std::endl;
   double p_alpha = AlphaByDU();
   double p_beta = BetaByAlphaAndCut();
   double p_alpha_m_beta = p_alpha - p_beta;
   cut = 0.9;
   (*this).DU = centrifuge.ComputeDeltaU(cut);
-  std::cout << "DU 2 " << DU << std::endl;
   AlphaByDU();
   BetaByAlphaAndCut();
   while (std::abs(alpha - beta) > precision) {
@@ -109,7 +107,6 @@ void StageConfig::BuildIdealStg(double f_assay, double precision) {
     DU = centrifuge.ComputeDeltaU(cut);
     alpha = AlphaByDU();
     beta = BetaByAlphaAndCut();
-    std::cout << "In STG cut " << cut << " DU " << DU << " a " << alpha << " b " << beta << std::endl; 
   } else {
     beta = alpha;
     cut = CutByAalphaBeta();
