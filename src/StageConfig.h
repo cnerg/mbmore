@@ -20,7 +20,7 @@ class StageConfig {
   double AlphaByDU();
 
   double BetaByAlphaAndCut();
-  double CutByAalphaBeta();
+  double CutByAlphaBeta();
 
   double ProductAssay();
   double TailAssay();

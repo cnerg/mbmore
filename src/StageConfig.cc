@@ -92,7 +92,7 @@ double StageConfig::BetaByAlphaAndCut() {
   return beta;
 }
 
-double StageConfig::CutByAalphaBeta() {
+double StageConfig::CutByAlphaBeta() {
   double product_assay = ProductAssay();
   double tail_assay = TailAssay();
 
@@ -109,7 +109,7 @@ void StageConfig::BuildIdealStg(double f_assay, double precision) {
     beta = BetaByAlphaAndCut();
   } else {
     beta = alpha;
-    cut = CutByAalphaBeta();
+    cut = CutByAlphaBeta();
   }
   product_assay = ProductAssay();
   tail_assay = TailAssay();
