@@ -296,6 +296,14 @@ class CascadeEnrich : public cyclus::Facility {
     "uilabel" : "Max feed rate for single centrifuge (mg/sec)", \
   "doc" : "maximum feed rate for a single centrifuge (mg/sec)"}
   double machine_feed;
+  
+#pragma cyclus var { \
+    "default": 0, \
+    "userlevel": 10, \
+    "tooltip": "Fix ALpha Beta recompute Theta", \
+    "uilabel": "recompute theta to maintain alpha and beta", \
+    "doc": "maintain alpha beta constant and recompute the cut for it" }
+  bool fix_ab;
 
 
 

@@ -26,7 +26,7 @@ class CascadeConfig {
   void CalcFeedFlows();
   void CalcStageFeatures();
   void DesignCascade(double max_feed, int max_centrifuges);
-  CascadeConfig Compute_Assay(double feed_assay, double precision);
+  CascadeConfig Compute_Assay(double feed_assay, double precision, bool u_cut = false);
 
   double FeedFlow() { return feed_flow; }
   CentrifugeConfig centrifuge;
@@ -45,7 +45,7 @@ class CascadeConfig {
                          CascadeConfig previous_enrichement);
 
   std::map<int, StageConfig> Update_enrichment(CascadeConfig cascade,
-                                               double feed_assay);
+                                               double feed_assay, bool u_cut = false);
 };
 
 }  // namespace mbmore

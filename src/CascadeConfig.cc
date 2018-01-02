@@ -203,9 +203,10 @@ void CascadeConfig::DesignCascade(double max_feed, int max_centrifuges) {
   n_machines = machines_needed;
 }
 
-CascadeConfig CascadeConfig::Compute_Assay(double f_assay, double precision) {
+CascadeConfig CascadeConfig::Compute_Assay(double f_assay, double precision,
+                                           bool u_cut) {
   CascadeConfig actual_cascade = (*this);
-  
+
   // Initialiase Feeding stage
   std::map<int, StageConfig>::iterator it = actual_cascade.stgs_config.find(0);
   it->second.feed_assay = f_assay;
@@ -213,23 +214,27 @@ CascadeConfig CascadeConfig::Compute_Assay(double f_assay, double precision) {
   it->second.TailAssay();
 
   // Propagate initialisation to all stages
-  for (it = actual_cascade.stgs_config.begin(); it != actual_cascade.stgs_config.end(); it++) {
+  for (it = actual_cascade.stgs_config.begin();
+       it != actual_cascade.stgs_config.end(); it++) {
     std::map<int, StageConfig>::iterator it_feed;
-    
+
     // Enrich stage -> feed = Product from Previous Stage
     it_feed = actual_cascade.stgs_config.find(it->first - 1);
     if (it->first > 0 && it_feed != actual_cascade.stgs_config.end()) {
       it->second.feed_assay = it_feed->second.product_assay;
     }
-    
+
     // Striping stage -> feed = tails from Next Stage
     it_feed = actual_cascade.stgs_config.find(it->first + 1);
     if (it->first < 0 && it_feed != actual_cascade.stgs_config.end()) {
       it->second.feed_assay = it_feed->second.tail_assay;
     }
-    
+
     // Update Product and Tail assay from feed assay
     if (it->first != 0) {
+      if (u_cut) {
+        it->second.CutByAlphaBeta();
+      }
       it->second.ProductAssay();
       it->second.TailAssay();
     }
@@ -237,13 +242,13 @@ CascadeConfig CascadeConfig::Compute_Assay(double f_assay, double precision) {
   // Looping to get the equilibrium
   CascadeConfig previous_cascade;
 
-  while (Diff_enrichment(actual_cascade, previous_cascade) >
-         precision) {
+  while (Diff_enrichment(actual_cascade, previous_cascade) > precision) {
     previous_cascade = actual_cascade;
-    actual_cascade.stgs_config = Update_enrichment(actual_cascade, f_assay);
+    actual_cascade.stgs_config = Update_enrichment(actual_cascade, f_assay, u_cut);
   }
   return actual_cascade;
 }
+
 double CascadeConfig::Diff_enrichment(CascadeConfig a_enrichments,
                                       CascadeConfig p_enrichments) {
   if (p_enrichments.n_enrich == 0) {
@@ -271,7 +276,7 @@ double CascadeConfig::Diff_enrichment(CascadeConfig a_enrichments,
 }
 
 std::map<int, StageConfig> CascadeConfig::Update_enrichment(
-    CascadeConfig cascade, double f_assay) {
+    CascadeConfig cascade, double f_assay, bool u_cut) {
   CascadeConfig updated_enrichment = cascade;
 
   // mixing variables
@@ -320,7 +325,11 @@ std::map<int, StageConfig> CascadeConfig::Update_enrichment(
     // Update Stage feed assay
     it_new->second.feed_assay = stg_f_assay;
     // Update Beta values (from feed) -- Alpha & Cut are cte
-    it_new->second.BetaByAlphaAndCut();
+    if(u_cut){
+      it_new->second.CutByAlphaBeta();
+    } else{
+      it_new->second.BetaByAlphaAndCut();
+    }
     // Recompute Product Assay and Tail Assay
     it_new->second.ProductAssay();
     it_new->second.TailAssay();

@@ -30,6 +30,7 @@ CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
       feed_commod(""),
       product_commod(""),
       tails_commod(""),
+      fix_ab(false),
       order_prefs(true) {}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CascadeEnrich::~CascadeEnrich() {}
@@ -463,11 +464,11 @@ double CascadeEnrich::FeedAssay(double quantity) {
 }
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
-  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision);
+  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
   return cascade_tmp.stgs_config.rbegin()->second.product_assay;
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
-  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision);
+  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
   return cascade_tmp.stgs_config.begin()->second.tail_assay;
 }
 
