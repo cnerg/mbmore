@@ -177,7 +177,7 @@ TEST_F(CascadeEnrichTest, TradeTails) {
   sim.AddRecipe("natu1", cascadenrichtest::c_natu1());
   sim.AddRecipe("leu", cascadenrichtest::c_leu());
 
-  sim.AddSource("natu").recipe("natu1").Finalize();
+  sim.AddSource("natu").recipe("natu1").capacity(200).Finalize();
   sim.AddSink("enr_u").recipe("leu").Finalize();
   sim.AddSink("tails").Finalize();
 
@@ -209,7 +209,7 @@ TEST_F(CascadeEnrichTest, TailsQty) {
   sim.AddRecipe("natu1", cascadenrichtest::c_natu1());
   sim.AddRecipe("leu", cascadenrichtest::c_leu());
 
-  sim.AddSource("natu").recipe("natu1").Finalize();
+  sim.AddSource("natu").recipe("natu1").capacity(200).Finalize();
   sim.AddSink("enr_u").recipe("leu").capacity(0.5).Finalize();
   sim.AddSink("enr_u").recipe("leu").capacity(0.5).Finalize();
   sim.AddSink("tails").Finalize();
@@ -255,6 +255,7 @@ TEST_F(CascadeEnrichTest, BidPrefs) {
   sim.AddRecipe("natu1", cascadenrichtest::c_natu1());
   sim.AddRecipe("natu2", cascadenrichtest::c_natu2());
 
+  sim.AddSource("natu").recipe("natu1").capacity(200).Finalize();
   sim.AddSource("natu").recipe("natu1").capacity(1).Finalize();
 
   sim.AddSource("natu").recipe("natu2").capacity(2).Finalize();
