@@ -106,7 +106,8 @@ void StageConfig::BuildIdealStg(double f_assay, double precision) {
     cut = CutForIdealStg(feed_assay, precision);
     DU = centrifuge.ComputeDeltaU(cut);
     alpha = AlphaByDU();
-    beta = BetaByAlphaAndCut();
+    beta = alpha;
+    cut = CutByAlphaBeta();
   } else {
     beta = alpha;
     cut = CutByAlphaBeta();
