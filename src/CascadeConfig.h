@@ -16,7 +16,7 @@ void dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipivot, double *b,
 
 class CascadeConfig {
  public:
-  CascadeConfig() { ; }
+  CascadeConfig() ;
   CascadeConfig(CentrifugeConfig centrifuge, double f_assay, double p_assay,
                 double t_assay, double max_feed_flow, int max_centrifuge,
                 double precision = 1e-8);

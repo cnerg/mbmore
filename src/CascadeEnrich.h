@@ -177,7 +177,7 @@ class CascadeEnrich : public cyclus::Facility {
 //group all the characteristic of a centrifuges
   CentrifugeConfig centrifuge;
   CascadeConfig cascade;
-  double precision = 1e-8;
+  double precision = 1e-15;
   
   
   const double secpermonth = 60.*60.*24.*(365.25/12.);

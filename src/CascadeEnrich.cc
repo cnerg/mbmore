@@ -465,10 +465,26 @@ double CascadeEnrich::FeedAssay(double quantity) {
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
   CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
+  std::cout << "product_assay " << std::setprecision(16) << cascade_tmp.stgs_config.rbegin()->second.product_assay << std::endl;
   return cascade_tmp.stgs_config.rbegin()->second.product_assay;
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
+  std::cout << "feed_assay " << feed_assay << std::endl;
   CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
+  std::cout << "tails_assay " << cascade_tmp.stgs_config.begin()->second.tail_assay << std::endl;
+  std::map<int, StageConfig>::iterator it;
+  for (it = cascade_tmp.stgs_config.begin(); it != cascade_tmp.stgs_config.end();
+       it++) {
+    std::cout << "stg " << it->first;
+    std::cout << " FA: " << it->second.feed_assay;
+    std::cout << " PA: " << it->second.product_assay;
+    std::cout << " TA: " << it->second.tail_assay;
+    std::cout << " feed_flow: " << it->second.feed_flow;
+    std::cout << " cut: " << it->second.cut;
+    std::cout << " alpha: " << it->second.alpha;
+    std::cout << " beta: " << it->second.beta;
+    std::cout << std::endl;
+  }
   return cascade_tmp.stgs_config.begin()->second.tail_assay;
 }
 
