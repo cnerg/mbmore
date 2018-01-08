@@ -280,6 +280,7 @@ CascadeConfig CascadeConfig::Compute_Assay(double f_assay, double precision,
     for (it = actual_cascade.stgs_config.begin(); it != actual_cascade.stgs_config.end(); it++){
       it->second.feed_flow *= 1./ratio;
     }
+    actual_cascade.feed_flow *= 1./ratio; 
     return actual_cascade;
   }
   // Looping to get the equilibrium

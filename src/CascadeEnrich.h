@@ -192,11 +192,12 @@ class CascadeEnrich : public cyclus::Facility {
   int n_strip_stages;
 
   // Set by maximum allowable centrifuges
-  double max_feed_flow;
   double ProductAssay(double feed_assay);
   double ProductFlow(double feed_flow);
   double TailsAssay(double feed_assay);
   double TailsFlow(double feed_flow);
+  double FeedRequired(double prod_qty);
+  double MaxFeedFlow(double feed_assay);
 
   #pragma cyclus var { \
     "tooltip" : "feed recipe", \

@@ -61,7 +61,6 @@ void CascadeEnrich::EnterNotify() {
   cascade = CascadeConfig(centrifuge, design_feed_assay, design_product_assay,
                           design_tails_assay, FlowPerSec(design_feed_flow),
                           max_centrifuges, precision);
-  max_feed_flow = FlowPerMon(cascade.FeedFlow());
 
   std::map<int, StageConfig>::iterator it;
   for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end();
@@ -289,7 +288,7 @@ CascadeEnrich::GetMatlBids(
     double u_frac = mq.mass_frac(nucs);
     double cor_feed_qty = feed_qty * u_frac;
     double production_capacity =
-        ProductFlow(std::min(cor_feed_qty, max_feed_flow));
+        ProductFlow(std::min(cor_feed_qty, MaxFeedFlow(FeedAssay(feed_qty))));
     cyclus::CapacityConstraint<Material> production_contraint(
         production_capacity);
     commod_port->AddConstraint(production_contraint);
@@ -350,8 +349,8 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   using cyclus::toolkit::FeedQty;
   using cyclus::toolkit::TailsQty;
   // get enrichment parameters
-  double max_product_mass = ProductFlow(max_feed_flow);
-  double feed_qty = qty / max_product_mass * max_feed_flow;
+  double feed_qty = FeedRequired(qty);
+
   double feed_assay = FeedAssay(feed_qty);
   double product_assay = ProductAssay(feed_assay);
 
@@ -459,38 +458,54 @@ double CascadeEnrich::FeedAssay(double quantity) {
   cyclus::Material::Ptr fission_matl =
       inventory.Pop(pop_qty, cyclus::eps_rsrc());
   inventory.Push(fission_matl);
-
   return cyclus::toolkit::UraniumAssay(fission_matl);
 }
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
   CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
-  std::cout << "product_assay " << std::setprecision(16) << cascade_tmp.stgs_config.rbegin()->second.product_assay << std::endl;
   return cascade_tmp.stgs_config.rbegin()->second.product_assay;
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
-  std::cout << "feed_assay " << feed_assay << std::endl;
   CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
-  std::cout << "tails_assay " << cascade_tmp.stgs_config.begin()->second.tail_assay << std::endl;
-  std::map<int, StageConfig>::iterator it;
-  for (it = cascade_tmp.stgs_config.begin(); it != cascade_tmp.stgs_config.end();
-       it++) {
-    std::cout << "stg " << it->first;
-    std::cout << " FA: " << it->second.feed_assay;
-    std::cout << " PA: " << it->second.product_assay;
-    std::cout << " TA: " << it->second.tail_assay;
-    std::cout << " feed_flow: " << it->second.feed_flow;
-    std::cout << " cut: " << it->second.cut;
-    std::cout << " alpha: " << it->second.alpha;
-    std::cout << " beta: " << it->second.beta;
-    std::cout << std::endl;
-  }
   return cascade_tmp.stgs_config.begin()->second.tail_assay;
 }
 
+double CascadeEnrich::MaxFeedFlow(double feed_assay){
+  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
+
+  return FlowPerMon(cascade_tmp.FeedFlow());
+
+}
+
+double CascadeEnrich::FeedRequired(double prod_qty) {
+  double max_feed_flow = MaxFeedFlow(FeedAssay(inventory.quantity()));
+  double max_product_flow = ProductFlow(max_feed_flow);
+  double feed_required = max_feed_flow / max_product_flow * prod_qty;
+
+  max_feed_flow = MaxFeedFlow(FeedAssay(feed_required));
+  max_product_flow = ProductFlow(max_feed_flow);
+  double corrected_feed_required = max_feed_flow / max_product_flow * prod_qty;
+  double diff_feed = std::abs(feed_required - corrected_feed_required);
+
+  while (diff_feed > precision) {
+    // reset feed_required
+    feed_required = corrected_feed_required;
+
+    max_feed_flow = MaxFeedFlow(FeedAssay(feed_required));
+    max_product_flow = ProductFlow(max_feed_flow);
+    corrected_feed_required = max_feed_flow / max_product_flow * prod_qty;
+    diff_feed = std::abs(feed_required - corrected_feed_required);
+  }
+
+  return corrected_feed_required;
+}
+
 double CascadeEnrich::ProductFlow(double feed_flow) {
-  double feed_ratio = feed_flow / max_feed_flow;
-  StageConfig last_stg = cascade.stgs_config.rbegin()->second;
+  double feed_assay = FeedAssay(feed_flow);
+  double feed_ratio = feed_flow / MaxFeedFlow(feed_assay);
+  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
+   
+  StageConfig last_stg = cascade_tmp.stgs_config.rbegin()->second;
   double product_flow = last_stg.feed_flow * last_stg.cut;
   return feed_ratio * FlowPerMon(product_flow);
 }
