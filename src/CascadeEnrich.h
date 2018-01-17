@@ -292,6 +292,13 @@ class CascadeEnrich : public cyclus::Facility {
   double diameter;
 
 #pragma cyclus var {					  \
+    "default" : 2, \
+    "tooltip" : "Centrifuge L/F* ", \
+    "uilabel" : "Centrifuge Countercurrent to feed ratio", \
+  "doc" : "Countercurrent to feed ratio"}
+  double L_over_F;
+
+#pragma cyclus var {					  \
     "default" : 15.0, \
     "tooltip" : "Centrifuge feed rate (mg/sec)", \
     "uilabel" : "Max feed rate for single centrifuge (mg/sec)", \
