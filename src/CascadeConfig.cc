@@ -272,7 +272,8 @@ CascadeConfig CascadeConfig::Compute_Assay(double f_assay, double precision,
     double ratio = 1;
     for (it = actual_cascade.stgs_config.begin(); it != actual_cascade.stgs_config.end(); it++){
       std::map<int, StageConfig>::iterator it_real = (*this).stgs_config.find(it->first);
-      double stg_flow_ratio = it->second.feed_flow / it_real->second.feed_flow;
+      double max_stg_flow = it_real->second.n_machines *it_real->second.centrifuge.feed;
+      double stg_flow_ratio = it->second.feed_flow / max_stg_flow;
       if (ratio < stg_flow_ratio){
         ratio = stg_flow_ratio;
       }
