@@ -27,6 +27,7 @@ CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
       machine_feed(15),
       max_enrich(1),
       design_feed_flow(100),
+      L_over_F(2),
       feed_commod(""),
       product_commod(""),
       tails_commod(""),
@@ -57,6 +58,7 @@ void CascadeEnrich::EnterNotify() {
   centrifuge.diameter = diameter;
   centrifuge.feed = machine_feed / 1000 / 1000;
   centrifuge.temp = temp;
+  centrifuge.flow_internal = L_over_F;
 
   cascade = CascadeConfig(centrifuge, design_feed_assay, design_product_assay,
                           design_tails_assay, FlowPerSec(design_feed_flow),
@@ -73,8 +75,10 @@ void CascadeEnrich::EnterNotify() {
     std::cout << " cut: " << it->second.cut;
     std::cout << " alpha: " << it->second.alpha;
     std::cout << " beta: " << it->second.beta;
+    std::cout << " machine: " << it->second.n_machines;
     std::cout << std::endl;
   }
+  std::cout << "Dsign Feed Flow " << FlowPerMon(cascade.FeedFlow()) << std::endl;
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
