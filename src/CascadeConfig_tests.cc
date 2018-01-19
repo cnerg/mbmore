@@ -44,12 +44,10 @@ const double tol_assay = 1e-5;
 const double tol_qty = 1e-6;
 const double tol_num = 1e-2;
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Ideal cascade design, and then using away from ideal design
 
-TEST(Cascade_Test, TestCascade) {
-  
+TEST(CascadeStage_Test, TestCascade) {
   CascadeConfig cascade;
   cascade.centrifuge = centrifuge;
   cascade.BuildIdealCascade(feed_assay, product_assay, waste_assay, 1e-8);
@@ -84,7 +82,7 @@ TEST(Cascade_Test, TestCascade) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // tests the steady state flow rates for a cascade
 //
-TEST(Cascade_Test, TestCascadeDesign) {
+TEST(CascadeStage_Test, TestCascadeDesign) {
   double fa = 0.10;
   double pa = 0.20;
   double wa = 0.05;
@@ -99,7 +97,8 @@ TEST(Cascade_Test, TestCascadeDesign) {
   CascadeConfig cascade(centrifuge, fa, pa, wa, feed_c, 1000000);
 
   for (int i = 0; i < pycode_flows.size(); i++) {
-    EXPECT_NEAR(cascade.stgs_config[i - cascade.n_strip].feed_flow, pycode_flows[i], tol_num);
+    EXPECT_NEAR(cascade.stgs_config[i - cascade.n_strip].feed_flow,
+                pycode_flows[i], tol_num);
     int nmach = cascade.stgs_config[i - cascade.n_strip].n_machines;
     EXPECT_EQ(nmach, pycode_machines[i]);
   }
@@ -123,12 +122,12 @@ TEST(Cascade_Test, TestCascadeDesign) {
   EXPECT_NEAR(py_opt_feed, cascade.FeedFlow(), tol_qty);
 }
 
-TEST(Cascade_Test, TestUpdateAssay) {
+TEST(CascadeStage_Test, TestUpdateAssay) {
   double fa = 0.10;
   double pa = 0.20;
   double wa = 0.05;
 
-  CascadeConfig cascade(centrifuge,fa, pa, wa, feed_c, 100);
+  CascadeConfig cascade(centrifuge, fa, pa, wa, feed_c, 100);
   double product_assay =
       cascade.stgs_config[cascade.n_enrich - 1].product_assay;
   double tail_assay = cascade.stgs_config[-cascade.n_strip].tail_assay;
@@ -155,11 +154,42 @@ TEST(Cascade_Test, TestUpdateAssay) {
               (1 - cascade.stgs_config[-cascade.n_strip].cut);
   feed_from_assay =
       product_flow * (product_assay - tail_assay) / (fa - tail_assay);
-  tail_from_assay =
+  tail_from_assay = product_flow * (product_assay - fa) / (fa - tail_assay);
+
+  EXPECT_NEAR(cascade.FeedFlow(), feed_from_assay, 1e-3);
+  EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
+}
+
+TEST(CascadeStage_Test, TestUpdateAlphaBetaFix) {
+  double fa = 0.10;
+  double pa = 0.20;
+  double wa = 0.05;
+
+  CascadeConfig cascade(centrifuge, fa, pa, wa, feed_c, 100);
+  double product_assay =
+      cascade.stgs_config[cascade.n_enrich - 1].product_assay;
+  double tail_assay = cascade.stgs_config[-cascade.n_strip].tail_assay;
+  double product_flow = cascade.stgs_config[cascade.n_enrich - 1].feed_flow *
+                        cascade.stgs_config[cascade.n_enrich - 1].cut;
+  double tail_flow = cascade.stgs_config[-cascade.n_strip].feed_flow *
+                     (1 - cascade.stgs_config[-cascade.n_strip].cut);
+
+  double feed_from_assay =
+      product_flow * (product_assay - tail_assay) / (fa - tail_assay);
+  double tail_from_assay =
       product_flow * (product_assay - fa) / (fa - tail_assay);
 
   EXPECT_NEAR(cascade.FeedFlow(), feed_from_assay, 1e-3);
   EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
+
+  fa = 0.2;
+  cascade = cascade.Compute_Assay(fa, 1e-17, true);
+  double alpha_ref = cascade.stgs_config[0].alpha;
+  std::map<int,StageConfig>::iterator it;
+  for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end(); it++){
+    EXPECT_EQ(alpha_ref, it->second.alpha);
+    EXPECT_EQ(alpha_ref, it->second.beta);
+  }
 }
 
 }  // namespace cascadeconfig_tests
