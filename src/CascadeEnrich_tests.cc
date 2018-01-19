@@ -255,6 +255,7 @@ TEST_F(CascadeEnrichTest, BidPrefs) {
   sim.AddRecipe("natu1", cascadenrichtest::c_natu1());
   sim.AddRecipe("natu2", cascadenrichtest::c_natu2());
 
+  sim.AddSource("natu").recipe("natu1").capacity(200).Finalize();
   sim.AddSource("natu").recipe("natu1").capacity(1).Finalize();
 
   sim.AddSource("natu").recipe("natu2").capacity(2).Finalize();

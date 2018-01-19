@@ -30,7 +30,7 @@ CentrifugeConfig::CentrifugeConfig() {
 }
 
 CentrifugeConfig::CentrifugeConfig(double v_a_, double h_, double d_, double feed_, double T_,
-                   double eff_, double M_, double dM_, double x_, double i_flow_){
+                   double eff_, double M_, double dM_, double x_, double flow_){
   v_a = v_a_;
   height = h_;
   diameter = d_;
@@ -39,7 +39,7 @@ CentrifugeConfig::CentrifugeConfig(double v_a_, double h_, double d_, double fee
 
   eff = eff_;
   x = x_;
-  flow_internal = i_flow_;
+  flow_internal = flow_;
 
   M = M_;
   dM = dM_;

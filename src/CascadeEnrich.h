@@ -177,7 +177,7 @@ class CascadeEnrich : public cyclus::Facility {
 //group all the characteristic of a centrifuges
   CentrifugeConfig centrifuge;
   CascadeConfig cascade;
-  double precision = 1e-8;
+  double precision = 1e-15;
   
   
   const double secpermonth = 60.*60.*24.*(365.25/12.);
@@ -192,11 +192,12 @@ class CascadeEnrich : public cyclus::Facility {
   int n_strip_stages;
 
   // Set by maximum allowable centrifuges
-  double max_feed_flow;
   double ProductAssay(double feed_assay);
   double ProductFlow(double feed_flow);
   double TailsAssay(double feed_assay);
   double TailsFlow(double feed_flow);
+  double FeedRequired(double prod_qty);
+  double MaxFeedFlow(double feed_assay);
 
   #pragma cyclus var { \
     "tooltip" : "feed recipe", \
@@ -291,11 +292,26 @@ class CascadeEnrich : public cyclus::Facility {
   double diameter;
 
 #pragma cyclus var {					  \
+    "default" : 2, \
+    "tooltip" : "Centrifuge L/F* ", \
+    "uilabel" : "Centrifuge Countercurrent to feed ratio", \
+  "doc" : "Countercurrent to feed ratio"}
+  double L_over_F;
+
+#pragma cyclus var {					  \
     "default" : 15.0, \
     "tooltip" : "Centrifuge feed rate (mg/sec)", \
     "uilabel" : "Max feed rate for single centrifuge (mg/sec)", \
   "doc" : "maximum feed rate for a single centrifuge (mg/sec)"}
   double machine_feed;
+  
+#pragma cyclus var { \
+    "default": 0, \
+    "userlevel": 10, \
+    "tooltip": "Fix ALpha Beta recompute Theta", \
+    "uilabel": "recompute theta to maintain alpha and beta", \
+    "doc": "maintain alpha beta constant and recompute the cut for it" }
+  bool fix_ab;
 
 
 
