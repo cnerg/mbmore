@@ -12,30 +12,30 @@
 
 namespace mbmore {
 
-StageConfig::StageConfig(double f_assay, double feed_, double precision_,
-                         double cut_, double DU_, double alpha_)
+StageConfig::StageConfig(CentrifugeConfig cent, double f_assay, double feed_,
+                         double precision_)
+    : centrifuge(cent),
+      feed_assay(f_assay),
+      feed_flow(feed_),
+      precision(precision_) {
+  BuildIdealStg(feed_assay, precision);
+}
+StageConfig::StageConfig(double f_assay, double feed_, double cut_, double DU_,
+                         double alpha_, double precision_)
     : feed_assay(f_assay),
       feed_flow(feed_),
       precision(precision_),
+      cut(cut_),
       DU(DU_),
-      alpha(alpha_),
-      cut(cut_) {
-  // if the cut is not provided guess it such as Alpha = Beta
-  if (cut == -1) {
-    BuildIdealStg(feed_assay, precision);
-  } else {
-    if (DU == -1) {
-      DU = centrifuge.ComputeDeltaU(cut);
-    }
-    // if alpha is not provided, compute it from the dU
-    if (alpha == -1) {
-      AlphaByDU();
-    }
-
-    BetaByAlphaAndCut();
-    ProductAssay();
-    TailAssay();
+      alpha(alpha_) {
+  // if alpha is not provided, compute it from the dU
+  if (alpha == -1) {
+    AlphaByDU();
   }
+
+  BetaByAlphaAndCut();
+  ProductAssay();
+  TailAssay();
 }
 double StageConfig::CutForIdealStg(double f_assay, double precision) {
   feed_assay = f_assay;
