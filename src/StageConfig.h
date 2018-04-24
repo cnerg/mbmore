@@ -12,13 +12,17 @@ class StageConfig {
 
  public:
   // Setup a empty stage
-  StageConfig() {;}
+  StageConfig() { ; }
   // Design a ideal stage for a specific feed assay and feed flow
-  StageConfig(CentrifugeConfig cent, double f_assay, double feed_flow, double precision = 1e-8); 
+  StageConfig(CentrifugeConfig cent, double f_assay, double feed_flow,
+              double precision = 1e-8);
   // Design a ideal stage for a specific feed assay and feed flow
-  StageConfig(double f_assay, double feed_flow, double cut_, double DU_, double alpha_ = -1, double precision = 1e-8 ); 
+  StageConfig(double f_assay, double feed_flow, double cut_, double DU_,
+              double alpha_ = -1, double precision = 1e-8);
 
-  // Build a stage assumming alpha = beta (if cut is not defined, compute the cut to make it so)
+  // Build a stage assumming alpha = beta (if cut is not defined, compute the
+  // cut
+  // to make it so)
   void BuildIdealStg(double f_assay, double precision = 1e-8);
   // Compute the cut to ensure alpha = beta (from dU)
   double CutForIdealStg(double f_assay, double precision = 1e-8);
@@ -38,7 +42,7 @@ class StageConfig {
 
   // Return the minimum number of centrifudes required to meed the feed flow
   double MachinesPerStage();
-  // Compute the Product feed 
+  // Compute the Product feed
   double ProductPerEnrStage();
 
   // Configuration of all the centrifuges in the stage
@@ -56,10 +60,10 @@ class StageConfig {
   double beta;
   // Feed flow (g/s)
   double feed_flow;
-  
+
   // number of centriges in the stage
   double n_machines;
-  
+
   // Feed assay
   double feed_assay;
   // Product assay
