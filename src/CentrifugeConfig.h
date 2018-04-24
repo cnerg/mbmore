@@ -16,8 +16,6 @@ class CentrifugeConfig {
 
   double ComputeDeltaU(double cut); // compute the solution of the Raetz equation using all the paramters valus and the provided cut value
 
-  // flow_internal = 2-4, x = pressure ratio, M = 0.352 kg/mol of UF6,
-  // dM = 0.003 kg/mol diff between 235 and 238
   double dM; // molar mass diff between the 2 components of the gaz default 0.003kg/mol (u235/U238)
   double M;  // gaz molar mass, default UF6 0.352 kg/mol
   double x;  // pressure ration -> drive r1/r2 ratio
