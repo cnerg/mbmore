@@ -8,12 +8,27 @@
 #include <sstream>
 #include <vector>
 
+/*  
+@article{alexander_glaser_characteristics_2008,
+	title = {Characteristics of the {Gas} {Centrifuge} for {Uranium} {Enrichment} and {Their} {Relevance} for {Nuclear} {Weapon} {Proliferation}},
+	issn = {1547-7800},
+	doi = {10.1080/08929880802335998},
+	number = {16},
+	journal = {Science and Global Security},
+	author = {Alexander Glaser},
+	year = {2008},
+	pages = {1--25},
+	annote = {From Tamara},
+	file = {2008aglaser_sgsvol16.pdf:/Users/mouginot/Zotero/storage/UAGA49FS/2008aglaser_sgsvol16.pdf:application/pdf}
+}
+*/
 namespace mbmore {
 
 CentrifugeConfig::CentrifugeConfig() {
-  v_a = 485;
-  height = 0.5;
-  diameter = 0.15;
+// Standard Values for a P1-type centrifuges
+  v_a = 320;
+  height = 1.8;
+  diameter = 0.10;
   feed = 15. / 1000. / 1000.;
   temp = 320;
 
@@ -21,8 +36,12 @@ CentrifugeConfig::CentrifugeConfig() {
   x = 1000;
   flow_internal = 2.0;
 
+  // default UF6 0.352 kg/mol
   M = 0.352;
+  
+  // default 0.003kg/mol (u235/U238)
   dM = 0.003;
+  // SEE GLASER P2
   D_rho = 2.2e-5;     // kg/m/s
   gas_const = 8.314;  // J/K/mol
   M_238 = 0.238;      // kg/mol
@@ -50,22 +69,6 @@ CentrifugeConfig::CentrifugeConfig(double v_a_, double h_, double d_, double fee
 }
 
 double CentrifugeConfig::ComputeDeltaU(double cut) {
-/*  
-@article{alexander_glaser_characteristics_2008,
-	title = {Characteristics of the {Gas} {Centrifuge} for {Uranium} {Enrichment} and {Their} {Relevance} for {Nuclear} {Weapon} {Proliferation}},
-	issn = {1547-7800},
-	doi = {10.1080/08929880802335998},
-	number = {16},
-	journal = {Science and Global Security},
-	author = {Alexander Glaser},
-	year = {2008},
-	pages = {1--25},
-	annote = {From Tamara},
-	file = {2008aglaser_sgsvol16.pdf:/Users/mouginot/Zotero/storage/UAGA49FS/2008aglaser_sgsvol16.pdf:application/pdf}
-}
-*/
-  
-  
   
   // Inputs that are effectively constants:
 
