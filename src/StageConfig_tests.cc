@@ -54,7 +54,7 @@ TEST(StageConfig_Test, TestAssays) {
   StageConfig stage(cur_f_assay, feed_m, cut, delU, cur_alpha, 1e-16);
   double cal_prod_assay = stage.ProductAssay();
 
-  // N_prime = alpha*R / ( 1+alpha*R) 
+  // N_prime = alpha*R / ( 1+alpha*R)
   double th_prod_assay = 0.009773;
   double tol = 1e-6;
 
