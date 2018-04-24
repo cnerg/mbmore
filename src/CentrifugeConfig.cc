@@ -1,5 +1,5 @@
 // Implements the CascadeEnrich class
-#include "CascadeConfig.h"
+#include "CentrifugeConfig.h"
 
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
