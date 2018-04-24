@@ -51,7 +51,7 @@ TEST(StageConfig_Test, TestAssays) {
   double cur_alpha = 1.4;
   double cur_f_assay = 0.007;
 
-  StageConfig stage(cur_f_assay, feed_m, 1e-16, cut, delU, cur_alpha);
+  StageConfig stage(cur_f_assay, feed_m, cut, delU, cur_alpha, 1e-16);
   double cal_prod_assay = stage.ProductAssay();
 
   // N_prime = alpha*R / ( 1+alpha*R) 
@@ -74,7 +74,7 @@ TEST(StageConfig_Test, TestSWU) {
   double pycode_U = 7.03232816847e-08;
   double tol = 1e-9;
 
-  StageConfig stage(feed_assay, feed_m, 1e-16, cut, delU, -1);
+  StageConfig stage(feed_assay, feed_m, cut, delU, -1, 1e-16);
 
   double pycode_alpha = 1.16321;
   double tol_alpha = 1e-2;
@@ -85,7 +85,7 @@ TEST(StageConfig_Test, TestSWU) {
 // Determine the output of the first enrich/strip stage of a cascade
 // based on the design params for the cascade
 TEST(StageConfig_Test, TestStages) {
-  StageConfig stage(feed_assay, feed_c, 1e-16, cut, delU, -1);
+  StageConfig stage(feed_assay, feed_c, cut, delU, -1, 1e-16);
 
   double product_assay_s = stage.ProductAssay();
   double n_mach_e = stage.MachinesPerStage();
@@ -103,7 +103,7 @@ TEST(StageConfig_Test, TestStages) {
   EXPECT_NEAR(product_assay_s, pycode_product_assay_s, tol_assay);
   EXPECT_NEAR(product_s, pycode_product_s, tol_qty);
 
-  stage = StageConfig(feed_assay, enrich_waste, 1e-16, cut, delU, -1);
+  stage = StageConfig(feed_assay, enrich_waste, cut, delU, -1, 1e-16);
   double n_mach_w = stage.MachinesPerStage();
   double strip_waste_assay = stage.TailAssay();
 

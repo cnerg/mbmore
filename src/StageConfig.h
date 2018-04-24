@@ -14,7 +14,9 @@ class StageConfig {
   // Setup a empty stage
   StageConfig() {;}
   // Design a ideal stage for a specific feed assay and feed flow
-  StageConfig(double f_assay, double feed_flow, double precision, double cut = -1, double DU = -1, double alpha = -1); 
+  StageConfig(CentrifugeConfig cent, double f_assay, double feed_flow, double precision = 1e-8); 
+  // Design a ideal stage for a specific feed assay and feed flow
+  StageConfig(double f_assay, double feed_flow, double cut_, double DU_, double alpha_ = -1, double precision = 1e-8 ); 
 
   // Build a stage assumming alpha = beta (if cut is not defined, compute the cut to make it so)
   void BuildIdealStg(double f_assay, double precision = 1e-8);
