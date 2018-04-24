@@ -4,11 +4,11 @@
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
 #include <cmath>
+#include <iomanip>
+#include <iostream>
 #include <limits>
 #include <sstream>
 #include <vector>
-#include <iostream>
-#include <iomanip>
 
 namespace mbmore {
 
