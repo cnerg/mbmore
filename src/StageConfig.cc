@@ -20,23 +20,23 @@ StageConfig::StageConfig(double f_assay, double feed_, double precision_,
       DU(DU_),
       alpha(alpha_),
       cut(cut_) {
+  // if the cut is not provided guess it such as Alpha = Beta
   if (cut == -1) {
     BuildIdealStg(feed_assay, precision);
-  }
+  } else {
+    if (DU == -1) {
+      DU = centrifuge.ComputeDeltaU(cut);
+    }
+    // if alpha is not provided, compute it from the dU
+    if (alpha == -1) {
+      AlphaByDU();
+    }
 
-  if (DU == -1) {
-    DU = centrifuge.ComputeDeltaU(cut);
+    BetaByAlphaAndCut();
+    ProductAssay();
+    TailAssay();
   }
-
-  if (alpha == -1) {
-    AlphaByDU();
-  }
-
-  BetaByAlphaAndCut();
-  ProductAssay();
-  TailAssay();
 }
-
 double StageConfig::CutForIdealStg(double f_assay, double precision) {
   feed_assay = f_assay;
   double p_cut = cut = 0.1;
@@ -59,8 +59,8 @@ double StageConfig::CutForIdealStg(double f_assay, double precision) {
     // targeting alpha_m_beta = 0
     cut = -b / a;
     DU = centrifuge.ComputeDeltaU(cut);
-    alpha = AlphaByDU();
-    beta = BetaByAlphaAndCut();
+    AlphaByDU();
+    BetaByAlphaAndCut();
   }
   return cut;
 }
@@ -103,17 +103,17 @@ double StageConfig::CutByAlphaBeta() {
 void StageConfig::BuildIdealStg(double f_assay, double precision) {
   feed_assay = f_assay;
   if (DU == -1 || alpha == -1) {
-    cut = CutForIdealStg(feed_assay, precision);
+    CutForIdealStg(feed_assay, precision);
     DU = centrifuge.ComputeDeltaU(cut);
-    alpha = AlphaByDU();
+    AlphaByDU();
     beta = alpha;
-    cut = CutByAlphaBeta();
+    CutByAlphaBeta();
   } else {
     beta = alpha;
-    cut = CutByAlphaBeta();
+    CutByAlphaBeta();
   }
-  product_assay = ProductAssay();
-  tail_assay = TailAssay();
+  ProductAssay();
+  TailAssay();
 }
 
 double StageConfig::MachinesPerStage() {

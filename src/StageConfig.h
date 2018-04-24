@@ -11,7 +11,9 @@ class StageConfig {
   friend CascadeConfig;
 
  public:
+  // Setup a empty stage
   StageConfig() {;}
+  // Design a ideal stage for a specific feed assay and feed flow
   StageConfig(double f_assay, double feed_flow, double precision, double cut = -1, double DU = -1, double alpha = -1); 
 
   // Build a stage assumming alpha = beta (if cut is not defined, compute the cut to make it so)
