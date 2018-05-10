@@ -39,7 +39,15 @@ class CascadeConfig {
 
   // Compute the response of the cascade to a non ideal feed assay
   void PropagateAssay(double f_assay);
-  void ComputeAssay(double f_assay, double precision = 1e-8);
+  
+  
+  // Propagate iterratively the assay assuming
+  // Alpha constant
+  void ComputeAssayByAlpha(double f_assay, double precision = 1e-8);
+  // Gamma constant
+  void ComputeAssayByGamma(double f_assay, double precision = 1e-8);
+  
+  
   void UpdateCut();
   void UpdateFlow();
 
@@ -73,8 +81,11 @@ class CascadeConfig {
 
   // method computing one iteration, of the algorithm used to get the response
   // to non ideal feed assay 
-  std::map<int, StageConfig> IterrateEnrichment(CascadeConfig cascade,
-                                               double feed_assay);
+  void IterrateEnrichment(double feed_assay);
+  // recompute product assay, beta and tails assay from alpha, cut and feed assay
+  void UpdateByAlpha();
+  //recompute alpha, product assay, beta and tails assay from gamma, cut and feed assay
+  void UpdateByGamma();
 };
 
 }  // namespace mbmore

@@ -221,12 +221,16 @@ CascadeConfig CascadeConfig::ModelMissUsedCascade(double f_assay,
 
   switch (modeling_opt) {
     default:
-      miss_used_cascade.ComputeAssay(f_assay, precision);
+      miss_used_cascade.ComputeAssayByAlpha(f_assay, precision);
       break;
 
     case 1:
       miss_used_cascade.UpdateCut();
       miss_used_cascade.UpdateFlow();
+      break;
+    
+    case 2:
+      miss_used_cascade.ComputeAssayByGamma(f_assay, precision);
       break;
   }
   return miss_used_cascade;
@@ -304,11 +308,21 @@ void CascadeConfig::PropagateAssay(double f_assay) {
   }
 }
 
-void CascadeConfig::ComputeAssay(double f_assay, double precision) {
+void CascadeConfig::ComputeAssayByAlpha(double f_assay, double precision) {
   CascadeConfig previous_cascade;
   while (DeltaEnrichment((*this), previous_cascade) > precision) {
     previous_cascade = (*this);
-    (*this).stgs_config = IterrateEnrichment((*this), f_assay);
+    (*this).IterrateEnrichment(f_assay);
+    (*this).UpdateByAlpha();
+  }
+}
+
+void CascadeConfig::ComputeAssayByGamma(double f_assay, double precision) {
+  CascadeConfig previous_cascade;
+  while (DeltaEnrichment((*this), previous_cascade) > precision) {
+    previous_cascade = (*this);
+    (*this).IterrateEnrichment(f_assay);
+    (*this).UpdateByGamma();
   }
 }
 
@@ -338,9 +352,8 @@ double CascadeConfig::DeltaEnrichment(CascadeConfig a_enrichments,
   return square_feed_diff + square_product_diff + square_waste_diff;
 }
 
-std::map<int, StageConfig> CascadeConfig::IterrateEnrichment(
-    CascadeConfig cascade, double f_assay) {
-  CascadeConfig updated_enrichment = cascade;
+void CascadeConfig::IterrateEnrichment(double f_assay) {
+  CascadeConfig updated_enrichment = (*this);
 
   // mixing variables
   double down_assay = 0;
@@ -351,23 +364,23 @@ std::map<int, StageConfig> CascadeConfig::IterrateEnrichment(
   std::map<int, StageConfig>::iterator it;
 
   // Get the Flow and Assay quantity
-  for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end();
+  for (it = (*this).stgs_config.begin(); it != (*this).stgs_config.end();
        it++) {
     int i = it->first;
     std::map<int, StageConfig>::iterator it_up =
-        cascade.stgs_config.find(i + 1);
+        (*this).stgs_config.find(i + 1);
     std::map<int, StageConfig>::iterator it_down =
-        cascade.stgs_config.find(i - 1);
+        (*this).stgs_config.find(i - 1);
     down_assay = 0;
     up_assay = 0;
     down_flow = 0;
     up_flow = 0;
 
-    if (it_down != cascade.stgs_config.end()) {
+    if (it_down != (*this).stgs_config.end()) {
       down_assay = it_down->second.product_assay;
       down_flow = it_down->second.feed_flow * it_down->second.cut;
     }
-    if (it_up != cascade.stgs_config.end()) {
+    if (it_up != (*this).stgs_config.end()) {
       up_assay = it_up->second.tail_assay;
       up_flow = it_up->second.feed_flow * (1 - it_up->second.cut);
     }
@@ -377,9 +390,9 @@ std::map<int, StageConfig> CascadeConfig::IterrateEnrichment(
         (down_assay * down_flow + up_assay * up_flow) / (down_flow + up_flow);
     if (i == 0) {  // add Feed flow in the entry stage
       stg_f_assay = (down_assay * down_flow + up_assay * up_flow +
-                     f_assay * cascade.feed_flow) /
-                    (down_flow + up_flow + cascade.feed_flow);
-      stg_feed_flow = down_flow + up_flow + cascade.feed_flow;
+                     f_assay * (*this).feed_flow) /
+                    (down_flow + up_flow + (*this).feed_flow);
+      stg_feed_flow = down_flow + up_flow + (*this).feed_flow;
     }
 
     std::map<int, StageConfig>::iterator it_new =
@@ -387,13 +400,36 @@ std::map<int, StageConfig> CascadeConfig::IterrateEnrichment(
 
     // Update Stage feed assay
     it_new->second.feed_assay = stg_f_assay;
-    // Update Beta values (from feed) -- Alpha & Cut are cte
-    it_new->second.BetaByAlphaAndCut();
-    // Recompute Product Assay and Tail Assay
-    it_new->second.ProductAssay();
-    it_new->second.TailAssay();
   }
 
-  return updated_enrichment.stgs_config;
+  (*this).stgs_config = updated_enrichment.stgs_config;
 }
+
+void CascadeConfig::UpdateByAlpha(){
+  std::map<int, StageConfig>::iterator it;
+  for (it = (*this).stgs_config.begin(); it != (*this).stgs_config.end();
+       it++) {
+    // Update Beta values (from feed) -- Alpha & Cut are cte
+    it->second.BetaByAlphaAndCut();
+    // Recompute Product Assay and Tail Assay
+    it->second.ProductAssay();
+    it->second.TailAssay();
+  }
+}
+
+void CascadeConfig::UpdateByGamma(){
+  std::map<int, StageConfig>::iterator it;
+  for (it = (*this).stgs_config.begin(); it != (*this).stgs_config.end();
+       it++) {
+    double gamma = it->second.alpha * it->second.beta;
+    // Recompute Product Assay
+    it->second.ProductAssayByGamma(gamma);
+    // Alpha by Product assay
+    it->second.AlphaByProductAssay();
+    // Beta and tail assay...
+    it->second.BetaByAlphaAndCut();
+    it->second.TailAssay();
+  }
+}
+
 }  // namespace mbmore
