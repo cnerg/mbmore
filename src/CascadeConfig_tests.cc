@@ -63,9 +63,9 @@ TEST(CascadeStage_Test, TestCascade) {
   // Now test assays when cascade is modified away from ideal design
   // (cascade optimized for natural uranium feed, now use 20% enriched
   double feed_assay_mod = 0.20;
-  cascade.DesignCascade(feed_c, 1000000);
+  cascade.ScaleCascade(feed_c, 1000000);
   CascadeConfig cascade_non_ideal =
-      cascade.Compute_Assay(feed_assay_mod, 1e-31);
+      cascade.ModelMissUsedCascade(feed_assay_mod, 0, 1e-31);
 
   double mod_product_assay =
       cascade_non_ideal.stgs_config[n_stage_enrich - 1].product_assay;
@@ -105,7 +105,7 @@ TEST(CascadeStage_Test, TestCascadeDesign) {
 
   // not enough machines
   int max_centrifuges = 80;
-  cascade.DesignCascade(feed_c, max_centrifuges);
+  cascade.ScaleCascade(feed_c, max_centrifuges);
   int py_tot_mach = 80;
   double py_opt_feed = 1.30116169899e-05;
 
@@ -114,7 +114,7 @@ TEST(CascadeStage_Test, TestCascadeDesign) {
 
   // more machines than requested capacity
   max_centrifuges = 1000;
-  cascade.DesignCascade(feed_c, max_centrifuges);
+  cascade.ScaleCascade(feed_c, max_centrifuges);
   py_tot_mach = 999;
   py_opt_feed = 0.0001667;
 
@@ -145,7 +145,7 @@ TEST(CascadeStage_Test, TestUpdateAssay) {
   EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
 
   fa = 0.2;
-  cascade = cascade.Compute_Assay(fa, 1e-17);
+  cascade = cascade.ModelMissUsedCascade(fa, 0, 1e-17);
   product_assay = cascade.stgs_config[cascade.n_enrich - 1].product_assay;
   tail_assay = cascade.stgs_config[-cascade.n_strip].tail_assay;
   product_flow = cascade.stgs_config[cascade.n_enrich - 1].feed_flow *
@@ -183,7 +183,7 @@ TEST(CascadeStage_Test, TestUpdateAlphaBetaFix) {
   EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
 
   fa = 0.2;
-  cascade = cascade.Compute_Assay(fa, 1e-17, true);
+  cascade = cascade.ModelMissUsedCascade(fa, 1, 1e-17);
   double alpha_ref = cascade.stgs_config[0].alpha;
   std::map<int,StageConfig>::iterator it;
   for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end(); it++){
