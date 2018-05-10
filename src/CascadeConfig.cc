@@ -221,6 +221,10 @@ CascadeConfig CascadeConfig::ModelMisuseCascade(double f_assay,
     case 2:
       miss_used_cascade.ComputeAssayByGamma(f_assay, precision);
       break;
+
+    case 2:
+      miss_used_cascade.ComputeAssayByGamma(f_assay, precision);
+      break;
   }
   return misuse_cascade;
 }
