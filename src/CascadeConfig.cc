@@ -45,19 +45,9 @@ CascadeConfig::CascadeConfig(CentrifugeConfig centrifuge_, double f_assay,
 //  http://www.physics.utah.edu/~detar/phys6720/handouts/lapack.html
 //
 void CascadeConfig::CalcFeedFlows() {
-  // This is the Max # of stages in  It cannot be passed in due to
-  // how memory is allocated and so must be hardcoded. It's been chosen
-  // to be much larger than it should ever need to be
 
-  // total number of stages
   int n_stages = n_enrich + n_strip;
   int max_stages = n_stages;
-  if (n_stages > max_stages) {
-    std::cout << "Too many stages in the cascade."
-                 "Can't calculate the theoretical flows..."
-              << std::endl;
-    exit(1);
-  }
 
   // Build Array with pointers
   double flow_eqns[max_stages][max_stages];
@@ -156,7 +146,7 @@ void CascadeConfig::BuildIdealCascade(double f_assay, double product_assay,
   stg = ideal_stgs[stg_i];
   // Calculate number of stripping stages
   while (stg.tail_assay() > waste_assay) {
-    stg.feed_assay(stg.tail_assay())
+    stg.feed_assay(stg.tail_assay());
     stg.BuildIdealStg();
     stg_i--;
     ideal_stgs.insert(std::make_pair(stg_i, stg));
@@ -166,7 +156,6 @@ void CascadeConfig::BuildIdealCascade(double f_assay, double product_assay,
 }
 
 void CascadeConfig::PopulateStages() {
-  double machine_tol = 0.01;
   int n_stages = n_enrich + n_strip;
 
   for (int i = 0; i < n_stages; i++) {
@@ -177,14 +166,6 @@ void CascadeConfig::PopulateStages() {
       exit(1);
     }
     it->second.MachinesNeededPerStage();
-    double n_mach_exact = it->second.n_machines();
-    // unless the ideal number of machines is Very close to an integer value,
-    // round up to next integer to preserve steady-state flow balance
-    int n_mach = (int)n_mach_exact;
-    if (std::abs(n_mach_exact - n_mach) > machine_tol) {
-      n_mach = int(n_mach_exact) + 1;
-    }
-    it->second.n_machines(n_mach);
   }
 }
 
@@ -250,15 +231,15 @@ void CascadeConfig::UpdateFlow() {
     double max_stg_flow =
         it_real->second.n_machines() * it_real->second.centrifuge.feed;
     double stg_flow_ratio = it->second.feed_flow() / max_stg_flow;
-    if (ratio < stg_flow_ratio) {
+    if (ratio > stg_flow_ratio) {
       ratio = stg_flow_ratio;
     }
   }
   for (it = (*this).stgs_config.begin(); it != (*this).stgs_config.end();
        it++) {
-    it->second.feed_flow(second.feed_flow() / ratio);
+    it->second.feed_flow(it->second.feed_flow() * ratio);
   }
-  (*this).feed_flow *= 1. / ratio;
+  (*this).feed_flow *= ratio;
 }
 
 void CascadeConfig::UpdateCut() {
