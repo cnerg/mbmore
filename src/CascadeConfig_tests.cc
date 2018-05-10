@@ -61,16 +61,16 @@ TEST(CascadeStage_Test, TestCascade) {
   EXPECT_EQ(n_stage_waste, pycode_n_strip_stage);
 
   // Now test assays when cascade is modified away from ideal design
-  // (cascade optimized for natural uranium feed, now use 20% enriched
+  // (cascade optimized for natural uranium feed, now use 20% enriched)
   double feed_assay_mod = 0.20;
   cascade.ScaleCascade(feed_c, 1000000);
   CascadeConfig cascade_non_ideal =
-      cascade.ModelMissUsedCascade(feed_assay_mod, 0, 1e-31);
+      cascade.ModelMisuseCascade(feed_assay_mod, 0, 1e-31);
 
   double mod_product_assay =
-      cascade_non_ideal.stgs_config[n_stage_enrich - 1].product_assay;
+      cascade_non_ideal.stgs_config[n_stage_enrich - 1].product_assay();
   double mod_waste_assay =
-      cascade_non_ideal.stgs_config[-n_stage_waste].product_assay;
+      cascade_non_ideal.stgs_config[-n_stage_waste].product_assay();
 
   double pycode_mod_product_assay = 0.8189;
   EXPECT_NEAR(mod_product_assay, pycode_mod_product_assay, tol_assay);
@@ -97,9 +97,9 @@ TEST(CascadeStage_Test, TestCascadeDesign) {
   CascadeConfig cascade(centrifuge, fa, pa, wa, feed_c, 1000000);
 
   for (int i = 0; i < pycode_flows.size(); i++) {
-    EXPECT_NEAR(cascade.stgs_config[i - cascade.n_strip].feed_flow,
+    EXPECT_NEAR(cascade.stgs_config[i - cascade.n_strip].feed_flow(),
                 pycode_flows[i], tol_num);
-    int nmach = cascade.stgs_config[i - cascade.n_strip].n_machines;
+    int nmach = cascade.stgs_config[i - cascade.n_strip].n_machines();
     EXPECT_EQ(nmach, pycode_machines[i]);
   }
 
@@ -129,12 +129,12 @@ TEST(CascadeStage_Test, TestUpdateAssay) {
 
   CascadeConfig cascade(centrifuge, fa, pa, wa, feed_c, 100);
   double product_assay =
-      cascade.stgs_config[cascade.n_enrich - 1].product_assay;
-  double tail_assay = cascade.stgs_config[-cascade.n_strip].tail_assay;
-  double product_flow = cascade.stgs_config[cascade.n_enrich - 1].feed_flow *
-                        cascade.stgs_config[cascade.n_enrich - 1].cut;
-  double tail_flow = cascade.stgs_config[-cascade.n_strip].feed_flow *
-                     (1 - cascade.stgs_config[-cascade.n_strip].cut);
+      cascade.stgs_config[cascade.n_enrich - 1].product_assay();
+  double tail_assay = cascade.stgs_config[-cascade.n_strip].tail_assay();
+  double product_flow = cascade.stgs_config[cascade.n_enrich - 1].feed_flow() *
+                        cascade.stgs_config[cascade.n_enrich - 1].cut();
+  double tail_flow = cascade.stgs_config[-cascade.n_strip].feed_flow() *
+                     (1 - cascade.stgs_config[-cascade.n_strip].cut());
 
   double feed_from_assay =
       product_flow * (product_assay - tail_assay) / (fa - tail_assay);
@@ -145,13 +145,13 @@ TEST(CascadeStage_Test, TestUpdateAssay) {
   EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
 
   fa = 0.2;
-  cascade = cascade.ModelMissUsedCascade(fa, 0, 1e-17);
-  product_assay = cascade.stgs_config[cascade.n_enrich - 1].product_assay;
-  tail_assay = cascade.stgs_config[-cascade.n_strip].tail_assay;
-  product_flow = cascade.stgs_config[cascade.n_enrich - 1].feed_flow *
-                 cascade.stgs_config[cascade.n_enrich - 1].cut;
-  tail_flow = cascade.stgs_config[-cascade.n_strip].feed_flow *
-              (1 - cascade.stgs_config[-cascade.n_strip].cut);
+  cascade = cascade.ModelMisuseCascade(fa, 0, 1e-17);
+  product_assay = cascade.stgs_config[cascade.n_enrich - 1].product_assay();
+  tail_assay = cascade.stgs_config[-cascade.n_strip].tail_assay();
+  product_flow = cascade.stgs_config[cascade.n_enrich - 1].feed_flow() *
+                 cascade.stgs_config[cascade.n_enrich - 1].cut();
+  tail_flow = cascade.stgs_config[-cascade.n_strip].feed_flow() *
+              (1 - cascade.stgs_config[-cascade.n_strip].cut());
   feed_from_assay =
       product_flow * (product_assay - tail_assay) / (fa - tail_assay);
   tail_from_assay = product_flow * (product_assay - fa) / (fa - tail_assay);
@@ -167,12 +167,12 @@ TEST(CascadeStage_Test, TestUpdateAlphaBetaFix) {
 
   CascadeConfig cascade(centrifuge, fa, pa, wa, feed_c, 100);
   double product_assay =
-      cascade.stgs_config[cascade.n_enrich - 1].product_assay;
-  double tail_assay = cascade.stgs_config[-cascade.n_strip].tail_assay;
-  double product_flow = cascade.stgs_config[cascade.n_enrich - 1].feed_flow *
-                        cascade.stgs_config[cascade.n_enrich - 1].cut;
-  double tail_flow = cascade.stgs_config[-cascade.n_strip].feed_flow *
-                     (1 - cascade.stgs_config[-cascade.n_strip].cut);
+      cascade.stgs_config[cascade.n_enrich - 1].product_assay();
+  double tail_assay = cascade.stgs_config[-cascade.n_strip].tail_assay();
+  double product_flow = cascade.stgs_config[cascade.n_enrich - 1].feed_flow() *
+                        cascade.stgs_config[cascade.n_enrich - 1].cut();
+  double tail_flow = cascade.stgs_config[-cascade.n_strip].feed_flow() *
+                     (1 - cascade.stgs_config[-cascade.n_strip].cut());
 
   double feed_from_assay =
       product_flow * (product_assay - tail_assay) / (fa - tail_assay);
@@ -183,12 +183,12 @@ TEST(CascadeStage_Test, TestUpdateAlphaBetaFix) {
   EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
 
   fa = 0.2;
-  cascade = cascade.ModelMissUsedCascade(fa, 1, 1e-17);
-  double alpha_ref = cascade.stgs_config[0].alpha;
+  cascade = cascade.ModelMisuseCascade(fa, 1, 1e-17);
+  double alpha_ref = cascade.stgs_config[0].alpha();
   std::map<int,StageConfig>::iterator it;
   for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end(); it++){
-    EXPECT_EQ(alpha_ref, it->second.alpha);
-    EXPECT_EQ(alpha_ref, it->second.beta);
+    EXPECT_EQ(alpha_ref, it->second.alpha());
+    EXPECT_EQ(alpha_ref, it->second.beta());
   }
 }
 
