@@ -35,3 +35,21 @@ PR #19
 **Security:** None
 
 
+PR #20
+------
+
+**Added:** None 
+  - add stages definitions, aims to be used in the future CascadeEnrich
+    archetype. 
+
+**Changed:** None 
+
+**Deprecated:** None
+
+**Removed:** None
+
+**Fixed:** None
+
+**Security:** None
+
+
