@@ -11,6 +11,7 @@
 #include "material.h"
 
 #include "CascadeEnrich.h"
+#include "CascadeConfig.h"
 
 namespace mbmore {
 
