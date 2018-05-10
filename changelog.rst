@@ -15,3 +15,23 @@ PR #17
 **Fixed:** None
 
 **Security:** None
+
+
+PR #19
+------
+
+**Added:** None 
+  - add centrifuges definitions, aims to be used in the future CascadeEnrich
+    archetype. 
+
+**Changed:** None 
+
+**Deprecated:** None
+
+**Removed:** None
+
+**Fixed:** None
+
+**Security:** None
+
+
