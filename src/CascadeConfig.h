@@ -39,7 +39,15 @@ class CascadeConfig {
 
   // Compute the response of the cascade to a non ideal feed assay
   void PropagateAssay(double f_assay);
-  void ComputeAssay(double f_assay, double precision = 1e-8);
+
+
+  // Propagate iterratively the assay assuming
+  // Alpha constant
+  void ComputeAssayByAlpha(double f_assay, double precision = 1e-8);
+  // Gamma constant
+  void ComputeAssayByGamma(double f_assay, double precision = 1e-8);
+
+
   void UpdateCut();
   void UpdateFlow();
 
