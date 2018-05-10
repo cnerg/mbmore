@@ -3,8 +3,11 @@
 USE_CYCLUS("mbmore" "mytest")
 USE_CYCLUS("mbmore" "behavior_functions")
 USE_CYCLUS("mbmore" "RandomEnrich")
+
 USE_CYCLUS("mbmore" "CentrifugeConfig")
 USE_CYCLUS("mbmore" "StageConfig")
+USE_CYCLUS("mbmore" "CascadeConfig")
+
 USE_CYCLUS("mbmore" "RandomSink")
 USE_CYCLUS("mbmore" "StateInst")
 USE_CYCLUS("mbmore" "InteractRegion")

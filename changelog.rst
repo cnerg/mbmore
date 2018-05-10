@@ -53,3 +53,21 @@ PR #20
 **Security:** None
 
 
+PR #??
+------
+
+**Added:** None 
+  - add cascades definitions, aims to be used in the future CascadeEnrich
+    archetype. 
+
+**Changed:** None 
+
+**Deprecated:** None
+
+**Removed:** None
+
+**Fixed:** None
+
+**Security:** None
+
+
