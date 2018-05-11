@@ -56,7 +56,7 @@ PR #20
 PR #21
 ------
 
-**Added:** None 
+**Added:** 
   - add cascades definitions, aims to be used in the future CascadeEnrich
     archetype. 
 
