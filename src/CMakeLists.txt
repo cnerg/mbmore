@@ -7,6 +7,7 @@ USE_CYCLUS("mbmore" "RandomEnrich")
 USE_CYCLUS("mbmore" "CentrifugeConfig")
 USE_CYCLUS("mbmore" "StageConfig")
 USE_CYCLUS("mbmore" "CascadeConfig")
+USE_CYCLUS("mbmore" "CascadeEnrich")
 
 USE_CYCLUS("mbmore" "RandomSink")
 USE_CYCLUS("mbmore" "StateInst")
