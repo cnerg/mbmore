@@ -20,7 +20,7 @@ PR #17
 PR #19
 ------
 
-**Added:** None 
+**Added:** 
   - add centrifuges definitions, aims to be used in the future CascadeEnrich
     archetype. 
 
