@@ -38,7 +38,7 @@ PR #19
 PR #20
 ------
 
-**Added:** None 
+**Added:** 
   - add stages definitions, aims to be used in the future CascadeEnrich
     archetype. 
 
