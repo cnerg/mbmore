@@ -71,3 +71,18 @@ PR #21
 **Security:** None
 
 
+PR #22
+------
+
+**Added:**  
+  - add the CascadeEnrich archetype. 
+
+**Changed:** None 
+
+**Deprecated:** None
+
+**Removed:** None
+
+**Fixed:** None
+
+**Security:** None
