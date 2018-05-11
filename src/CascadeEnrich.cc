@@ -31,7 +31,7 @@ CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
       feed_commod(""),
       product_commod(""),
       tails_commod(""),
-      fix_ab(false),
+      miss_use_model(0),
       order_prefs(true) {}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CascadeEnrich::~CascadeEnrich() {}
@@ -466,16 +466,16 @@ double CascadeEnrich::FeedAssay(double quantity) {
 }
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
-  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
+  CascadeConfig cascade_tmp = cascade.ModelMissUsedCascade(feed_assay, miss_use_model, precision);
   return cascade_tmp.stgs_config.rbegin()->second.product_assay;
 }
 double CascadeEnrich::TailsAssay(double feed_assay) {
-  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
+  CascadeConfig cascade_tmp = cascade.ModelMissUsedCascade(feed_assay, miss_use_model, precision);
   return cascade_tmp.stgs_config.begin()->second.tail_assay;
 }
 
 double CascadeEnrich::MaxFeedFlow(double feed_assay){
-  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
+  CascadeConfig cascade_tmp = cascade.ModelMissUsedCascade(feed_assay, miss_use_model, precision);
 
   return FlowPerMon(cascade_tmp.FeedFlow());
 
@@ -507,7 +507,7 @@ double CascadeEnrich::FeedRequired(double prod_qty) {
 double CascadeEnrich::ProductFlow(double feed_flow) {
   double feed_assay = FeedAssay(feed_flow);
   double feed_ratio = feed_flow / MaxFeedFlow(feed_assay);
-  CascadeConfig cascade_tmp = cascade.Compute_Assay(feed_assay, precision, fix_ab);
+  CascadeConfig cascade_tmp = cascade.ModelMissUsedCascade(feed_assay, miss_use_model, precision);
    
   StageConfig last_stg = cascade_tmp.stgs_config.rbegin()->second;
   double product_flow = last_stg.feed_flow * last_stg.cut;
