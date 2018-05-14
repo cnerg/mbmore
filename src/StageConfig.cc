@@ -73,15 +73,20 @@ double StageConfig::ProductAssay() {
 
 double StageConfig::TailAssay() {
   double A = (feed_assay / (1. - feed_assay)) / beta;
-  tail_assay = A / (1. + A);
-  return tail_assay;
+  (*this).tail_assay = A / (1. + A);
+  return (*this).tail_assay;
 }
 
 double StageConfig::AlphaByDU() {
   double feed = centrifuge.feed;
   double M = centrifuge.M;
-  alpha = 1 + std::sqrt((2 * (DU / M) * (1 - cut) / (cut * feed)));
-  return alpha;
+  (*this).alpha = 1 + std::sqrt((2 * (DU / M) * (1 - cut) / (cut * feed)));
+  return (*this).alpha;
+}
+
+double StageConfig::AlphaByProductAssay(){
+  (*this).alpha = (1 - feed_assay)/feed_assay * product_assay/(1 - product_assay);
+  return (*this).alpha;
 }
 
 double StageConfig::BetaByAlphaAndCut() {
@@ -91,6 +96,23 @@ double StageConfig::BetaByAlphaAndCut() {
   beta = feed_assay / (1. - feed_assay) * (1. - waste_assay) / waste_assay;
   return beta;
 }
+
+double StageConfig::ProductAssayByGamma(double gamma){
+  double prod_assay = ( sqrt( pow( (feed_assay - cut) * gamma, 2)
+                              + gamma * ( 2*feed_assay + 2*cut 
+                                          - 2*pow(feed_assay, 2)
+                                          - 2*pow(cut, 2))
+                        + pow(feed_assay + cut -1, 2))
+                        + gamma*(feed_assay + cut)
+                        - feed_assay - cut + 1 )
+                      / (2*cut * (gamma -1));
+  
+  (*this).product_assay = prod_assay;
+  
+  return (*this).product_assay;
+}
+
+
 
 double StageConfig::CutByAlphaBeta() {
   double product_assay = ProductAssay();
