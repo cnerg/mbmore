@@ -45,7 +45,6 @@ CentrifugeConfig::CentrifugeConfig() {
   D_rho = 2.2e-5;     // kg/m/s
   gas_const = 8.314;  // J/K/mol
   M_238 = 0.238;      // kg/mol
-  secpermonth = 60. * 60. * 24. * (365.25 / 12.);
 }
 
 CentrifugeConfig::CentrifugeConfig(double v_a_, double h_, double d_, double feed_, double T_,
@@ -65,7 +64,6 @@ CentrifugeConfig::CentrifugeConfig(double v_a_, double h_, double d_, double fee
   D_rho = 2.2e-5;     // kg/m/s
   gas_const = 8.314;  // J/K/mol
   M_238 = 0.238;      // kg/mol
-  secpermonth = 60. * 60. * 24. * (365.25 / 12.);
 }
 
 double CentrifugeConfig::ComputeDeltaU(double cut) {

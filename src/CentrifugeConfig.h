@@ -32,7 +32,6 @@ class CentrifugeConfig {
   double D_rho;      // kg/m/s
   double gas_const;  // J/K/mol
   double M_238;      // kg/mol
-  double secpermonth; // obvious ?!
 
   // two method to compute some part of the solution to the Raetz equation
   double CalcCTherm(double v_a, double temp, double dM);
