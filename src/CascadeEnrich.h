@@ -126,11 +126,11 @@ class CascadeEnrich : public cyclus::Facility {
 
   /// --- Convert input file flows kg/mon to SI units ---
   inline double FlowPerSec(double flow_per_mon) {
-    return flow_per_mon / secpermonth;
+    return flow_per_mon / secpertimestep;
   }
 
-  inline double FlowPerMon(double flow_per_sec) {
-    return flow_per_sec * secpermonth;
+  inline double FlowPerDt(double flow_per_sec) {
+    return flow_per_sec * secpertimestep;
   }
 
   inline double Mg2kgPerSec(double feed_mg_per_sec) {
@@ -183,7 +183,7 @@ class CascadeEnrich : public cyclus::Facility {
   double precision = 1e-15;
 
 
-  const double secpermonth = 60.*60.*24.*(365.25/12.);
+ double secpertimestep = 60.*60.*24.*(365.25/12.);
 
   // Set to design_tails at beginning of simulation. Gets reset if
   // facility is used off-design
