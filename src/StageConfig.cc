@@ -98,7 +98,7 @@ double StageConfig::BetaByAlphaAndCut() {
 }
 
 double StageConfig::ProductAssayByGamma(double gamma){
-  double prod_assay = ( sqrt( pow( (feed_assay - cut) * gamma, 2)
+  double prod_assay = ( - sqrt( pow( (feed_assay - cut) * gamma, 2)
                               + gamma * ( 2*feed_assay + 2*cut 
                                           - 2*pow(feed_assay, 2)
                                           - 2*pow(cut, 2))
