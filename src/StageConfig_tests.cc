@@ -82,6 +82,32 @@ TEST(StageConfig_Test, TestSWU) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(StageConfig_Test, ProductAssayByGamma) {
+  double gamma = 1.3798316056650026;
+  double target_product_assay = 0.00821;
+  double theta_ = 0.46040372309;
+  double feed_assay_ = 0.007;
+  StageConfig stage(feed_assay_, feed_c, theta_, delU, -1, 1e-16);
+
+  EXPECT_NEAR(target_product_assay,stage.ProductAssayByGamma(gamma), 1e-5);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(StageConfig_Test, AlphaByProductAssay) {
+  double gamma = 1.3798316056650026;
+  double target_product_assay = 0.00821;
+  double theta_ = 0.46040372309;
+  double feed_assay_ = 0.007;
+  StageConfig stage(feed_assay_, feed_c, theta_, delU, -1, 1e-16);
+  stage.feed_assay = 0.1;
+  stage.product_assay = 0.3;
+  double alpha_ = 0.3/(1-0.3)*(1-0.1)/0.1;
+
+  EXPECT_NEAR(alpha_,stage.AlphaByProductAssay(), 1e-5);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determine the output of the first enrich/strip stage of a cascade
 // based on the design params for the cascade
 TEST(StageConfig_Test, TestStages) {
