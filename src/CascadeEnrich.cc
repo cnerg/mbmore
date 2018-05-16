@@ -32,7 +32,9 @@ CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
       product_commod(""),
       tails_commod(""),
       miss_use_model(0),
-      order_prefs(true) {}
+      order_prefs(true) {
+        secpertimestep = (*this).context()->sim_info().dt;
+      }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CascadeEnrich::~CascadeEnrich() {}
 
@@ -59,6 +61,7 @@ void CascadeEnrich::EnterNotify() {
   centrifuge.feed = machine_feed / 1000 / 1000;
   centrifuge.temp = temp;
   centrifuge.flow_internal = L_over_F;
+  secpertimestep = (*this).context()->sim_info().dt;
 
   cascade = CascadeConfig(centrifuge, design_feed_assay, design_product_assay,
                           design_tails_assay, FlowPerSec(design_feed_flow),
@@ -78,7 +81,7 @@ void CascadeEnrich::EnterNotify() {
     std::cout << " machine: " << it->second.n_machines;
     std::cout << std::endl;
   }
-  std::cout << "Dsign Feed Flow " << FlowPerMon(cascade.FeedFlow()) << std::endl;
+  std::cout << "Dsign Feed Flow " << FlowPerDt(cascade.FeedFlow()) << std::endl;
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
@@ -477,7 +480,7 @@ double CascadeEnrich::TailsAssay(double feed_assay) {
 double CascadeEnrich::MaxFeedFlow(double feed_assay){
   CascadeConfig cascade_tmp = cascade.ModelMissUsedCascade(feed_assay, miss_use_model, precision);
 
-  return FlowPerMon(cascade_tmp.FeedFlow());
+  return FlowPerDt(cascade_tmp.FeedFlow());
 
 }
 
@@ -511,7 +514,7 @@ double CascadeEnrich::ProductFlow(double feed_flow) {
    
   StageConfig last_stg = cascade_tmp.stgs_config.rbegin()->second;
   double product_flow = last_stg.feed_flow * last_stg.cut;
-  return feed_ratio * FlowPerMon(product_flow);
+  return feed_ratio * FlowPerDt(product_flow);
 }
 
 double CascadeEnrich::TailsFlow(double feed_flow) {
