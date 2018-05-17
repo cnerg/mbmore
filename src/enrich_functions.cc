@@ -15,25 +15,6 @@ double gas_const = 8.314;  // J/K/mol
 double M_238 = 0.238;      // kg/mol
 
 
-double AlphaBySwu(double del_U, double feed, double cut, double M) {
-  double alpha = 1 + std::sqrt((2 * (del_U / M) * (1 - cut) / (cut * feed)));
-  return alpha;
-}
-
-// per machine
-double ProductAssayByAlpha(double alpha, double feed_assay) {
-  // Possibly incorrect is commented out ?
-  //    double ratio = (1.0 - feed_assay) / (alpha * feed_assay);
-  //    return 1.0 / (ratio + 1.0);
-  double ratio = alpha * feed_assay / (1.0 - feed_assay);
-  return ratio / (1 + ratio);
-}
-
-double WasteAssayByAlpha(double alpha, double feed_assay) {
-  double A = (feed_assay / (1 - feed_assay)) / alpha;
-  return A / (1 + A);
-}
-
 // This equation can only be used in the limit where the separation factor
 // (alpha) is very close to one, which is not true for modern gas centrifuges
 // DO NOT USE THIS EQUATION!!!
