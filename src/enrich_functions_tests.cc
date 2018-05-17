@@ -46,27 +46,6 @@ namespace mbmore {
     const double tol_num = 1e-2;
    
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Find product assay from separation factor alpha
-TEST(Enrich_Functions_Test, TestAssays) {
-
-  double cur_alpha = 1.4;
-  double cur_f_assay = 0.007;
-
-  double cpp_assay = ProductAssayByAlpha(cur_alpha, cur_f_assay);
-  
-  double pycode_assay = 0.009772636;
-  double tol = 1e-6;
-  
-  EXPECT_NEAR(cpp_assay, pycode_assay, tol);
-
-  double n_stages = 5;
-  double pycode_w_assay = 0.00095311 ;
-
-  double cpp_w_assay = WasteAssayFromNStages(cur_alpha, cur_f_assay, n_stages);
-  
-  EXPECT_NEAR(cpp_w_assay, pycode_w_assay, tol);
-
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Ideal cascade design, and then using away from ideal design
