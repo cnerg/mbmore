@@ -44,38 +44,6 @@ std::pair<double, double> StagesPerCascade(double alpha, double feed_assay,
 // Determine number of stages required to reach ideal cascade product assay
 // (requires integer number of stages, so output may exceed target assay)
 
-std::pair<int, int> FindNStages(double alpha, double feed_assay,
-                                double product_assay, double waste_assay) {
-  using std::pair;
-
-  int ideal_enrich_stage = 0;
-  int ideal_strip_stage = 0;
-  double stage_feed_assay = feed_assay;
-  double stage_product_assay = feed_assay;
-  double stage_waste_assay = feed_assay;  // start w/waste of 1st enrich stage
-
-  // Calculate number of enriching stages
-  while (stage_product_assay < product_assay) {
-    stage_product_assay = ProductAssayByAlpha(alpha, stage_feed_assay);
-    if (ideal_enrich_stage == 0) {
-      stage_waste_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
-    }
-    ideal_enrich_stage += 1;
-    stage_feed_assay = stage_product_assay;
-  }
-  // Calculate number of stripping stages
-  stage_feed_assay = stage_waste_assay;
-  while (stage_waste_assay > waste_assay) {
-    stage_waste_assay = WasteAssayByAlpha(alpha, stage_feed_assay);
-    ideal_strip_stage += 1;
-    stage_feed_assay = stage_waste_assay;
-  }
-
-  std::pair<int, int> stages =
-      std::make_pair(ideal_enrich_stage, ideal_strip_stage);
-  return stages;
-}
-
 double ProductAssayFromNStages(double alpha, double feed_assay,
                                double enrich_stages) {
   double A =
@@ -135,86 +103,6 @@ double DelUByCascadeConfig(double product_assay, double waste_assay,
   return U_cascade / feed_assay;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Calculate steady-state flow rates into each cascade stage
-// Linear system of equations in form AX = B, where A is nxn square matrix
-// of linear equations for the flow rates of each stage and B are the external
-// feeds for the stage. External feed is zero for all stages accept cascade
-// feed stage (F_0) stages start with last strip stage [-2, -1, 0, 1, 2]
-//  http://www.physics.utah.edu/~detar/phys6720/handouts/lapack.html
-//
-std::vector<double> CalcFeedFlows(std::pair<int, int> n_st, double cascade_feed,
-                                  double cut) {
-  // This is the Max # of stages in cascade. It cannot be passed in due to
-  // how memory is allocated and so must be hardcoded. It's been chosen
-  // to be much larger than it should ever need to be
-  int max_stages = 100;
-
-  int n_enrich = n_st.first;
-  int n_strip = n_st.second;
-  int n_stages = n_st.first + n_st.second;
-
-  // LAPACK takes the external flow feeds as B, and then returns a modified
-  // version of the same array now representing the solution flow rates.
-
-  // Build Array with pointers
-  double flow_eqns[max_stages][max_stages];
-  double flows[1][max_stages];
-
-  // build matrix of equations in this pattern
-  // [[ -1, 1-cut,    0,     0,      0]       [[0]
-  //  [cut,    -1, 1-cut,    0,      0]        [0]
-  //  [  0,   cut,    -1, 1-cut,     0]  * X = [-1*cascade_feed]
-  //  [  0,     0,   cut,    -1, 1-cut]        [0]
-  //  [  0,     0,     0,   cut,    -1]]       [0]]
-  //
-  for (int row_idx = 0; row_idx < max_stages; row_idx++) {
-    // fill the array with zeros, then update individual elements as nonzero
-    flows[0][row_idx] = 0;
-    for (int fill_idx = 0; fill_idx < max_stages; fill_idx++) {
-      flow_eqns[fill_idx][row_idx] = 0;
-    }
-    // Required do to the artificial 'Max Stages' defn. Only calculate
-    // non-zero matrix elements where stages really exist.
-    if (row_idx < n_stages) {
-      int i = row_idx - n_strip;
-      int col_idx = n_strip + i;
-      flow_eqns[col_idx][row_idx] = -1;
-      if (col_idx != 0) {
-        flow_eqns[col_idx - 1][row_idx] = cut;
-      }
-      if (col_idx != n_stages - 1) {
-        flow_eqns[col_idx + 1][row_idx] = (1 - cut);
-      }
-      // Add the external feed for the cascade
-      if (i == 0) {
-        flows[0][row_idx] = -1 * cascade_feed;
-      }
-    }
-  }
-
-  // LAPACK solver variables
-  int nrhs = 1;          // 1 column solution
-  int lda = max_stages;  // must be >= MAX(1,N)
-  int ldb = max_stages;  // must be >= MAX(1,N)
-  int ipiv[max_stages];
-  int info;
-
-  // Solve the linear system
-  dgesv_(&n_stages, &nrhs, &flow_eqns[0][0], &lda, ipiv, &flows[0][0], &ldb,
-         &info);
-
-  // Check for success
-  if (info != 0) {
-    std::cerr << "LAPACK linear solver dgesv returned error " << info << "\n";
-  }
-
-  std::vector<double> final_flows;
-  for (int i = 0; i < n_stages; i++) {
-    final_flows.push_back(flows[0][i]);
-  }
-  return final_flows;
-}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determine number of machines in each stage of the cascade, and total
 // output flow from each stage
@@ -278,16 +166,6 @@ std::vector<std::pair<int, double>> CalcStageFeatures(
   }
 
   return stage_info;
-}
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Determine total number of machines in the cascade from machines per stage
-int FindTotalMachines(std::vector<std::pair<int, double>> stage_info) {
-  int machines_needed = 0;
-  std::vector<std::pair<int, double>>::const_iterator it;
-  for (it = stage_info.begin(); it != stage_info.end(); it++) {
-    machines_needed += it->first;
-  }
-  return machines_needed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
