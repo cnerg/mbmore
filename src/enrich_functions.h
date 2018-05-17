@@ -14,20 +14,6 @@ extern "C" {
            int *ipivot, double *b, int *ldb, int *info) ;
 }
   
-  // Calculates the ideal separation energy for a single machine 
-  // as defined by the Raetz equation
-  // (referenced in Glaser, Science and Global Security 2009)
-  double CalcDelU(double v_a, double height, double diameter,  double feed,
-		  double temp, double cut, double eff, double M, double dM,
-		  double x, double flow_internal);
-
-  // Calculates the exponent for the energy distribution using ideal gas law
-  // (component of multiple other equations)
-  double CalcCTherm(double v_a, double temp, double dM);
-
-  // Calculates the V(N_x) term for enrichment eqns where N_x is the assay
-  // of isotope x
-  double CalcV(double assay);
 
   // Calculates the separations factor given the ideal separation energy of a
   // single machine (del_U has units of moles/sec)
