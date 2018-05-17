@@ -15,11 +15,6 @@ extern "C" {
 }
   
 
-  // Calculates the number of stages needed in a cascade given the separation
-  // potential of a single centrifuge and the material assays
-  std::pair<int, int>
-    FindNStages(double alpha, double feed_assay, double product_assay,
-		     double Nwc);
 
   // Calculates the product assay after N enriching stages
   double ProductAssayFromNStages(double alpha, double feed_assay,
@@ -68,10 +63,6 @@ extern "C" {
 			     double product_flow, double waste_flow,
 			     double feed_assay);
 
-  // Solves system of linear eqns to determine steady state flow rates
-  // in each stage of cascade
-  std::vector<double> CalcFeedFlows(std::pair<int, int> n_st,
-				    double cascade_feed, double cut);
 
   // Determines the number of machines and product in each stage based
   // on the steady-state flows defined for the cascade.
@@ -81,8 +72,6 @@ extern "C" {
 						    std::pair<int, int> n_st,
 						    std::vector<double> feed_flow);
 
-  // Determine total number of machines in the cascade from machines per stage
-  int FindTotalMachines(std::vector<std::pair<int, double>> stage_info);
 
   std::pair<int,double> DesignCascade( double design_feed, double design_alpha,
 				       double design_delU, double cut,
