@@ -13,11 +13,6 @@ extern "C" {
      void dgesv_(int *n, int *nrhs,  double *a,  int  *lda,  
            int *ipivot, double *b, int *ldb, int *info) ;
 }
-
-  // Organizes bids by enrichment level of requested material
-  bool SortBids(cyclus::Bid<cyclus::Material>* i,
-		cyclus::Bid<cyclus::Material>* j);
-
   
   // Calculates the ideal separation energy for a single machine 
   // as defined by the Raetz equation
