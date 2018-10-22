@@ -67,20 +67,6 @@ TEST(Enrich_Functions_Test, TestAssays) {
   EXPECT_NEAR(cpp_w_assay, pycode_w_assay, tol);
 
 }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Calculate ideal SWU params of single machine (separation potential delU
-// and separation factor alpha)
-TEST(Enrich_Functions_Test, TestSWU) {
-
-  double pycode_U = 7.03232816847e-08;
-  double tol = 1e-9;
-  
-  EXPECT_NEAR(delU, pycode_U, tol);
-
-  double pycode_alpha = 1.16321;
-  double tol_alpha = 1e-2;
-  EXPECT_NEAR(alpha, pycode_alpha, tol_alpha);
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Ideal cascade design, and then using away from ideal design
