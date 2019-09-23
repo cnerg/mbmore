@@ -55,17 +55,17 @@ TEST(StageConfig_Test, TestAssays) {
   double cal_prod_assay = stage.ProductAssay();
 
   // N_prime = alpha*R / ( 1+alpha*R)
-  double th_prod_assay = 0.009773;
+  double theory_prod_assay = 0.009773;
   double tol = 1e-6;
 
-  EXPECT_NEAR(cal_prod_assay, th_prod_assay, tol);
+  EXPECT_NEAR(cal_prod_assay, theory_prod_assay, tol);
 
   double n_stages = 5;
-  double th_w_assay = 0.004227;
+  double theory_w_assay = 0.004227;
   double cur_beta = stage.BetaByAlphaAndCut();
   double cal_w_assay = stage.TailAssay();
 
-  EXPECT_NEAR(cal_w_assay, th_w_assay, tol);
+  EXPECT_NEAR(cal_w_assay, theory_w_assay, tol);
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Calculate ideal SWU params of single machine (separation potential delU
@@ -108,10 +108,10 @@ TEST(StageConfig_Test, TestStages) {
   double strip_waste_assay = stage.TailAssay();
 
   double pycode_n_mach_w = 26.6127;
-  double th_waste_assay_s = 0.005951;
+  double theory_waste_assay_s = 0.005951;
 
   EXPECT_NEAR(n_mach_w, pycode_n_mach_w, tol_num);
-  EXPECT_NEAR(strip_waste_assay, th_waste_assay_s, tol_assay);
+  EXPECT_NEAR(strip_waste_assay, theory_waste_assay_s, tol_assay);
 }
 
 }  // namespace enrichfunctiontests
