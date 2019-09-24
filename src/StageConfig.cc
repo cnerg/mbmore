@@ -37,6 +37,9 @@ StageConfig::StageConfig(double f_assay, double feed_, double cut_, double DU_,
   ProductAssay();
   TailAssay();
 }
+  
+// alpha = beta occurs approx. in the region 0.1 < cut < 0.9
+// so bounds are calculated for ideal cut
 double StageConfig::CutForIdealStg(double f_assay, double precision) {
   feed_assay = f_assay;
   double p_cut = cut = 0.1;
