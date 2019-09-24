@@ -31,6 +31,7 @@ double feed_m = 15 * 60 * 60 / ((1e3) * 60 * 60 * 1000.0);  // kg/sec
 double temp = 320.0;                                        // Kelvin
 
 // Cascade params used in Python test code (Enrichment_Calculations.ipynb)
+// found in enrich_calcs repo listed above.
 const double feed_assay = 0.0071;
 const double product_assay = 0.035;
 const double waste_assay = 0.001;

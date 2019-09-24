@@ -43,20 +43,20 @@ double StageConfig::CutForIdealStg(double f_assay, double precision) {
   (*this).DU = centrifuge.ComputeDeltaU(cut);
   double p_alpha = AlphaByDU();
   double p_beta = BetaByAlphaAndCut();
-  double p_alpha_m_beta = p_alpha - p_beta;
+  double p_alpha_minus_beta = p_alpha - p_beta;
   cut = 0.9;
   (*this).DU = centrifuge.ComputeDeltaU(cut);
   AlphaByDU();
   BetaByAlphaAndCut();
   while (std::abs(alpha - beta) > precision) {
     // a*cut +b =y
-    double alpha_m_beta = alpha - beta;
-    double a = (p_alpha_m_beta - alpha_m_beta) / (p_cut - cut);
-    double b = alpha_m_beta - cut * a;
+    double alpha_minus_beta = alpha - beta;
+    double a = (p_alpha_minus_beta - alpha_minus_beta) / (p_cut - cut);
+    double b = alpha_minus_beta - cut * a;
     // old = new
-    p_alpha_m_beta = alpha_m_beta;
+    p_alpha_minus_beta = alpha_minus_beta;
     p_cut = cut;
-    // targeting alpha_m_beta = 0
+    // targeting alpha_minus_beta = 0
     cut = -b / a;
     DU = centrifuge.ComputeDeltaU(cut);
     AlphaByDU();
@@ -66,7 +66,7 @@ double StageConfig::CutForIdealStg(double f_assay, double precision) {
 }
 
 double StageConfig::ProductAssay() {
-  double ratio = alpha * feed_assay / (1.0 - feed_assay);
+  double ratio = alpha * feed_assay / (1. - feed_assay);
   product_assay = ratio / (1. + ratio);
   return product_assay;
 }
@@ -80,7 +80,7 @@ double StageConfig::TailAssay() {
 double StageConfig::AlphaByDU() {
   double feed = centrifuge.feed;
   double M = centrifuge.M;
-  alpha = 1 + std::sqrt((2 * (DU / M) * (1 - cut) / (cut * feed)));
+  alpha = 1. + std::sqrt((2. * (DU / M) * (1. - cut) / (cut * feed)));
   return alpha;
 }
 
@@ -117,13 +117,13 @@ void StageConfig::BuildIdealStg(double f_assay, double precision) {
 }
 
 double StageConfig::MachinesPerStage() {
-  n_machines = feed_flow / (2.0 * DU / (pow((alpha - 1.0), 2)));
+  n_machines = feed_flow / (2. * DU / (pow((alpha - 1.), 2.)));
   return n_machines;
 }
 
 double StageConfig::ProductPerEnrStage() {
-  return feed_flow * (alpha - 1.0) * feed_assay * (1 - feed_assay) /
-         (2 * (product_assay - feed_assay));
+  return feed_flow * (alpha - 1.) * feed_assay * (1. - feed_assay) /
+         (2. * (product_assay - feed_assay));
 }
 
 }  // namespace mbmore
