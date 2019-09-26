@@ -41,7 +41,7 @@ class StageConfig {
   double TailAssay();
 
   // Return the minimum number of centrifuges required to meet the feed flow
-  double MachinesPerStage();
+  double MachinesNeededPerStage();
   // Compute the Product feed
   double ProductPerEnrStage();
 

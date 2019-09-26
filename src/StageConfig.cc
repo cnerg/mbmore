@@ -37,7 +37,7 @@ StageConfig::StageConfig(double f_assay, double feed_, double cut_, double DU_,
   ProductAssay();
   TailAssay();
 }
-  
+
 // alpha = beta occurs approx. in the region 0.1 < cut < 0.9
 // so bounds are calculated for ideal cut
 double StageConfig::CutForIdealStg(double f_assay, double precision) {
@@ -119,14 +119,12 @@ void StageConfig::BuildIdealStg(double f_assay, double precision) {
   TailAssay();
 }
 
-double StageConfig::MachinesPerStage() {
+double StageConfig::MachinesNeededPerStage() {
+  // This equation was replaced because the per-machine feed-flow
+  // is already calculated inside the centrifuge object.
   n_machines = feed_flow / (2. * DU / (pow((alpha - 1.), 2.)));
+  //n_machines = feed_flow / centrifuge.feed;
   return n_machines;
-}
-
-double StageConfig::ProductPerEnrStage() {
-  return feed_flow * (alpha - 1.) * feed_assay * (1. - feed_assay) /
-         (2. * (product_assay - feed_assay));
 }
 
 }  // namespace mbmore

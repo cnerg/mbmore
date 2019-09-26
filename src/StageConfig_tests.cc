@@ -56,20 +56,20 @@ TEST(StageConfig_Test, TestAssays) {
   double cal_prod_assay = stage.ProductAssay();
 
   // N_prime = alpha*R / ( 1+alpha*R)
-  double theory_prod_assay = 0.009773;
+  double target_prod_assay = 0.009773;
   double tol = 1e-6;
 
-  EXPECT_NEAR(cal_prod_assay, theory_prod_assay, tol);
+  EXPECT_NEAR(cal_prod_assay, target_prod_assay, tol);
 
   double n_stages = 5;
-  double theory_w_assay = 0.004227;
+  double target_w_assay = 0.004227;
   double cur_beta = stage.BetaByAlphaAndCut();
   double cal_w_assay = stage.TailAssay();
 
-  EXPECT_NEAR(cal_w_assay, theory_w_assay, tol);
+  EXPECT_NEAR(cal_w_assay, target_w_assay, tol);
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Calculate ideal SWU params of single machine (separation potential delU
+// Calculate ideal SWU params of single machinefeed_assay (separation potential delU
 // and separation factor alpha)
 TEST(StageConfig_Test, TestSWU) {
   double pycode_U = 7.03232816847e-08;
@@ -83,36 +83,25 @@ TEST(StageConfig_Test, TestSWU) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Calculate the product assay for an ideal stage configuration.
+//TEST(StageConfig_Test, TestAssays) {
+//
+//}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Determine the output of the first enrich/strip stage of a cascade
 // based on the design params for the cascade
 TEST(StageConfig_Test, TestStages) {
   StageConfig stage(feed_assay, feed_c, cut, delU, -1, 1e-16);
 
   double product_assay_s = stage.ProductAssay();
-  double n_mach_e = stage.MachinesPerStage();
-  double product_s = stage.ProductPerEnrStage();
-
-  double enrich_waste = feed_c - product_s;
-  double enrich_waste_assay =
-      (feed_c * feed_assay - product_s * product_assay_s) / enrich_waste;
+  double n_mach_e = stage.MachinesNeededPerStage();
 
   double pycode_product_assay_s = 0.0082492;
   double pycode_n_mach_e = 53.287;
-  double pycode_product_s = 0.0001408;
 
   EXPECT_NEAR(n_mach_e, pycode_n_mach_e, tol_num);
   EXPECT_NEAR(product_assay_s, pycode_product_assay_s, tol_assay);
-  EXPECT_NEAR(product_s, pycode_product_s, tol_qty);
-
-  stage = StageConfig(feed_assay, enrich_waste, cut, delU, -1, 1e-16);
-  double n_mach_w = stage.MachinesPerStage();
-  double strip_waste_assay = stage.TailAssay();
-
-  double pycode_n_mach_w = 26.6127;
-  double theory_waste_assay_s = 0.005951;
-
-  EXPECT_NEAR(n_mach_w, pycode_n_mach_w, tol_num);
-  EXPECT_NEAR(strip_waste_assay, theory_waste_assay_s, tol_assay);
 }
 
 }  // namespace enrichfunctiontests
