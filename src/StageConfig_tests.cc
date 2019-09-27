@@ -84,7 +84,7 @@ TEST(StageConfig_Test, TestSWU) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Calculate the product assay for an ideal stage configuration.
-//TEST(StageConfig_Test, TestAssays) {
+//TEST(StageConfig_Test, TestIdealStage) {
 //
 //}
 
@@ -92,7 +92,10 @@ TEST(StageConfig_Test, TestSWU) {
 // Determine the output of the first enrich/strip stage of a cascade
 // based on the design params for the cascade
 TEST(StageConfig_Test, TestStages) {
-  StageConfig stage(feed_assay, feed_c, cut, delU, -1, 1e-16);
+  //StageConfig stage(feed_assay, feed_c, cut, delU, -1, 1e-16);
+  StageConfig stage(centrifuge, feed_assay, feed_c, 1e-16);
+  
+  stage.AlphaByDU();
 
   double product_assay_s = stage.ProductAssay();
   double n_mach_e = stage.MachinesNeededPerStage();
