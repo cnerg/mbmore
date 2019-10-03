@@ -120,10 +120,10 @@ void StageConfig::BuildIdealStg(double f_assay, double precision) {
 }
 
 double StageConfig::MachinesNeededPerStage() {
-  // This equation was replaced because the per-machine feed-flow
-  // is already calculated inside the centrifuge object.
-  //n_machines = feed_flow / (2. * DU / (pow((alpha - 1.), 2.)));
-  n_machines = feed_flow / centrifuge.feed;
+  // n_machines: the denominator should be equal to the
+  // centrifuge feed flow (centrifuge.feed).
+
+  n_machines = feed_flow / ((2 * DU / M) * ((1 - cut) / cut) / pow((alpha - 1.), 2.));
   return n_machines;
 }
 

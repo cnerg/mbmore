@@ -84,18 +84,20 @@ TEST(StageConfig_Test, TestSWU) {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Calculate the product assay for an ideal stage configuration.
-TEST(StageConfig_Test, TestIdealStage) {
+TEST(StageConfig_Test, TestIdeal) {
   StageConfig stage_ideal(feed_assay, feed_m, cut, -1, -1, 1e-16);
 
   stage_ideal.BuildIdealStg(feed_assay,1e-3);
 
-  double pycode_alpha = 1.16321;
+  // All expected numbers were calculated using the methods used
+  // and are trusted to be correct (regression test).
+  double pycode_alpha = 1.18181;
   double tol_alpha = 1e-2;
 
-  double pycode_cut = 0.5;
+  double pycode_cut = 0.4589269;
   double tol_cut = 1e-3;
 
-  double pycode_U = 7.03232816847e-08;
+  double pycode_U = 7.4221362040947e-08;
   double tol_DU = 1e-9;
 
   EXPECT_NEAR(stage_ideal.alpha, pycode_alpha, tol_alpha);
@@ -107,16 +109,17 @@ TEST(StageConfig_Test, TestIdealStage) {
 // Determine the output of the first enrich/strip stage of a cascade
 // based on the design params for the cascade
 TEST(StageConfig_Test, TestStages) {
-  //StageConfig stage(feed_assay, feed_c, cut, delU, -1, 1e-16);
-  StageConfig stage(centrifuge, feed_assay, feed_c, 1e-16);
-
-  stage.AlphaByDU();
+  StageConfig stage(feed_assay, feed_c, cut, delU, -1, 1e-16);
 
   double product_assay_s = stage.ProductAssay();
   double n_mach_e = stage.MachinesNeededPerStage();
 
   double pycode_product_assay_s = 0.0082492;
-  double pycode_n_mach_e = 53.287;
+
+  // cent_feed_flow = (2 * DU / M) * ((1 - cut) / cut) / pow((alpha - 1.), 2.)
+  // N_machines = feed_flow / cent_feed_flow
+  // centrifuge feed flow should be equal to feed_m (from Glaser)
+  double pycode_n_mach_e = 18.7571;
 
   EXPECT_NEAR(n_mach_e, pycode_n_mach_e, tol_num);
   EXPECT_NEAR(product_assay_s, pycode_product_assay_s, tol_assay);
