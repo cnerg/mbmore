@@ -8,7 +8,7 @@ namespace mbmore {
 class CascadeConfig;
 
 class StageConfig {
-  friend CascadeConfig;
+  //friend CascadeConfig;
 
  public:
   // Setup a empty stage
@@ -20,9 +20,8 @@ class StageConfig {
   StageConfig(double f_assay, double feed_flow, double cut_, double DU_,
               double alpha_ = -1, double precision = 1e-8);
 
-  // Build a stage assuming alpha = beta (if cut is not defined, compute the
-  // cut
-  // to make it so)
+  // Build a stage assuming alpha = beta
+  // (if cut is not defined, compute the cut to make it so)
   void BuildIdealStg(double f_assay, double precision = 1e-8);
   // Compute the cut to ensure alpha = beta (from dU)
   double CutForIdealStg(double f_assay, double precision = 1e-8);
@@ -42,8 +41,6 @@ class StageConfig {
 
   // Return the minimum number of centrifuges required to meet the feed flow
   double MachinesNeededPerStage();
-  // Compute the Product feed
-  double ProductPerEnrStage();
 
   // Configuration of all the centrifuges in the stage
   CentrifugeConfig centrifuge;

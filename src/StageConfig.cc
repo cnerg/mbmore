@@ -38,19 +38,40 @@ StageConfig::StageConfig(double f_assay, double feed_, double cut_, double DU_,
   TailAssay();
 }
 
-// alpha = beta occurs approx. in the region 0.1 < cut < 0.9
-// so bounds are calculated for ideal cut
+// Search for cut where alpha = beta by starting at cut = 0.1, 0.9
 double StageConfig::CutForIdealStg(double f_assay, double precision) {
   feed_assay = f_assay;
+
+  // Calculating high and low parameters
   double p_cut = cut = 0.1;
   (*this).DU = centrifuge.ComputeDeltaU(cut);
-  double p_alpha = AlphaByDU();
-  double p_beta = BetaByAlphaAndCut();
-  double p_alpha_minus_beta = p_alpha - p_beta;
-  cut = 0.9;
+  double low_alpha = AlphaByDU();
+  double low_beta = BetaByAlphaAndCut();
+  double high_cut = cut = 0.9;
   (*this).DU = centrifuge.ComputeDeltaU(cut);
-  AlphaByDU();
-  BetaByAlphaAndCut();
+  double high_alpha = AlphaByDU();
+  double high_beta = BetaByAlphaAndCut();
+
+  // Set initial guess to closer cut values
+  if (std::abs(low_alpha - low_beta) < std::abs(high_alpha - high_beta)) {
+    alpha = low_alpha;
+    beta = low_beta;
+    cut = low_cut;
+
+    double p_alpha = high_alpha;
+    double p_beta = high_beta;
+    double p_cut = high_cut;
+  } else {
+    alpha = high_alpha;
+    beta = high_beta;
+    cut = high_cut;
+
+    double p_alpha = low_alpha;
+    double p_beta = low_beta;
+    double p_cut = low_cut;
+  }
+
+  double p_alpha_minus_beta = p_alpha - p_beta;
   while (std::abs(alpha - beta) > precision) {
     // a*cut +b =y
     double alpha_minus_beta = alpha - beta;
@@ -83,6 +104,7 @@ double StageConfig::TailAssay() {
 double StageConfig::AlphaByDU() {
   double feed = centrifuge.feed;
   double M = centrifuge.M;
+  // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
   alpha = 1. + std::sqrt((2. * (DU / M) * (1. - cut) / (cut * feed)));
   return alpha;
 }
@@ -109,12 +131,10 @@ void StageConfig::BuildIdealStg(double f_assay, double precision) {
     CutForIdealStg(feed_assay, precision);
     DU = centrifuge.ComputeDeltaU(cut);
     AlphaByDU();
-    beta = alpha;
-    CutByAlphaBeta();
-  } else {
-    beta = alpha;
-    CutByAlphaBeta();
   }
+
+  beta = alpha;
+  CutByAlphaBeta();
   ProductAssay();
   TailAssay();
 }
@@ -123,7 +143,10 @@ double StageConfig::MachinesNeededPerStage() {
   // n_machines: the denominator should be equal to the
   // centrifuge feed flow (centrifuge.feed).
 
-  n_machines = feed_flow / ((2 * DU / M) * ((1 - cut) / cut) / pow((alpha - 1.), 2.));
+  // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
+  cfeed_flow = (2 * DU / M) * ((1 - cut) / cut) / pow((alpha - 1.), 2.);
+  //n_machines = (feed_flow / ((2 * DU / M) * ((1 - cut) / cut) / pow((alpha - 1.), 2.)));
+  n_machines = std::round(feed_flow / cfeed_flow);
   return n_machines;
 }
 
