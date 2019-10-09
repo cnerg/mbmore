@@ -33,7 +33,7 @@ double temp = 320.0;                                        // Kelvin
 // Cascade params used in Python test code (Enrichment_Calculations.ipynb)
 // found in enrich_calcs repo listed above.
 const double feed_assay = 0.0071;
-const double product_assay = 0.035;
+const double prod_assay = 0.035;
 const double waste_assay = 0.001;
 const double feed_c = 739 / (30.4 * 24 * 60 * 60);    // kg/month -> kg/sec
 const double product_c = 77 / (30.4 * 24 * 60 * 60);  // kg/month -> kg/sec
@@ -53,20 +53,20 @@ TEST(StageConfig_Test, TestAssays) {
   double cur_f_assay = 0.007;
 
   StageConfig stage(cur_f_assay, feed_m, cut, delU, cur_alpha, 1e-16);
-  double cal_prod_assay = stage.ProductAssay();
+  stage.ProductAssay();
 
   // N_prime = alpha*R / ( 1+alpha*R)
   double target_prod_assay = 0.009773;
   double tol = 1e-6;
 
-  EXPECT_NEAR(cal_prod_assay, target_prod_assay, tol);
+  EXPECT_NEAR(stage.product_assay(), target_prod_assay, tol);
 
   double n_stages = 5;
   double target_w_assay = 0.004227;
-  double cur_beta = stage.BetaByAlphaAndCut();
-  double cal_w_assay = stage.TailAssay();
+  stage.BetaByAlphaAndCut();
+  stage.TailAssay();
 
-  EXPECT_NEAR(cal_w_assay, target_w_assay, tol);
+  EXPECT_NEAR(stage.tail_assay(), target_w_assay, tol);
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Calculate ideal SWU params of single machinefeed_assay (separation potential delU
@@ -79,7 +79,7 @@ TEST(StageConfig_Test, TestSWU) {
 
   double pycode_alpha = 1.16321;
   double tol_alpha = 1e-2;
-  EXPECT_NEAR(stage.alpha, pycode_alpha, tol_alpha);
+  EXPECT_NEAR(stage.alpha(), pycode_alpha, tol_alpha);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -87,7 +87,10 @@ TEST(StageConfig_Test, TestSWU) {
 TEST(StageConfig_Test, TestIdeal) {
   StageConfig stage_ideal(feed_assay, feed_m, cut, -1, -1, 1e-16);
 
-  stage_ideal.BuildIdealStg(feed_assay,1e-3);
+  // Only setting precision for building ideal stage
+  stage_ideal.precision(1e-3);
+  stage_ideal.BuildIdealStg();
+  stage_ideal.precision(1e-16);
 
   // All expected numbers were calculated using the methods used
   // and are trusted to be correct (regression test).
@@ -100,9 +103,9 @@ TEST(StageConfig_Test, TestIdeal) {
   double pycode_U = 7.4221362040947e-08;
   double tol_DU = 1e-9;
 
-  EXPECT_NEAR(stage_ideal.alpha, pycode_alpha, tol_alpha);
-  EXPECT_NEAR(stage_ideal.cut, pycode_cut, tol_cut);
-  EXPECT_NEAR(stage_ideal.DU, pycode_U, tol_DU);
+  EXPECT_NEAR(stage_ideal.alpha(), pycode_alpha, tol_alpha);
+  EXPECT_NEAR(stage_ideal.cut(), pycode_cut, tol_cut);
+  EXPECT_NEAR(stage_ideal.DU(), pycode_U, tol_DU);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -111,19 +114,18 @@ TEST(StageConfig_Test, TestIdeal) {
 TEST(StageConfig_Test, TestStages) {
   StageConfig stage(feed_assay, feed_c, cut, delU, -1, 1e-16);
 
-  double product_assay_s = stage.ProductAssay();
-  double n_mach_e = stage.MachinesNeededPerStage();
+  stage.ProductAssay();
+  stage.MachinesNeededPerStage();
 
   double pycode_product_assay_s = 0.0082492;
 
   // cent_feed_flow = (2 * DU / M) * ((1 - cut) / cut) / pow((alpha - 1.), 2.)
   // N_machines = feed_flow / cent_feed_flow
   // centrifuge feed flow should be equal to feed_m (from Glaser)
-  //double pycode_n_mach_e = 18.7571;
-  double pycode_n_mach_e = 10;
+  int pycode_n_mach_e = 19;
 
-  EXPECT_NEAR(n_mach_e, pycode_n_mach_e, tol_num);
-  EXPECT_NEAR(product_assay_s, pycode_product_assay_s, tol_assay);
+  EXPECT_NEAR(stage.n_machines(), pycode_n_mach_e, tol_num);
+  EXPECT_NEAR(stage.product_assay(), pycode_product_assay_s, tol_assay);
 }
 
 }  // namespace enrichfunctiontests

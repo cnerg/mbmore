@@ -12,24 +12,25 @@
 
 namespace mbmore {
 
-StageConfig::StageConfig(CentrifugeConfig cent, double f_assay, double feed_,
-                         double precision_)
+StageConfig::StageConfig(CentrifugeConfig cent, double f_assay, double feed__,
+                         double precision__)
     : centrifuge(cent),
-      feed_assay(f_assay),
-      feed_flow(feed_),
-      precision(precision_) {
-  BuildIdealStg(feed_assay, precision);
+      feed_assay_(f_assay),
+      feed_flow_(feed__),
+      precision_(precision__) {
+  BuildIdealStg();
 }
-StageConfig::StageConfig(double f_assay, double feed_, double cut_, double DU_,
-                         double alpha_, double precision_)
-    : feed_assay(f_assay),
-      feed_flow(feed_),
-      precision(precision_),
-      cut(cut_),
-      DU(DU_),
-      alpha(alpha_) {
+StageConfig::StageConfig(double f_assay, double feed__, double cut__, double DU__,
+                         double alpha__, double precision__)
+    : centrifuge(),
+      feed_assay_(f_assay),
+      feed_flow_(feed__),
+      precision_(precision__),
+      cut_(cut__),
+      DU_(DU__),
+      alpha_(alpha__) {
   // if alpha is not provided, compute it from the dU
-  if (alpha == -1) {
+  if (alpha_ == -1) {
     AlphaByDU();
   }
 
@@ -39,115 +40,109 @@ StageConfig::StageConfig(double f_assay, double feed_, double cut_, double DU_,
 }
 
 // Search for cut where alpha = beta by starting at cut = 0.1, 0.9
-double StageConfig::CutForIdealStg(double f_assay, double precision) {
-  feed_assay = f_assay;
-
+void StageConfig::CutForIdealStg() {
   // Calculating high and low parameters
-  double p_cut = cut = 0.1;
-  (*this).DU = centrifuge.ComputeDeltaU(cut);
-  double low_alpha = AlphaByDU();
-  double low_beta = BetaByAlphaAndCut();
-  double high_cut = cut = 0.9;
-  (*this).DU = centrifuge.ComputeDeltaU(cut);
-  double high_alpha = AlphaByDU();
-  double high_beta = BetaByAlphaAndCut();
+  double low_cut = cut_ = 0.1;
+  DU_ = centrifuge.ComputeDeltaU(cut_);
+  AlphaByDU();
+  BetaByAlphaAndCut();
+  double low_alpha = alpha_;
+  double low_beta = beta_;
+  double high_cut = cut_ = 0.9;
+  DU_ = centrifuge.ComputeDeltaU(cut_);
+  AlphaByDU();
+  BetaByAlphaAndCut();
+  double high_alpha = alpha_;
+  double high_beta = beta_;
 
+  double p_alpha, p_beta, p_cut;
   // Set initial guess to closer cut values
   if (std::abs(low_alpha - low_beta) < std::abs(high_alpha - high_beta)) {
-    alpha = low_alpha;
-    beta = low_beta;
-    cut = low_cut;
+    alpha_ = low_alpha;
+    beta_ = low_beta;
+    cut_ = low_cut;
 
-    double p_alpha = high_alpha;
-    double p_beta = high_beta;
-    double p_cut = high_cut;
+    p_alpha = high_alpha;
+    p_beta = high_beta;
+    p_cut = high_cut;
   } else {
-    alpha = high_alpha;
-    beta = high_beta;
-    cut = high_cut;
+    alpha_ = high_alpha;
+    beta_ = high_beta;
+    cut_ = high_cut;
 
-    double p_alpha = low_alpha;
-    double p_beta = low_beta;
-    double p_cut = low_cut;
+    p_alpha = low_alpha;
+    p_beta = low_beta;
+    p_cut = low_cut;
   }
 
   double p_alpha_minus_beta = p_alpha - p_beta;
-  while (std::abs(alpha - beta) > precision) {
+  while (std::abs(alpha_ - beta_) > precision_) {
     // a*cut +b =y
-    double alpha_minus_beta = alpha - beta;
-    double a = (p_alpha_minus_beta - alpha_minus_beta) / (p_cut - cut);
-    double b = alpha_minus_beta - cut * a;
+    double alpha_minus_beta = alpha_ - beta_;
+    double a = (p_alpha_minus_beta - alpha_minus_beta) / (p_cut - cut_);
+    double b = alpha_minus_beta - cut_ * a;
     // old = new
     p_alpha_minus_beta = alpha_minus_beta;
-    p_cut = cut;
+    p_cut = cut_;
     // targeting alpha_minus_beta = 0
-    cut = -b / a;
-    DU = centrifuge.ComputeDeltaU(cut);
+    cut_ = -b / a;
+    DU_ = centrifuge.ComputeDeltaU(cut_);
     AlphaByDU();
     BetaByAlphaAndCut();
   }
-  return cut;
 }
 
-double StageConfig::ProductAssay() {
-  double ratio = alpha * feed_assay / (1. - feed_assay);
-  product_assay = ratio / (1. + ratio);
-  return product_assay;
+void StageConfig::ProductAssay() {
+  double ratio = alpha_ * feed_assay_ / (1. - feed_assay_);
+  product_assay_ = ratio / (1. + ratio);
 }
 
-double StageConfig::TailAssay() {
-  double A = (feed_assay / (1. - feed_assay)) / beta;
-  tail_assay = A / (1. + A);
-  return tail_assay;
+void StageConfig::TailAssay() {
+  double A = (feed_assay_ / (1. - feed_assay_)) / beta_;
+  tail_assay_ = A / (1. + A);
 }
 
-double StageConfig::AlphaByDU() {
+void StageConfig::AlphaByDU() {
   double feed = centrifuge.feed;
   double M = centrifuge.M;
   // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
-  alpha = 1. + std::sqrt((2. * (DU / M) * (1. - cut) / (cut * feed)));
-  return alpha;
+  alpha_ = 1. + std::sqrt((2. * (DU_ / M) * (1. - cut_) / (cut_ * feed)));
 }
 
-double StageConfig::BetaByAlphaAndCut() {
-  double product_assay = ProductAssay();
-  double waste_assay = (feed_assay - cut * product_assay) / (1. - cut);
+void StageConfig::BetaByAlphaAndCut() {
+  ProductAssay();
+  double waste_assay = (feed_assay_ - cut_ * product_assay_) / (1. - cut_);
 
-  beta = feed_assay / (1. - feed_assay) * (1. - waste_assay) / waste_assay;
-  return beta;
+  beta_ = feed_assay_ / (1. - feed_assay_) * (1. - waste_assay) / waste_assay;
 }
 
-double StageConfig::CutByAlphaBeta() {
-  double product_assay = ProductAssay();
-  double tail_assay = TailAssay();
+void StageConfig::CutByAlphaBeta() {
+  ProductAssay();
+  TailAssay();
 
-  cut = (feed_assay - tail_assay) / (product_assay - tail_assay);
-  return cut;
+  cut_ = (feed_assay_ - tail_assay_) / (product_assay_ - tail_assay_);
 }
 
-void StageConfig::BuildIdealStg(double f_assay, double precision) {
-  feed_assay = f_assay;
-  if (DU == -1 || alpha == -1) {
-    CutForIdealStg(feed_assay, precision);
-    DU = centrifuge.ComputeDeltaU(cut);
+void StageConfig::BuildIdealStg() {
+  if (DU_ == -1 || alpha_ == -1) {
+    CutForIdealStg();
+    DU_ = centrifuge.ComputeDeltaU(cut_);
     AlphaByDU();
   }
 
-  beta = alpha;
+  beta_ = alpha_;
   CutByAlphaBeta();
   ProductAssay();
   TailAssay();
 }
 
-double StageConfig::MachinesNeededPerStage() {
+void StageConfig::MachinesNeededPerStage() {
   // n_machines: the denominator should be equal to the
   // centrifuge feed flow (centrifuge.feed).
 
   // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
-  cfeed_flow = (2 * DU / M) * ((1 - cut) / cut) / pow((alpha - 1.), 2.);
-  //n_machines = (feed_flow / ((2 * DU / M) * ((1 - cut) / cut) / pow((alpha - 1.), 2.)));
-  n_machines = std::round(feed_flow / cfeed_flow);
-  return n_machines;
+  double cfeed_flow = (2 * DU_ / centrifuge.M) * ((1 - cut_) / cut_) / pow((alpha_ - 1.), 2.);
+  n_machines_ = std::ceil(feed_flow_ / cfeed_flow);
 }
 
 }  // namespace mbmore
