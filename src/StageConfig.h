@@ -15,8 +15,6 @@ class StageConfig {
     // Compute the cut to ensure alpha = beta (from dU)
     void CutForIdealStg();
 
-    // Configuration of all the centrifuges in the stage
-    CentrifugeConfig centrifuge;
     // Precision used for the cut calculation defautl 1e-8
     double precision_ = 1e-8;
 
@@ -70,6 +68,10 @@ class StageConfig {
 
     // Return the minimum number of centrifuges required to meet the feed flow
     void MachinesNeededPerStage();
+  
+    // Configuration of all the centrifuges in the stage
+    // Default centrifuge initialized
+    CentrifugeConfig centrifuge;
 
     // Setter methods
     void precision(double p) {precision_ = p;}
