@@ -29,13 +29,13 @@ class CascadeConfig {
 
   // Solve the flow matrix from the stages cuts
   void CalcFeedFlows();
-  // DO something ?!
+  // Establish machines needed in each stage
   void PopulateStages();
-  
-  // Scale the Casacde to meet the limitation in max feed or max centrifuges
+
+  // Scale the Cascade to meet the limitation in max feed or max centrifuges
   void ScaleCascade(double max_feed, int max_centrifuges);
 
-  CascadeConfig ModelMissUsedCascade(double f_assay, int modeling_opt = 0, double precision = 1e-8);
+  CascadeConfig ModelMisusedCascade(double f_assay, int modeling_opt = 0, double precision = 1e-8);
 
   // Compute the response of the cascade to a non ideal feed assay
   void PropagateAssay(double f_assay);
@@ -57,7 +57,7 @@ class CascadeConfig {
   // total number of machine in the Cascade
   int n_machines;
   // real feed flow (constrained by the cascade design/total number of
-  // machine/max feed flow
+  // machine/max feed flow)
   double feed_flow;
 
   //design feed assay
@@ -71,8 +71,8 @@ class CascadeConfig {
   double DeltaEnrichment(CascadeConfig actual_enrichments,
                          CascadeConfig previous_enrichment);
 
-  // method computing one iteration, of the algorithm used to get the response
-  // to non ideal feed assay 
+  // method computing one iteration of the algorithm used to get the response
+  // to non ideal feed assay
   std::map<int, StageConfig> IterrateEnrichment(CascadeConfig cascade,
                                                double feed_assay);
 };
