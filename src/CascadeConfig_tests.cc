@@ -65,7 +65,7 @@ TEST(CascadeStage_Test, TestCascade) {
   double feed_assay_mod = 0.20;
   cascade.ScaleCascade(feed_c, 1000000);
   CascadeConfig cascade_non_ideal =
-      cascade.ModelMissUsedCascade(feed_assay_mod, 0, 1e-31);
+      cascade.ModelMisusedCascade(feed_assay_mod, 0, 1e-31);
 
   double mod_product_assay =
       cascade_non_ideal.stgs_config[n_stage_enrich - 1].product_assay;
@@ -145,7 +145,7 @@ TEST(CascadeStage_Test, TestUpdateAssay) {
   EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
 
   fa = 0.2;
-  cascade = cascade.ModelMissUsedCascade(fa, 0, 1e-17);
+  cascade = cascade.ModelMisusedCascade(fa, 0, 1e-17);
   product_assay = cascade.stgs_config[cascade.n_enrich - 1].product_assay;
   tail_assay = cascade.stgs_config[-cascade.n_strip].tail_assay;
   product_flow = cascade.stgs_config[cascade.n_enrich - 1].feed_flow *
@@ -183,7 +183,7 @@ TEST(CascadeStage_Test, TestUpdateAlphaBetaFix) {
   EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
 
   fa = 0.2;
-  cascade = cascade.ModelMissUsedCascade(fa, 1, 1e-17);
+  cascade = cascade.ModelMisusedCascade(fa, 1, 1e-17);
   double alpha_ref = cascade.stgs_config[0].alpha;
   std::map<int,StageConfig>::iterator it;
   for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end(); it++){
