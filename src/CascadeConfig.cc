@@ -136,13 +136,16 @@ void CascadeConfig::BuildIdealCascade(double f_assay, double product_assay,
   stg.alpha(-1);
   stg.DU(-1);
   stg.centrifuge = centrifuge;
-  stg.BuildIdealStg(f_assay, precision);
+  stg.feed_assay(f_assay);
+  stg.precision(precision);
+  stg.BuildIdealStg();
   int stg_i = 0;
   ideal_stgs[stg_i] = stg;
   double ref_alpha = ideal_stgs[0].alpha();
   double ref_du = ideal_stgs[0].DU();
   // Calculate number of enriching stages
   while (stg.product_assay() < product_assay) {
+    stg.feed_assay(stg.product_assay());
     stg.BuildIdealStg();
     stg_i++;
     ideal_stgs.insert(std::make_pair(stg_i, stg));
@@ -153,7 +156,7 @@ void CascadeConfig::BuildIdealCascade(double f_assay, double product_assay,
   stg = ideal_stgs[stg_i];
   // Calculate number of stripping stages
   while (stg.tail_assay() > waste_assay) {
-    stg.product_assay(stg.tail_assay())
+    stg.feed_assay(stg.tail_assay())
     stg.BuildIdealStg();
     stg_i--;
     ideal_stgs.insert(std::make_pair(stg_i, stg));
