@@ -66,14 +66,14 @@ class CascadeConfig {
   double design_product_assay;
   //design tail assay
   double design_tail_assay;
-  
+
   // Method to check the assays different between 2 cascades
   double DeltaEnrichment(CascadeConfig actual_enrichments,
                          CascadeConfig previous_enrichment);
 
   // method computing one iteration of the algorithm used to get the response
   // to non ideal feed assay
-  std::map<int, StageConfig> IterrateEnrichment(CascadeConfig cascade,
+  std::map<int, StageConfig> IterateEnrichment(CascadeConfig cascade,
                                                double feed_assay);
 };
 

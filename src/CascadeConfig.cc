@@ -256,7 +256,7 @@ void CascadeConfig::UpdateFlow() {
   }
   for (it = (*this).stgs_config.begin(); it != (*this).stgs_config.end();
        it++) {
-    it->second.feed_flow(second.feed_flow() * (1. / ratio));
+    it->second.feed_flow(second.feed_flow() / ratio);
   }
   (*this).feed_flow *= 1. / ratio;
 }
@@ -270,7 +270,7 @@ void CascadeConfig::UpdateCut() {
 }
 
 void CascadeConfig::PropagateAssay(double f_assay) {
-  // Initialiase Feeding stage
+  // Initialise Feeding stage
   std::map<int, StageConfig>::iterator it = (*this).stgs_config.find(0);
   it->second.feed_assay(f_assay);
   it->second.ProductAssay();
@@ -313,7 +313,7 @@ void CascadeConfig::ComputeAssay(double f_assay, double precision) {
   CascadeConfig previous_cascade;
   while (DeltaEnrichment((*this), previous_cascade) > precision) {
     previous_cascade = (*this);
-    (*this).stgs_config = IterrateEnrichment((*this), f_assay);
+    (*this).stgs_config = IterateEnrichment((*this), f_assay);
   }
 }
 
@@ -343,7 +343,7 @@ double CascadeConfig::DeltaEnrichment(CascadeConfig a_enrichments,
   return square_feed_diff + square_product_diff + square_waste_diff;
 }
 
-std::map<int, StageConfig> CascadeConfig::IterrateEnrichment(
+std::map<int, StageConfig> CascadeConfig::IterateEnrichment(
     CascadeConfig cascade, double f_assay) {
   CascadeConfig updated_enrichment = cascade;
 

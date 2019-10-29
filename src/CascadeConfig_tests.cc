@@ -61,7 +61,7 @@ TEST(CascadeStage_Test, TestCascade) {
   EXPECT_EQ(n_stage_waste, pycode_n_strip_stage);
 
   // Now test assays when cascade is modified away from ideal design
-  // (cascade optimized for natural uranium feed, now use 20% enriched
+  // (cascade optimized for natural uranium feed, now use 20% enriched)
   double feed_assay_mod = 0.20;
   cascade.ScaleCascade(feed_c, 1000000);
   CascadeConfig cascade_non_ideal =
