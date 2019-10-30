@@ -8,7 +8,6 @@ namespace mbmore {
 class CascadeConfig;
 
 class StageConfig {
-  //friend CascadeConfig;
 
   private:
 
