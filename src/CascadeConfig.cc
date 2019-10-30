@@ -218,23 +218,23 @@ void CascadeConfig::ScaleCascade(double max_feed, int max_centrifuges) {
   n_machines = machines_needed;
 }
 
-CascadeConfig CascadeConfig::ModelMisusedCascade(double f_assay,
+CascadeConfig CascadeConfig::ModelMisuseCascade(double f_assay,
                                                   int modeling_opt,
                                                   double precision) {
-  CascadeConfig misused_cascade = (*this);
-  misused_cascade.PropagateAssay(f_assay);
+  CascadeConfig misuse_cascade = (*this);
+  misuse_cascade.PropagateAssay(f_assay);
 
   switch (modeling_opt) {
     default:
-      misused_cascade.ComputeAssay(f_assay, precision);
+      misuse_cascade.ComputeAssay(f_assay, precision);
       break;
 
     case 1:
-      misused_cascade.UpdateCut();
-      misused_cascade.UpdateFlow();
+      misuse_cascade.UpdateCut();
+      misuse_cascade.UpdateFlow();
       break;
   }
-  return misused_cascade;
+  return misuse_cascade;
 }
 
 void CascadeConfig::UpdateFlow() {

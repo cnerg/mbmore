@@ -35,7 +35,7 @@ class CascadeConfig {
   // Scale the Cascade to meet the limitation in max feed or max centrifuges
   void ScaleCascade(double max_feed, int max_centrifuges);
 
-  CascadeConfig ModelMisusedCascade(double f_assay, int modeling_opt = 0, double precision = 1e-8);
+  CascadeConfig ModelMisuseCascade(double f_assay, int modeling_opt = 0, double precision = 1e-8);
 
   // Compute the response of the cascade to a non ideal feed assay
   void PropagateAssay(double f_assay);
