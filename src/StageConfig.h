@@ -66,8 +66,8 @@ class StageConfig {
     void TailAssay();
 
     // Return the minimum number of centrifuges required to meet the feed flow
-    void MachinesNeededPerStage();
-  
+    void MachinesNeededPerStage(double tolerance = 0.01);
+
     // Configuration of all the centrifuges in the stage
     // Default centrifuge initialized
     CentrifugeConfig centrifuge;

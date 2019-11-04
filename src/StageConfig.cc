@@ -136,13 +136,20 @@ void StageConfig::BuildIdealStg() {
   TailAssay();
 }
 
-void StageConfig::MachinesNeededPerStage() {
+void StageConfig::MachinesNeededPerStage(double tolerance) {
   // n_machines: the denominator should be equal to the
   // centrifuge feed flow (centrifuge.feed).
 
   // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
   double cfeed_flow = (2 * DU_ / centrifuge.M) * ((1 - cut_) / cut_) / pow((alpha_ - 1.), 2.);
-  n_machines_ = std::ceil(feed_flow_ / cfeed_flow);
+  double n_exact = feed_flow_ / cfeed_flow;
+
+  // Adds a machine if fractional amount is needed
+  n_machines_ = int(n_exact);
+  if (std::abs(n_exact - n_machines_) > tolerance) {
+    n_machines_ = int(n_exact) + 1;
+  }
+
 }
 
 }  // namespace mbmore
