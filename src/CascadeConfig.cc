@@ -173,6 +173,7 @@ int CascadeConfig::FindTotalMachines() {
   int machines = 0;
   std::map<int, StageConfig>::iterator it;
   for (it = stgs_config.begin(); it != stgs_config.end(); it++) {
+    if (it->second.n_machines() == -1) it->second.MachinesNeededPerStage();
     machines += it->second.n_machines();
   }
   return machines;
