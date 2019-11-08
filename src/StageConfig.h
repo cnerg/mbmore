@@ -29,7 +29,7 @@ class StageConfig {
     double feed_flow_;
 
     // number of centrifuges in the stage
-    int n_machines_;
+    int n_machines_ = -1;
 
     // Feed assay
     double feed_assay_;
