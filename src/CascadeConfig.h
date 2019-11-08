@@ -69,7 +69,8 @@ class CascadeConfig {
 
   // Method to check the assays different between 2 cascades
   double DeltaEnrichment(CascadeConfig actual_enrichments,
-                         CascadeConfig previous_enrichment);
+                         CascadeConfig previous_enrichment,
+                         double precision);
 
   // method computing one iteration of the algorithm used to get the response
   // to non ideal feed assay
