@@ -206,6 +206,8 @@ CascadeConfig CascadeConfig::ModelMisuseCascade(double f_assay,
   CascadeConfig misuse_cascade = (*this);
   misuse_cascade.PropagateAssay(f_assay);
 
+  // Default: alpha, cut = constant; beta = varying
+  // Case 1: alpha = beta, cut = varying
   switch (modeling_opt) {
     default:
       misuse_cascade.ComputeAssay(f_assay, precision);
@@ -293,16 +295,17 @@ void CascadeConfig::PropagateAssay(double f_assay) {
 
 void CascadeConfig::ComputeAssay(double f_assay, double precision) {
   CascadeConfig previous_cascade;
-  while (DeltaEnrichment((*this), previous_cascade) > precision) {
+  while (DeltaEnrichment((*this), previous_cascade, precision) > precision) {
     previous_cascade = (*this);
     (*this).stgs_config = IterateEnrichment((*this), f_assay);
   }
 }
 
 double CascadeConfig::DeltaEnrichment(CascadeConfig a_enrichments,
-                                      CascadeConfig p_enrichments) {
+                                      CascadeConfig p_enrichments,
+                                      double precision) {
   if (p_enrichments.n_enrich == 0) {
-    return 100.;
+    return 100. * std::abs(precision);
   }
   double square_feed_diff = 0;
   double square_product_diff = 0;
