@@ -295,7 +295,7 @@ void CascadeConfig::PropagateAssay(double f_assay) {
 
 void CascadeConfig::ComputeAssay(double f_assay, double precision) {
   CascadeConfig previous_cascade;
-  while (DeltaEnrichment((*this), previous_cascade, precision) > precision) {
+  while (DeltaEnrichment((*this), previous_cascade, precision) > std::abs(precision)) {
     previous_cascade = (*this);
     (*this).stgs_config = IterateEnrichment((*this), f_assay);
   }
