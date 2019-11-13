@@ -8,8 +8,7 @@
 
 namespace mbmore {
 
-// Benchmarked against mbmore_enrich_compare.ipynb
-// https://github.com/mbmcgarry/data_analysis/tree/master/enrich_calcs
+// Benchmarked using a regression test (expected values calculated manually)
 namespace cascadeconfig_tests {
 // Fixed for a cascade separating out U235 from U238 in UF6 gas
 const double M = 0.352;   // kg/mol UF6
@@ -21,15 +20,14 @@ const double flow_internal = 2.0;
 const double eff = 1.0;
 const double cut = 0.5;
 
-// Centrifuge params used in Python test code
-// (based on Glaser SGS 2009 paper)
+// Centrifuge parameters based on Glaser SGS 2009 paper
 const double v_a = 485;                                           // m/s
 const double height = 0.5;                                        // meters
 const double diameter = 0.15;                                     // meters
 const double feed_m = 15 * 60 * 60 / ((1e3) * 60 * 60 * 1000.0);  // kg/sec
 const double temp = 320.0;                                        // Kelvin
 
-// Cascade params used in Python test code (Enrichment_Calculations.ipynb)
+// Cascade params used in calculating expected values
 const double feed_assay = 0.0071;
 const double product_assay = 0.035;
 const double waste_assay = 0.001;
@@ -37,6 +35,7 @@ const double feed_c = 739 / (30.4 * 24 * 60 * 60);    // kg/month -> kg/sec
 const double product_c = 77 / (30.4 * 24 * 60 * 60);  // kg/month -> kg/sec
 CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM, x,
                             flow_internal);
+
 // del U=7.0323281e-08 alpha=1.16321
 double delU = centrifuge.ComputeDeltaU(cut);
 
@@ -51,14 +50,14 @@ TEST(CascadeStage_Test, TestCascade) {
   CascadeConfig cascade;
   cascade.centrifuge = centrifuge;
   cascade.BuildIdealCascade(feed_assay, product_assay, waste_assay, 1e-8);
-  int pycode_n_enrich_stage = 11;
-  int pycode_n_strip_stage = 12;
+  int expected_n_enrich_stage = 11;
+  int expected_n_strip_stage = 12;
   //  integer
   int n_stage_enrich = cascade.n_enrich;
   int n_stage_waste = cascade.n_strip;
 
-  EXPECT_EQ(n_stage_enrich, pycode_n_enrich_stage);
-  EXPECT_EQ(n_stage_waste, pycode_n_strip_stage);
+  EXPECT_EQ(n_stage_enrich, expected_n_enrich_stage);
+  EXPECT_EQ(n_stage_waste, expected_n_strip_stage);
 
   // Now test assays when cascade is modified away from ideal design
   // (cascade optimized for natural uranium feed, now use 20% enriched)
@@ -72,11 +71,11 @@ TEST(CascadeStage_Test, TestCascade) {
   double mod_waste_assay =
       cascade_non_ideal.stgs_config[-n_stage_waste].product_assay();
 
-  double pycode_mod_product_assay = 0.8189;
-  EXPECT_NEAR(mod_product_assay, pycode_mod_product_assay, tol_assay);
+  double expected_mod_product_assay = 0.8189;
+  EXPECT_NEAR(mod_product_assay, expected_mod_product_assay, tol_assay);
 
-  double pycode_mod_waste_assay = 0.11198;
-  EXPECT_NEAR(mod_waste_assay, pycode_mod_waste_assay, tol_assay);
+  double expected_mod_waste_assay = 0.11198;
+  EXPECT_NEAR(mod_waste_assay, expected_mod_waste_assay, tol_assay);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -87,39 +86,42 @@ TEST(CascadeStage_Test, TestCascadeDesign) {
   double pa = 0.20;
   double wa = 0.05;
 
-  std::vector<double> pycode_flows = {
+  std::vector<double> expected_flows = {
       0.00030693, 0.00061387, 0.0009208,  0.00122774, 0.00153467,
       0.00127889, 0.00102311, 0.00076734, 0.00051156, 0.00025578};
 
-  std::vector<int> pycode_machines = {80,  149, 210, 264, 312,
-                                      241, 180, 127, 80,  38};
+  std::vector<int> expected_machines = {25, 46, 65, 82, 97, 76,
+                                      57, 40, 26, 13};
+  //std::vector<int> expected_machines = {80,  149, 210, 264, 312,
+//                                      241, 180, 127, 80,  38};
 
   CascadeConfig cascade(centrifuge, fa, pa, wa, feed_c, 1000000);
 
-  for (int i = 0; i < pycode_flows.size(); i++) {
+  for (int i = 0; i < expected_flows.size(); i++) {
     EXPECT_NEAR(cascade.stgs_config[i - cascade.n_strip].feed_flow(),
-                pycode_flows[i], tol_num);
+                expected_flows[i], tol_num);
     int nmach = cascade.stgs_config[i - cascade.n_strip].n_machines();
-    EXPECT_EQ(nmach, pycode_machines[i]);
+    EXPECT_EQ(nmach, expected_machines[i]);
   }
 
   // not enough machines
   int max_centrifuges = 80;
   cascade.ScaleCascade(feed_c, max_centrifuges);
-  int py_tot_mach = 80;
-  double py_opt_feed = 1.30116169899e-05;
+  int expected_tot_mach = 80;
+  double expected_opt_feed = 4.11669203083e-05;
+  //double expected_opt_feed = 1.30116169899e-05;
 
-  EXPECT_EQ(py_tot_mach, cascade.FindTotalMachines());
-  EXPECT_NEAR(py_opt_feed, cascade.FeedFlow(), tol_qty);
+  EXPECT_EQ(expected_tot_mach, cascade.FindTotalMachines());
+  EXPECT_NEAR(expected_opt_feed, cascade.FeedFlow(), tol_qty);
 
   // more machines than requested capacity
   max_centrifuges = 1000;
   cascade.ScaleCascade(feed_c, max_centrifuges);
-  py_tot_mach = 999;
-  py_opt_feed = 0.0001667;
+  expected_tot_mach = 999;
+  expected_opt_feed = 0.0001667;
 
-  EXPECT_EQ(py_tot_mach, cascade.FindTotalMachines());
-  EXPECT_NEAR(py_opt_feed, cascade.FeedFlow(), tol_qty);
+  EXPECT_EQ(expected_tot_mach, cascade.FindTotalMachines());
+  EXPECT_NEAR(expected_opt_feed, cascade.FeedFlow(), tol_qty);
 }
 
 TEST(CascadeStage_Test, TestUpdateAssay) {
