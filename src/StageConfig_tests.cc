@@ -8,10 +8,8 @@
 
 namespace mbmore {
 
-// Benchmarked against mbmore_enrich_compare.ipynb
-// https://github.com/mbmcgarry/data_analysis/tree/master/enrich_calcs
+// Benchmarked using a regression test (expected values calculated manually)
 namespace stageconfig_test {
-// Fixed for a cascade separating out U235 from U238 in UF6 gas
 // Fixed for a cascade separating out U235 from U238 in UF6 gas
 double M = 0.352;   // kg/mol UF6
 double dM = 0.003;  // kg/mol U238 - U235
@@ -22,16 +20,14 @@ double flow_internal = 2.0;
 double eff = 1.0;
 double cut = 0.5;
 
-// Centrifuge params used in Python test code
-// (based on Glaser SGS 2009 paper)
+// Centrifgue parameters based on Glaser SGS 2009 paper
 double v_a = 485;                                           // m/s
 double height = 0.5;                                        // meters
 double diameter = 0.15;                                     // meters
 double feed_m = 15 * 60 * 60 / ((1e3) * 60 * 60 * 1000.0);  // kg/sec
 double temp = 320.0;                                        // Kelvin
 
-// Cascade params used in Python test code (Enrichment_Calculations.ipynb)
-// found in enrich_calcs repo listed above.
+// Cascade params used in in calculating expected values
 const double feed_assay = 0.0071;
 const double prod_assay = 0.035;
 const double waste_assay = 0.001;
@@ -39,6 +35,7 @@ const double feed_c = 739 / (30.4 * 24 * 60 * 60);    // kg/month -> kg/sec
 const double product_c = 77 / (30.4 * 24 * 60 * 60);  // kg/month -> kg/sec
 CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM, x,
                             flow_internal);
+
 // del U=7.0323281e-08 alpha=1.16321
 double delU = centrifuge.ComputeDeltaU(cut);
 
@@ -69,17 +66,17 @@ TEST(StageConfig_Test, TestAssays) {
   EXPECT_NEAR(stage.tail_assay(), target_w_assay, tol);
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Calculate ideal SWU params of single machinefeed_assay (separation potential delU
-// and separation factor alpha)
+// Calculate ideal SWU params of single machinefeed_assay
+// (separation potential delU and separation factor alpha)
 TEST(StageConfig_Test, TestSWU) {
-  double pycode_U = 7.03232816847e-08;
+  double expected_U = 7.03232816847e-08;
   double tol = 1e-9;
 
   StageConfig stage(feed_assay, feed_m, cut, delU, -1, 1e-16);
 
-  double pycode_alpha = 1.16321;
+  double expected_alpha = 1.16321;
   double tol_alpha = 1e-2;
-  EXPECT_NEAR(stage.alpha(), pycode_alpha, tol_alpha);
+  EXPECT_NEAR(stage.alpha(), expected_alpha, tol_alpha);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -94,18 +91,18 @@ TEST(StageConfig_Test, TestIdeal) {
 
   // All expected numbers were calculated using the methods used
   // and are trusted to be correct (regression test).
-  double pycode_alpha = 1.18181;
+  double expected_alpha = 1.18181;
   double tol_alpha = 1e-2;
 
-  double pycode_cut = 0.4589269;
+  double expected_cut = 0.4589269;
   double tol_cut = 1e-3;
 
-  double pycode_U = 7.4221362040947e-08;
+  double expected_U = 7.4221362040947e-08;
   double tol_DU = 1e-9;
 
-  EXPECT_NEAR(stage_ideal.alpha(), pycode_alpha, tol_alpha);
-  EXPECT_NEAR(stage_ideal.cut(), pycode_cut, tol_cut);
-  EXPECT_NEAR(stage_ideal.DU(), pycode_U, tol_DU);
+  EXPECT_NEAR(stage_ideal.alpha(), expected_alpha, tol_alpha);
+  EXPECT_NEAR(stage_ideal.cut(), expected_cut, tol_cut);
+  EXPECT_NEAR(stage_ideal.DU(), expected_U, tol_DU);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -117,15 +114,13 @@ TEST(StageConfig_Test, TestStages) {
   stage.ProductAssay();
   stage.MachinesNeededPerStage();
 
-  double pycode_product_assay_s = 0.0082492;
+  double expected_product_assay_s = 0.0082492;
 
-  // cent_feed_flow = (2 * DU / M) * ((1 - cut) / cut) / pow((alpha - 1.), 2.)
-  // N_machines = feed_flow / cent_feed_flow
-  // centrifuge feed flow should be equal to feed_m (from Glaser)
-  int pycode_n_mach_e = 19;
+  // Calculated using equations from 2009 Glaser paper
+  int expected_n_mach_e = 19;
 
-  EXPECT_NEAR(stage.n_machines(), pycode_n_mach_e, tol_num);
-  EXPECT_NEAR(stage.product_assay(), pycode_product_assay_s, tol_assay);
+  EXPECT_NEAR(stage.n_machines(), expected_n_mach_e, tol_num);
+  EXPECT_NEAR(stage.product_assay(), expected_product_assay_s, tol_assay);
 }
 
 }  // namespace enrichfunctiontests
