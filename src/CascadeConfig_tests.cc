@@ -45,7 +45,7 @@ const double tol_num = 1e-2;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Ideal cascade design, and then using away from ideal design
-
+//
 TEST(CascadeStage_Test, TestCascade) {
   CascadeConfig cascade;
   cascade.centrifuge = centrifuge;
@@ -79,7 +79,7 @@ TEST(CascadeStage_Test, TestCascade) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// tests the steady state flow rates for a cascade
+// Tests the steady state flow rates for a cascade
 //
 TEST(CascadeStage_Test, TestCascadeDesign) {
   double fa = 0.10;
@@ -92,8 +92,6 @@ TEST(CascadeStage_Test, TestCascadeDesign) {
 
   std::vector<int> expected_machines = {25, 46, 65, 82, 97, 76,
                                       57, 40, 26, 13};
-  //std::vector<int> expected_machines = {80,  149, 210, 264, 312,
-//                                      241, 180, 127, 80,  38};
 
   CascadeConfig cascade(centrifuge, fa, pa, wa, feed_c, 1000000);
 
@@ -109,21 +107,23 @@ TEST(CascadeStage_Test, TestCascadeDesign) {
   cascade.ScaleCascade(feed_c, max_centrifuges);
   int expected_tot_mach = 80;
   double expected_opt_feed = 4.11669203083e-05;
-  //double expected_opt_feed = 1.30116169899e-05;
 
   EXPECT_EQ(expected_tot_mach, cascade.FindTotalMachines());
   EXPECT_NEAR(expected_opt_feed, cascade.FeedFlow(), tol_qty);
 
   // more machines than requested capacity
-  max_centrifuges = 1000;
+  max_centrifuges = 600;
   cascade.ScaleCascade(feed_c, max_centrifuges);
-  expected_tot_mach = 999;
-  expected_opt_feed = 0.0001667;
+  expected_tot_mach = 527;
+  expected_opt_feed = 0.0002814;
 
   EXPECT_EQ(expected_tot_mach, cascade.FindTotalMachines());
   EXPECT_NEAR(expected_opt_feed, cascade.FeedFlow(), tol_qty);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Tests feed flows in misue model A, where alpha & cut are constant
+//
 TEST(CascadeStage_Test, TestUpdateAssay) {
   double fa = 0.10;
   double pa = 0.20;
@@ -162,6 +162,9 @@ TEST(CascadeStage_Test, TestUpdateAssay) {
   EXPECT_NEAR(tail_flow, tail_from_assay, 1e-3);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Test feed flows in misuse model B, where alpha = beta
+//
 TEST(CascadeStage_Test, TestUpdateAlphaBetaFix) {
   double fa = 0.10;
   double pa = 0.20;
