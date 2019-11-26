@@ -81,25 +81,23 @@ class CascadeEnrich : public cyclus::Facility {
   ///  @param time is the time to perform the tock
   virtual void Tock();
 
-  /// @brief The Enrichment request Materials of its given
-  /// commodity.
+  /// @brief The Enrichment request Materials of its given commodity.
   virtual std::set<cyclus::RequestPortfolio<cyclus::Material>::Ptr>
   GetMatlRequests();
 
   /// @brief The Enrichment adjusts preferences for offers of
-  /// natural uranium it has received to maximize U-235 content
-  /// Any offers that have zero U-235 content are not accepted
+  /// natural uranium it has received to maximize U-235 content.
+  /// Any offers that have zero U-235 content are not accepted.
   virtual void AdjustMatlPrefs(cyclus::PrefMap<cyclus::Material>::type& prefs);
 
-  /// @brief The Enrichment place accepted trade Materials in their
-  /// Inventory
+  /// @brief The Enrichment place accepted trade Materials in their Inventory.
   virtual void AcceptMatlTrades(
       const std::vector<std::pair<cyclus::Trade<cyclus::Material>,
                                   cyclus::Material::Ptr> >& responses);
 
   /// @brief Responds to each request for this facility's commodity.  If a given
   /// request is more than this facility's inventory or SWU capacity, it will
-  /// offer its minimum of its capacities.
+  /// offer the minimum of its capacities.
   virtual std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr> GetMatlBids(
       cyclus::CommodMap<cyclus::Material>::type& commod_requests);
 
@@ -172,14 +170,13 @@ class CascadeEnrich : public cyclus::Facility {
   void RecordEnrichment_(double natural_u);
 
 
-  // Not physical constants but fixed assumptions for a cascade separating
-  // out U235 from U238 in UF6 gas
-//group all the characteristic of a centrifuges
+  // Not physical constants but fixed assumptions for a cascade separating out
+  // U235 from U238 in UF6 gas group all the characteristic of a centrifuges
   CentrifugeConfig centrifuge;
   CascadeConfig cascade;
   double precision = 1e-15;
-  
-  
+
+
   const double secpermonth = 60.*60.*24.*(365.25/12.);
 
   // Set to design_tails at beginning of simulation. Gets reset if
@@ -213,7 +210,7 @@ class CascadeEnrich : public cyclus::Facility {
     "doc": "amount of natural uranium stored at the enrichment " \
     "facility at the beginning of the simulation (kg)" }
   double initial_feed;
-  
+
   #pragma cyclus var { \
     "default": 1e299, "tooltip": "max inventory of feed material (kg)", \
     "uilabel": "Maximum Feed Inventory", \
@@ -304,7 +301,7 @@ class CascadeEnrich : public cyclus::Facility {
     "uilabel" : "Max feed rate for single centrifuge (mg/sec)", \
   "doc" : "maximum feed rate for a single centrifuge (mg/sec)"}
   double machine_feed;
-  
+
   #pragma cyclus var { \
     "default": 0, \
     "userlevel": 10, \
