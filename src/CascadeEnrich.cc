@@ -52,7 +52,7 @@ void CascadeEnrich::EnterNotify() {
   using cyclus::Material;
   cyclus::Facility::EnterNotify();
   centrifuge = CentrifugeConfig();
-  // Update Centrifuge paramter from the user input:
+  // Update Centrifuge parameter from the user input:
   centrifuge.v_a = centrifuge_velocity;
   centrifuge.height = height;
   centrifuge.diameter = diameter;
@@ -78,7 +78,7 @@ void CascadeEnrich::EnterNotify() {
     std::cout << " machine: " << it->second.n_machines;
     std::cout << std::endl;
   }
-  std::cout << "Dsign Feed Flow " << FlowPerMon(cascade.FeedFlow()) << std::endl;
+  std::cout << "Design Feed Flow " << FlowPerMon(cascade.FeedFlow()) << std::endl;
   if (max_feed_inventory > 0) {
     inventory.capacity(max_feed_inventory);
   }
@@ -273,8 +273,8 @@ CascadeEnrich::GetMatlBids(
     for (it = commod_requests.begin(); it != commod_requests.end(); ++it) {
       Request<Material>* req = *it;
       Material::Ptr offer = Offer_(req->target());
-      // The offer might not match the required enrichment ! it just produce
-      // what it can according to the cascade configuration and the feed asays
+      // The offer might not match the required enrichment ! It just produces
+      // what it can according to the cascade configuration and the feed assays
       commod_port->AddBid(req, offer, this);
     }
 
@@ -352,15 +352,14 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
   using cyclus::toolkit::UraniumAssay;
   using cyclus::toolkit::FeedQty;
   using cyclus::toolkit::TailsQty;
+
   // get enrichment parameters
   double feed_qty = FeedRequired(qty);
-
   double feed_assay = FeedAssay(feed_qty);
   double product_assay = ProductAssay(feed_assay);
-
-
   double tails_assay = TailsAssay(FeedAssay(feed_qty));
   double tails_mass = TailsFlow(feed_qty);
+
   // Determine the composition of the natural uranium
   // (ie. U-235+U-238/TotalMass)
   double pop_qty = inventory.quantity();
@@ -508,7 +507,7 @@ double CascadeEnrich::ProductFlow(double feed_flow) {
   double feed_assay = FeedAssay(feed_flow);
   double feed_ratio = feed_flow / MaxFeedFlow(feed_assay);
   CascadeConfig cascade_tmp = cascade.ModelMissUsedCascade(feed_assay, miss_use_model, precision);
-   
+
   StageConfig last_stg = cascade_tmp.stgs_config.rbegin()->second;
   double product_flow = last_stg.feed_flow * last_stg.cut;
   return feed_ratio * FlowPerMon(product_flow);
