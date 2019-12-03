@@ -45,40 +45,40 @@ class CascadeEnrich : public cyclus::Facility {
   "niche": "enrichment facility", \
   "doc": \
   "The CascadeEnrich facility based on the Cycamore Enrich facility. " \
- "timesteps (see README for full implementation documentation ",\
+  "timesteps (see README for full implementation documentation ",\
 }
 
  public:
   // --- Module Members ---
-  ///    Constructor for the CascadeEnrich class
-  ///    @param ctx the cyclus context for access to simulation-wide parameters
+  /// Constructor for the CascadeEnrich class
+  /// @param ctx the cyclus context for access to simulation-wide parameters
   CascadeEnrich(cyclus::Context* ctx);
 
-  ///     Destructor for the CascadeEnrich class
+  /// Destructor for the CascadeEnrich class
   virtual ~CascadeEnrich();
 
 #pragma cyclus
 
-  ///     Print information about this agent
+  /// Print information about this agent
   virtual std::string str();
   // ---
 
-  // --- Facility Members ---
-  /// perform module-specific tasks when entering the simulation
-  //virtual void Build(cyclus::Agent* parent);
-  // ---
+  /// --- Facility Members ---
+  /// Perform module-specific tasks when entering the simulation
+  /// virtual void Build(cyclus::Agent* parent);
+  /// ---
 
   // --- Agent Members ---
-  ///  Each facility is prompted to do its beginning-of-time-step
-  ///  stuff at the tick of the timer.
+  /// Each facility is prompted to do its beginning-of-time-step
+  /// stuff at the tick of the timer.
   virtual void EnterNotify();
-  ///  @param time is the time to perform the tick
+  /// @param time is the time to perform the tick
   virtual void Tick();
 
-  ///  Each facility is prompted to its end-of-time-step
-  ///  stuff on the tock of the timer.
+  /// Each facility is prompted to its end-of-time-step
+  /// stuff on the tock of the timer.
 
-  ///  @param time is the time to perform the tock
+  /// @param time is the time to perform the tock
   virtual void Tock();
 
   /// @brief The Enrichment request Materials of its given commodity.
@@ -88,6 +88,8 @@ class CascadeEnrich : public cyclus::Facility {
   /// @brief The Enrichment adjusts preferences for offers of
   /// natural uranium it has received to maximize U-235 content.
   /// Any offers that have zero U-235 content are not accepted.
+  ///
+  /// @param prefs is the preference map with all requests.
   virtual void AdjustMatlPrefs(cyclus::PrefMap<cyclus::Material>::type& prefs);
 
   /// @brief The Enrichment place accepted trade Materials in their Inventory.
@@ -98,6 +100,8 @@ class CascadeEnrich : public cyclus::Facility {
   /// @brief Responds to each request for this facility's commodity.  If a given
   /// request is more than this facility's inventory or SWU capacity, it will
   /// offer the minimum of its capacities.
+  ///
+  /// @param commod_requests is a cyclus map of requests for this facility
   virtual std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr> GetMatlBids(
       cyclus::CommodMap<cyclus::Material>::type& commod_requests);
 
@@ -120,7 +124,7 @@ class CascadeEnrich : public cyclus::Facility {
   // TODO: MAKE THESE CONVERSIONS TOOLKIT FNS and have them explicitly check
   // timestep duration
 
-  // Convert input file flows kg/mon to SI units
+  /// --- Convert input file flows kg/mon to SI units ---
   inline double FlowPerSec(double flow_per_mon) {
     return flow_per_mon / secpermonth;
   }
@@ -132,11 +136,13 @@ class CascadeEnrich : public cyclus::Facility {
   inline double Mg2kgPerSec(double feed_mg_per_sec) {
     return feed_mg_per_sec / (1e6);
   }
+  /// ---
 
-  ///  @brief Determines if a particular material is a valid request to respond
-  ///  to.  Valid requests must contain U235 and U238 and must have a relative
-  ///  U235-to-U238 ratio less than this facility's tails_assay().
-  ///  @return true if the above description is met by the material
+  /// @brief Determines if a particular material is a valid request to respond
+  /// to. Valid requests must contain U235 and U238 and must have a relative
+  /// U235-to-U238 ratio less than this facility's tails_assay().
+  ///
+  /// @return true if the above description is met by the material
   bool ValidReq(const cyclus::Material::Ptr mat);
 
   inline const cyclus::toolkit::ResBuf<cyclus::Material>& Tails() const {
@@ -144,34 +150,34 @@ class CascadeEnrich : public cyclus::Facility {
   }
 
  private:
-  ///  @brief calculates the feed assay based on the unenriched inventory
+  /// @brief calculates the feed assay based on the unenriched inventory
   double FeedAssay(double quantity);
 
 
-  ///   @brief adds a material into the natural uranium inventory
-  ///   @throws if the material is not the same composition as the feed_recipe
+  ///  @brief adds a material into the natural uranium inventory
+  ///  @throws if the material is not the same composition as the feed_recipe
   void AddMat_(cyclus::Material::Ptr mat);
 
-  ///   @brief generates a request for this facility given its current state.
-  ///   Quantity of the material will be equal to remaining inventory size.
+  ///  @brief generates a request for this facility given its current state.
+  ///  Quantity of the material will be equal to remaining inventory size.
   cyclus::Material::Ptr Request_();
 
-  ///  @brief Generates a material offer for a given request. The response
-  ///  composition will be comprised only of U235 and U238 at their relative
-  ///  ratio in the requested material. The response quantity will be the
-  ///  same as the requested commodity.
+  /// @brief Generates a material offer for a given request. The response
+  /// composition will be comprised only of U235 and U238 at their relative
+  /// ratio in the requested material. The response quantity will be the
+  /// same as the requested commodity.
   ///
-  ///  @param req the requested material being responded to
+  /// @param req the requested material being responded to
   cyclus::Material::Ptr Offer_(cyclus::Material::Ptr req);
 
   cyclus::Material::Ptr Enrich_(cyclus::Material::Ptr mat, double qty);
 
-  ///  @brief records and enrichment with the cyclus::Recorder
+  /// @brief records and enrichment with the cyclus::Recorder
   void RecordEnrichment_(double natural_u);
 
 
   // Not physical constants but fixed assumptions for a cascade separating out
-  // U235 from U238 in UF6 gas group all the characteristic of a centrifuges
+  // U235 from U238 in UF6 gas group all the characteristic of a centrifuges.
   CentrifugeConfig centrifuge;
   CascadeConfig cascade;
   double precision = 1e-15;
@@ -225,9 +231,9 @@ class CascadeEnrich : public cyclus::Facility {
     "default": 100, \
     "tooltip": "design feed flow (kg/mon)", \
     "uilabel": "Design Feed Flow", \
-    "doc": "Target amount of feed material to be processed by the" \
-    " facility (kg/mon). Either this or max_centrifuges is used to constrain" \
-    " the cascade design" }
+    "doc": "Target amount of feed material to be processed by the " \
+    "facility (kg/mon). Either this or max_centrifuges is used to constrain " \
+    "the cascade design" }
   double design_feed_flow;
 
   #pragma cyclus var { \
@@ -271,35 +277,35 @@ class CascadeEnrich : public cyclus::Facility {
     "default" : 485.0, \
     "tooltip" : "Centrifuge velocity (m/s)", \
     "uilabel" : "Centrifuge velocity (m/s)", \
-  "doc" : "operational centrifuge velocity (m/s) at the outer radius (a)"}
+    "doc" : "operational centrifuge velocity (m/s) at the outer radius (a)" }
   double centrifuge_velocity;
 
 #pragma cyclus var {						\
     "default" : 0.5, \
     "tooltip" : "Centrifuge height (m)", \
     "uilabel" : "Centrifuge height (m)", \
-  "doc" : "height of centrifuge (m)"}
+    "doc" : "height of centrifuge (m)" }
   double height;
 
 #pragma cyclus var {					  \
     "default" : 0.15, \
     "tooltip" : "Centrifuge diameter (m)", \
     "uilabel" : "Centrifuge diameter (m)", \
-  "doc" : "diameter of centrifuge (m)"}
+    "doc" : "diameter of centrifuge (m)" }
   double diameter;
 
 #pragma cyclus var {					  \
     "default" : 2, \
     "tooltip" : "Centrifuge L/F* ", \
     "uilabel" : "Centrifuge Countercurrent to feed ratio", \
-  "doc" : "Countercurrent to feed ratio"}
+    "doc" : "Countercurrent to feed ratio" }
   double L_over_F;
 
 #pragma cyclus var {					  \
     "default" : 15.0, \
     "tooltip" : "Centrifuge feed rate (mg/sec)", \
     "uilabel" : "Max feed rate for single centrifuge (mg/sec)", \
-  "doc" : "maximum feed rate for a single centrifuge (mg/sec)"}
+    "doc" : "maximum feed rate for a single centrifuge (mg/sec)" }
   double machine_feed;
 
   #pragma cyclus var { \
@@ -310,7 +316,7 @@ class CascadeEnrich : public cyclus::Facility {
     "doc": "Miss-use modeling option: " \
     " - 0: alpha-theta fix -- beta varies, " \
     " - 1: alpha=beta fix -- theta varies, " \
-    " - 2: alpha*beta fix "}
+    " - 2: alpha*beta fix " }
   int miss_use_model;
 
 
