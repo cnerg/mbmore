@@ -68,14 +68,14 @@ void CascadeEnrich::EnterNotify() {
   for (it = cascade.stgs_config.begin(); it != cascade.stgs_config.end();
        it++) {
     std::cout << "stg " << it->first;
-    std::cout << " FA: " << it->second.feed_assay;
-    std::cout << " PA: " << it->second.product_assay;
-    std::cout << " TA: " << it->second.tail_assay;
-    std::cout << " feed_flow: " << it->second.feed_flow;
-    std::cout << " cut: " << it->second.cut;
-    std::cout << " alpha: " << it->second.alpha;
-    std::cout << " beta: " << it->second.beta;
-    std::cout << " machine: " << it->second.n_machines;
+    std::cout << " FA: " << it->second.feed_assay();
+    std::cout << " PA: " << it->second.product_assay();
+    std::cout << " TA: " << it->second.tail_assay();
+    std::cout << " feed_flow: " << it->second.feed_flow();
+    std::cout << " cut: " << it->second.cut();
+    std::cout << " alpha: " << it->second.alpha();
+    std::cout << " beta: " << it->second.beta();
+    std::cout << " machine: " << it->second.n_machines();
     std::cout << std::endl;
   }
   std::cout << "Design Feed Flow " << FlowPerMon(cascade.FeedFlow()) << std::endl;
@@ -122,9 +122,10 @@ CascadeEnrich::GetMatlRequests() {
 
   return ports;
 }
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Sort offers of input material to have higher preference for more
-//  U-235 content
+// U-235 content
 void CascadeEnrich::AdjustMatlPrefs(
     cyclus::PrefMap<cyclus::Material>::type& prefs) {
   using cyclus::Bid;
@@ -181,6 +182,7 @@ void CascadeEnrich::AcceptMatlTrades(
     AddMat_(it->second);
   }
 }
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::AddMat_(cyclus::Material::Ptr mat) {
   // Elements and isotopes other than U-235, U-238 are sent directly to tails
@@ -223,6 +225,7 @@ void CascadeEnrich::AddMat_(cyclus::Material::Ptr mat) {
       << " to its inventory, which is holding " << inventory.quantity()
       << " total.";
 }
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::set<cyclus::BidPortfolio<cyclus::Material>::Ptr>
 CascadeEnrich::GetMatlBids(
@@ -408,6 +411,7 @@ cyclus::Material::Ptr CascadeEnrich::Enrich_(cyclus::Material::Ptr mat,
 
   return response;
 }
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CascadeEnrich::RecordEnrichment_(double natural_u) {
   using cyclus::Context;
@@ -431,6 +435,7 @@ cyclus::Material::Ptr CascadeEnrich::Request_() {
   return cyclus::Material::CreateUntracked(qty,
                                            context()->GetRecipe(feed_recipe));
 }
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 cyclus::Material::Ptr CascadeEnrich::Offer_(cyclus::Material::Ptr mat) {
   double feed_assay = FeedAssay(mat->quantity());
@@ -443,6 +448,7 @@ cyclus::Material::Ptr CascadeEnrich::Offer_(cyclus::Material::Ptr mat) {
   return cyclus::Material::CreateUntracked(
       mat->quantity(), cyclus::Composition::CreateFromAtom(comp));
 }
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
   cyclus::toolkit::MatQuery q(mat);
@@ -450,6 +456,7 @@ bool CascadeEnrich::ValidReq(const cyclus::Material::Ptr mat) {
   double u238 = q.atom_frac(922380000);
   return (u238 > 0 && u235 / (u235 + u238) > tails_assay);
 }
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 double CascadeEnrich::FeedAssay(double quantity) {
   using cyclus::Material;
@@ -465,16 +472,17 @@ double CascadeEnrich::FeedAssay(double quantity) {
 }
 
 double CascadeEnrich::ProductAssay(double feed_assay) {
-  CascadeConfig cascade_tmp = cascade.ModelMissUsedCascade(feed_assay, miss_use_model, precision);
-  return cascade_tmp.stgs_config.rbegin()->second.product_assay;
+  CascadeConfig cascade_tmp = cascade.ModelMisusedCascade(feed_assay, miss_use_model, precision);
+  return cascade_tmp.stgs_config.rbegin()->second.product_assay();
 }
+
 double CascadeEnrich::TailsAssay(double feed_assay) {
-  CascadeConfig cascade_tmp = cascade.ModelMissUsedCascade(feed_assay, miss_use_model, precision);
-  return cascade_tmp.stgs_config.begin()->second.tail_assay;
+  CascadeConfig cascade_tmp = cascade.ModelMisusedCascade(feed_assay, miss_use_model, precision);
+  return cascade_tmp.stgs_config.begin()->second.tail_assay();
 }
 
 double CascadeEnrich::MaxFeedFlow(double feed_assay){
-  CascadeConfig cascade_tmp = cascade.ModelMissUsedCascade(feed_assay, miss_use_model, precision);
+  CascadeConfig cascade_tmp = cascade.ModelMisusedCascade(feed_assay, miss_use_model, precision);
 
   return FlowPerMon(cascade_tmp.FeedFlow());
 
@@ -506,10 +514,10 @@ double CascadeEnrich::FeedRequired(double prod_qty) {
 double CascadeEnrich::ProductFlow(double feed_flow) {
   double feed_assay = FeedAssay(feed_flow);
   double feed_ratio = feed_flow / MaxFeedFlow(feed_assay);
-  CascadeConfig cascade_tmp = cascade.ModelMissUsedCascade(feed_assay, miss_use_model, precision);
+  CascadeConfig cascade_tmp = cascade.ModelMisusedCascade(feed_assay, miss_use_model, precision);
 
-  StageConfig last_stg = cascade_tmp.stgs_config.rbegin()->second;
-  double product_flow = last_stg.feed_flow * last_stg.cut;
+  StageConfig last_stg = cascade_tmp.stgs_config.rbegin()->second();
+  double product_flow = last_stg.feed_flow() * last_stg.cut();
   return feed_ratio * FlowPerMon(product_flow);
 }
 
