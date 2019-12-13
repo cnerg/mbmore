@@ -311,13 +311,13 @@ class CascadeEnrich : public cyclus::Facility {
   #pragma cyclus var { \
     "default": 0, \
     "userlevel": 10, \
-    "tooltip": "Modeling option for miss-use calculation", \
-    "uilabel": "Miss-use Modeling", \
-    "doc": "Miss-use modeling option: " \
+    "tooltip": "Modeling option for misuse calculation", \
+    "uilabel": "Misuse Modeling", \
+    "doc": "Misuse modeling option: " \
     " - 0: alpha-theta fix -- beta varies, " \
     " - 1: alpha=beta fix -- theta varies, " \
     " - 2: alpha*beta fix " }
-  int miss_use_model;
+  int misuse_model;
 
 
 
