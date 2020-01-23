@@ -31,7 +31,7 @@ CascadeEnrich::CascadeEnrich(cyclus::Context* ctx)
       feed_commod(""),
       product_commod(""),
       tails_commod(""),
-      miss_use_model(0),
+      misuse_model(0),
       order_prefs(true) {
         secpertimestep = (*this).context()->sim_info().dt;
       }
@@ -520,7 +520,7 @@ double CascadeEnrich::ProductFlow(double feed_flow) {
   CascadeConfig cascade_tmp = cascade.ModelMisuseCascade(feed_assay, misuse_model, precision);
 
   StageConfig last_stg = cascade_tmp.stgs_config.rbegin()->second;
-  double product_flow = last_stg.feed_flow * last_stg.cut;
+  double product_flow = last_stg.feed_flow() * last_stg.cut();
   return feed_ratio * FlowPerDt(product_flow);
 }
 
