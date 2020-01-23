@@ -210,7 +210,7 @@ CascadeConfig CascadeConfig::ModelMisuseCascade(double f_assay,
   // Case 1: alpha = beta, cut = varying
   switch (modeling_opt) {
     default:
-      misuse_cascade.ComputeAssay(f_assay, precision);
+      misuse_cascade.ComputeAssayByAlpha(f_assay, precision);
       break;
 
     case 1:
@@ -219,11 +219,7 @@ CascadeConfig CascadeConfig::ModelMisuseCascade(double f_assay,
       break;
 
     case 2:
-      miss_used_cascade.ComputeAssayByGamma(f_assay, precision);
-      break;
-
-    case 2:
-      miss_used_cascade.ComputeAssayByGamma(f_assay, precision);
+      misuse_cascade.ComputeAssayByGamma(f_assay, precision);
       break;
   }
   return misuse_cascade;
@@ -309,6 +305,15 @@ void CascadeConfig::ComputeAssayByAlpha(double f_assay, double precision) {
   }
 }
 
+void CascadeConfig::ComputeAssayByGamma(double f_assay, double precision) {
+  CascadeConfig previous_cascade;
+  while (DeltaEnrichment((*this), previous_cascade) > precision) {
+    previous_cascade = (*this);
+    (*this).IterrateEnrichment(f_assay);
+    (*this).UpdateByGamma();
+  }
+}
+
 double CascadeConfig::DeltaEnrichment(CascadeConfig a_enrichments,
                                       CascadeConfig p_enrichments,
                                       double precision) {
@@ -391,21 +396,7 @@ std::map<int, StageConfig> CascadeConfig::IterateEnrichment(
     it->second.ProductAssay();
     it->second.TailAssay();
   }
-}
 
-void CascadeConfig::UpdateByGamma(){
-  std::map<int, StageConfig>::iterator it;
-  for (it = (*this).stgs_config.begin(); it != (*this).stgs_config.end();
-       it++) {
-    double gamma = it->second.alpha * it->second.beta;
-    // Recompute Product Assay
-    it->second.ProductAssayByGamma(gamma);
-    // Alpha by Product assay
-    it->second.AlphaByProductAssay();
-    // Beta and tail assay...
-    it->second.BetaByAlphaAndCut();
-    it->second.TailAssay();
-  }
+  return updated_enrichment.stgs_config;
 }
-
 }  // namespace mbmore
