@@ -80,10 +80,13 @@ class CascadeConfig {
                          CascadeConfig previous_enrichment,
                          double precision);
 
-  // method computing one iteration of the algorithm used to get the response
+  // method computing one iteration, of the algorithm used to get the response
   // to non ideal feed assay
-  std::map<int, StageConfig> IterateEnrichment(CascadeConfig cascade,
-                                               double feed_assay);
+  void IterateEnrichment(double feed_assay);
+  // recompute product assay, beta and tails assay from alpha, cut and feed assay
+  void UpdateByAlpha();
+  //recompute alpha, product assay, beta and tails assay from gamma, cut and feed assay
+  void UpdateByGamma();
 };
 
 }  // namespace mbmore
