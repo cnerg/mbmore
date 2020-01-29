@@ -109,11 +109,26 @@ void StageConfig::AlphaByDU() {
   alpha_ = 1. + std::sqrt((2. * (DU_ / M) * (1. - cut_) / (cut_ * feed)));
 }
 
+void StageConfig::AlphaByProductAssay(){
+  alpha_ = (1 - feed_assay_)/feed_assay_ * product_assay_/(1 - product_assay_);
+}
+
 void StageConfig::BetaByAlphaAndCut() {
   ProductAssay();
   double waste_assay = (feed_assay_ - cut_ * product_assay_) / (1. - cut_);
 
   beta_ = feed_assay_ / (1. - feed_assay_) * (1. - waste_assay) / waste_assay;
+}
+
+void StageConfig::ProductAssayByGamma(double gamma){
+  double product_assay_ = ( - sqrt( pow( (feed_assay_ - cut_) * gamma, 2)
+                              + gamma * ( 2*feed_assay_ + 2*cut_
+                                          - 2*pow(feed_assay_, 2)
+                                          - 2*pow(cut_, 2))
+                        + pow(feed_assay_ + cut_ -1, 2))
+                        + gamma*(feed_assay_ + cut_)
+                        - feed_assay_ - cut_ + 1 )
+                      / (2*cut_ * (gamma -1));
 }
 
 void StageConfig::CutByAlphaBeta() {

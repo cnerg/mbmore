@@ -300,18 +300,18 @@ void CascadeConfig::PropagateAssay(double f_assay) {
 
 void CascadeConfig::ComputeAssayByAlpha(double f_assay, double precision) {
   CascadeConfig previous_cascade;
-  while (DeltaEnrichment((*this), previous_cascade) > precision) {
+  while (DeltaEnrichment((*this), previous_cascade, precision) > precision) {
     previous_cascade = (*this);
-    (*this).IterrateEnrichment(f_assay);
+    (*this).IterateEnrichment(f_assay);
     (*this).UpdateByAlpha();
   }
 }
 
 void CascadeConfig::ComputeAssayByGamma(double f_assay, double precision) {
   CascadeConfig previous_cascade;
-  while (DeltaEnrichment((*this), previous_cascade) > precision) {
+  while (DeltaEnrichment((*this), previous_cascade, precision) > precision) {
     previous_cascade = (*this);
-    (*this).IterrateEnrichment(f_assay);
+    (*this).IterateEnrichment(f_assay);
     (*this).UpdateByGamma();
   }
 }
