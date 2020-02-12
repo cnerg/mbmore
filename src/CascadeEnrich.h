@@ -232,7 +232,7 @@ class CascadeEnrich : public cyclus::Facility {
     "tooltip": "design feed flow (kg/mon)", \
     "uilabel": "Design Feed Flow", \
     "doc": "Target amount of feed material to be processed by the " \
-    "facility (kg/mon). Either this or max_centrifuges is used to constrain " \
+    "facility (kg/s). Either this or max_centrifuges is used to constrain " \
     "the cascade design" }
   double design_feed_flow;
 

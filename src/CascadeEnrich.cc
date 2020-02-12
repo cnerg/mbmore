@@ -64,7 +64,7 @@ void CascadeEnrich::EnterNotify() {
   secpertimestep = (*this).context()->sim_info().dt;
 
   cascade = CascadeConfig(centrifuge, design_feed_assay, design_product_assay,
-                          design_tails_assay, FlowPerSec(design_feed_flow),
+                          design_tails_assay, design_feed_flow,
                           max_centrifuges, precision);
 
   std::map<int, StageConfig>::iterator it;
