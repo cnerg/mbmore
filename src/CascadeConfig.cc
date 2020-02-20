@@ -122,13 +122,7 @@ void CascadeConfig::BuildIdealCascade(double f_assay, double product_assay,
   int ideal_strip_stage = 0;
 
   // Initialisation of Feeding stage (I == 0)
-  StageConfig stg;
-  stg.alpha(-1);
-  stg.DU(-1);
-  stg.centrifuge = centrifuge;
-  stg.feed_assay(f_assay);
-  stg.precision(precision);
-  stg.BuildIdealStg();
+  StageConfig stg(centrifuge, f_assay, precision);
   int stg_i = 0;
   ideal_stgs[stg_i] = stg;
   double ref_alpha = ideal_stgs[0].alpha();
@@ -186,8 +180,14 @@ void CascadeConfig::ScaleCascade(double max_feed, int max_centrifuges) {
   CalcFeedFlows();
   PopulateStages();
 
-  // Do design parameters require more centrifuges than what is available?
   int machines_needed = FindTotalMachines();
+
+  if (max_centrifuges == -1) {
+    n_machines = machines_needed;
+    return;
+  }
+
+  // Do design parameters require more centrifuges than what is available?
   double max_feed_from_machine = max_feed;
   while (machines_needed > max_centrifuges) {
     double scaling_ratio = (double)machines_needed / (double)max_centrifuges;

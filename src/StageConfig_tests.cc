@@ -142,6 +142,7 @@ TEST(StageConfig_Test, TestStages) {
   stage.ProductAssay();
   stage.MachinesNeededPerStage();
 
+  //double expected_product_assay_s = 0.007782156959583;
   double expected_product_assay_s = 0.0082492;
 
   // Calculated using equations from 2009 Glaser paper

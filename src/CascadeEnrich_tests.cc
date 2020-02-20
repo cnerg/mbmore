@@ -145,7 +145,7 @@ TEST_F(CascadeEnrichTest, CheckCapConstraint) {
   sim.AddRecipe("natu1", cascadenrichtest::c_natu1());
   sim.AddRecipe("heu", cascadenrichtest::c_heu());
 
-  sim.AddSink("enr_u").recipe("heu").capacity(10).Finalize();
+  sim.AddSink("enr_u").recipe("heu").capacity(20).Finalize();
 
   int id = sim.Run();
 
@@ -157,6 +157,66 @@ TEST_F(CascadeEnrichTest, CheckCapConstraint) {
   EXPECT_EQ(1.0, qr.rows.size());
   EXPECT_NEAR(5.831, m->quantity(), 0.01)
       << "traded quantity exceeds capacity constraint";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST_F(CascadeEnrichTest, FeedFlowTime) {
+  // Tests that simulations using different timesteps reach the
+  // same equilibrium value, all other parameters held the same.
+
+  std::string config =
+      "   <feed_commod>natu</feed_commod> "
+      "   <feed_recipe>natu1</feed_recipe> "
+      "   <product_commod>enr_u</product_commod> "
+      "   <tails_commod>tails</tails_commod> "
+      "   <tails_assay>0.003</tails_assay> "
+      "   <initial_feed>1e09</initial_feed> ";
+
+  int simdur = 1;
+
+  // Running sim with daily timestep
+  cyclus::MockSim sim(cyclus::AgentSpec(":mbmore:CascadeEnrich"), config,
+                        simdur);
+  cyclus::SimInfo SI(1, 0, 1, "", "never");
+  SI.dt = 3600*24;
+  cyclus::Context* ctx = sim.context();
+  ctx->InitSim(SI);
+
+  sim.AddRecipe("natu1", cascadenrichtest::c_natu1());
+  sim.AddRecipe("heu", cascadenrichtest::c_heu());
+  sim.AddSink("enr_u").recipe("heu").Finalize();
+
+  int id = sim.Run();
+
+  std::vector<Cond> conds;
+  conds.push_back(Cond("Commodity", "==", std::string("enr_u")));
+  QueryResult qr = sim.db().Query("Transactions", &conds);
+  Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
+
+  double day_q = m->quantity();
+
+  // Running sim with yearly timestep
+  cyclus::MockSim sim2(cyclus::AgentSpec(":mbmore:CascadeEnrich"), config,
+                        simdur);
+  cyclus::SimInfo SI2(1, 0, 1, "", "never");
+  SI2.dt = 3600*24*365.25;
+  cyclus::Context* ctx2 = sim2.context();
+  ctx->InitSim(SI2);
+
+  sim2.AddRecipe("natu1", cascadenrichtest::c_natu1());
+  sim2.AddRecipe("heu", cascadenrichtest::c_heu());
+  sim2.AddSink("enr_u").recipe("heu").Finalize();
+
+  int id2 = sim2.Run();
+
+  std::vector<Cond> conds2;
+  conds2.push_back(Cond("Commodity", "==", std::string("enr_u")));
+  QueryResult qr2 = sim2.db().Query("Transactions", &conds2);
+  Material::Ptr m2 = sim2.GetMaterial(qr2.GetVal<int>("ResourceId"));
+
+  double year_q = m2->quantity();
+
+  EXPECT_NEAR(day_q*365.25,year_q, 0.01);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

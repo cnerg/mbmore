@@ -20,9 +20,9 @@ class StageConfig {
     // cut value of the stage
     double cut_;
     // dU value of the stage (calculated form the centrifuges config with the cut)
-    double DU_;
+    double DU_ = -1;
     // Feed to Product enrichment ratio
-    double alpha_;
+    double alpha_ = -1;
     // Feed to Tail enrichment ratio
     double beta_;
     // Feed flow (g/s)
@@ -42,8 +42,8 @@ class StageConfig {
     // Setup a empty stage
     StageConfig() { ; }
     // Design an ideal stage for a specific feed assay and feed flow
-    StageConfig(CentrifugeConfig cent, double f_assay, double feed_flow,
-                double precision = 1e-8);
+    StageConfig(CentrifugeConfig cent, double f_assay,
+                double precision = 1e-8, double feed_flow = -1);
     // Design an ideal stage for a specific feed assay and feed flow
     StageConfig(double f_assay, double feed_flow, double cut_, double DU_,
                 double alpha_ = -1, double precision = 1e-8);

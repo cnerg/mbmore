@@ -237,7 +237,7 @@ class CascadeEnrich : public cyclus::Facility {
   double design_feed_flow;
 
   #pragma cyclus var { \
-    "default" : 1000, \
+    "default" : -1, \
     "tooltip" : "number of centrifuges available ", \
     "uilabel" : "Number of Centrifuges", \
     "doc" : "number of centrifuges available to make the cascade" }
