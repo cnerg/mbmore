@@ -228,8 +228,8 @@ class CascadeEnrich : public cyclus::Facility {
   double max_feed_inventory;
 
 #pragma cyclus var {					      \
-    "default": 100, \
-    "tooltip": "design feed flow (kg/mon)", \
+    "default": 0.000015, \
+    "tooltip": "design feed flow (kg/s)", \
     "uilabel": "Design Feed Flow", \
     "doc": "Target amount of feed material to be processed by the " \
     "facility (kg/s). Either this or max_centrifuges is used to constrain " \
@@ -307,6 +307,22 @@ class CascadeEnrich : public cyclus::Facility {
     "uilabel" : "Max feed rate for single centrifuge (mg/sec)", \
     "doc" : "maximum feed rate for a single centrifuge (mg/sec)" }
   double machine_feed;
+
+#pragma cyclus var {					  \
+    "default" : 1000., \
+    "tooltip" : "Internal Pressure Ratio", \
+    "uilabel" : "Centrifuge internal pressure ratio", \
+    "doc" : "Pressure ratio parameter for centrifuge design"\
+            "that drives the r1 / r2 ratio."}
+  double x;
+
+#pragma cyclus var {					  \
+    "default" : 1.0, \
+    "tooltip" : "Overall centrifuge efficiency", \
+    "uilabel" : "Overall centrifuge efficiency", \
+    "doc" : "Centrifuge efficiency parameter that describes"\
+            "its effective separative performance."}
+  double eff;
 
   #pragma cyclus var { \
     "default": 0, \

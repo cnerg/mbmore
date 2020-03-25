@@ -16,7 +16,7 @@ double dM = 0.003;  // kg/mol U238 - U235
 double x = 1000;    // Pressure ratio (Glaser)
 
 // General cascade assumptions
-double flow_internal = 2.0;
+double flow_ratio = 2.0;
 double eff = 1.0;
 double cut = 0.5;
 
@@ -34,7 +34,7 @@ const double waste_assay = 0.001;
 const double feed_c = 739 / (30.4 * 24 * 60 * 60);    // kg/month -> kg/sec
 const double product_c = 77 / (30.4 * 24 * 60 * 60);  // kg/month -> kg/sec
 CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM, x,
-                            flow_internal);
+                            flow_ratio);
 
 // del U=7.0323281e-08 alpha=1.16321
 double delU = centrifuge.ComputeDeltaU(cut);
@@ -150,6 +150,38 @@ TEST(StageConfig_Test, TestStages) {
 
   EXPECT_NEAR(stage.n_machines(), expected_n_mach_e, tol_num);
   EXPECT_NEAR(stage.product_assay(), expected_product_assay_s, tol_assay);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Verify that, for a P1-type centrifuge, results are in agreement
+// with those presented by Glaser paper.
+TEST(StageConfig_Test, AlphaBeta) {
+  // P1-type parameters
+  double v_a = 320; // m/s
+  double Z = 1.8; // m
+  double d = 0.10; // m
+  double eff = 0.564;
+  double x = 1000.;
+  double flow_ratio = 2.0;
+  double temp = 320; // K
+  double M = 0.352;   // kg/mol UF6
+  double dM = 0.003;  // kg/mol U238 - U235
+  double feed = 12.6 / 1000. / 1000.; // mg/s -> kg/s
+  double cut = 0.5;
+  double f_assay = 0.00720;
+
+  CentrifugeConfig cent(v_a, Z, d, feed, temp, eff, M, dM, x, flow_ratio);
+
+  double delU = cent.ComputeDeltaU(cut);
+
+  double delU_e = 2.5 / (365.25 * 24 * 60 * 60);
+  EXPECT_NEAR(delU, 1.0, 1e-8);
+
+  StageConfig stg(f_assay, feed, cut, delU);
+
+  double ab_e = 1.29;
+  EXPECT_NEAR(stg.alpha() * stg.beta(), ab_e, 0.0001);
+
 }
 
 }  // namespace enrichfunctiontests

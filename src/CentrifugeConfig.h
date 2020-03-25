@@ -19,7 +19,7 @@ class CentrifugeConfig {
   double dM; // molar mass diff between the 2 components of the gas default 0.003kg/mol (u235/U238)
   double M;  // gas molar mass, default UF6 0.352 kg/mol
   double x;  // pressure ration -> drive r1/r2 ratio
-  double flow_internal; // countercurrent-to-feed ratios k range between 2 and 4
+  double flow_ratio; // countercurrent-to-feed ratios k range between 2 and 4
 
   double v_a; // peripheral velocities
   double height; // centrifugre height

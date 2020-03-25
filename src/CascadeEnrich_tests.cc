@@ -170,11 +170,13 @@ TEST_F(CascadeEnrichTest, FeedFlowTime) {
       "   <product_commod>enr_u</product_commod> "
       "   <tails_commod>tails</tails_commod> "
       "   <tails_assay>0.003</tails_assay> "
-      "   <initial_feed>1e09</initial_feed> ";
+      "   <initial_feed>1e09</initial_feed> "
+      "   <max_centrifuges>300</max_centrifuges>";
 
   int simdur = 1;
 
-  // Running sim with daily timestep
+  //--------------------------------------------------------------------
+  // BEGIN: Daily timestep sim
   cyclus::MockSim sim(cyclus::AgentSpec(":mbmore:CascadeEnrich"), config,
                         simdur);
   cyclus::SimInfo SI(1, 0, 1, "", "never");
@@ -195,13 +197,15 @@ TEST_F(CascadeEnrichTest, FeedFlowTime) {
 
   double day_q = m->quantity();
 
-  // Running sim with yearly timestep
+  // END: Daily timestep sim
+  //--------------------------------------------------------------------
+  // BEGIN: Yearly timestep sim
   cyclus::MockSim sim2(cyclus::AgentSpec(":mbmore:CascadeEnrich"), config,
                         simdur);
   cyclus::SimInfo SI2(1, 0, 1, "", "never");
   SI2.dt = 3600*24*365.25;
   cyclus::Context* ctx2 = sim2.context();
-  ctx->InitSim(SI2);
+  ctx2->InitSim(SI2);
 
   sim2.AddRecipe("natu1", cascadenrichtest::c_natu1());
   sim2.AddRecipe("heu", cascadenrichtest::c_heu());
@@ -215,7 +219,9 @@ TEST_F(CascadeEnrichTest, FeedFlowTime) {
   Material::Ptr m2 = sim2.GetMaterial(qr2.GetVal<int>("ResourceId"));
 
   double year_q = m2->quantity();
+  // END: Yearly timestep sim
 
+  // Check if, scaling for timestep, the same quantity is produced
   EXPECT_NEAR(day_q*365.25,year_q, 0.01);
 }
 

@@ -60,7 +60,7 @@ void CascadeEnrich::EnterNotify() {
   centrifuge.diameter = diameter;
   centrifuge.feed = machine_feed / 1000 / 1000;
   centrifuge.temp = temp;
-  centrifuge.flow_internal = L_over_F;
+  centrifuge.flow_ratio = L_over_F;
   secpertimestep = (*this).context()->sim_info().dt;
 
   cascade = CascadeConfig(centrifuge, design_feed_assay, design_product_assay,
