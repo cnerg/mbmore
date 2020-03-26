@@ -1,5 +1,6 @@
 // Implements the CascadeEnrich class
 #include "StageConfig.h"
+#include "cyclus.h" 
 
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
@@ -164,6 +165,15 @@ void StageConfig::MachinesNeededPerStage(double tolerance) {
   if (std::abs(n_exact - n_machines_) > tolerance) {
     n_machines_ = int(n_exact) + 1;
   }
+
+}
+double StageConfig::SWU(){
+  using cyclus::toolkit::Assays;
+  using cyclus::toolkit::SwuRequired;
+  if(product_assay_ == -1 || feed_assay_ == -1 || tail_assay_ == 1 || feed_flow_ == -1)
+    return -1;
+
+  return SwuRequired(feed_flow_, Assays(feed_assay_, product_assay_, tail_assay_));
 
 }
 

@@ -63,6 +63,9 @@ class StageConfig {
     // recompute Cut value assuming Alpha and Beta fixed
     void CutByAlphaBeta();
 
+    // return the SWU of the stage
+    double SWU();
+
     // Compute Product from gamma
     void ProductAssayByGamma(double gamma);
 
