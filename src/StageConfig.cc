@@ -161,7 +161,7 @@ void StageConfig::MachinesNeededPerStage(double tolerance) {
 
   // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
   double cfeed_flow =
-      (2 * DU_ / centrifuge.M) * ((1 - cut_) / cut_) / pow((alpha_ - 1.), 2.);
+      2 * DU_ * ((1 - cut_) / cut_) / pow((alpha_ - 1.), 2.);
   double n_exact = feed_flow_ / cfeed_flow;
 
   // Adds a machine if fractional amount is needed
