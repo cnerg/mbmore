@@ -1,6 +1,6 @@
 // Implements the CascadeEnrich class
 #include "StageConfig.h"
-#include "cyclus.h" 
+#include "cyclus.h"
 
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
@@ -21,8 +21,8 @@ StageConfig::StageConfig(CentrifugeConfig cent, double f_assay,
       precision_(precision__) {
   BuildIdealStg();
 }
-StageConfig::StageConfig(double f_assay, double feed__, double cut__, double DU__,
-                         double alpha__, double precision__)
+StageConfig::StageConfig(double f_assay, double feed__, double cut__,
+                         double DU__, double alpha__, double precision__)
     : centrifuge(),
       feed_assay_(f_assay),
       feed_flow_(feed__),
@@ -104,14 +104,19 @@ void StageConfig::TailAssay() {
 }
 
 void StageConfig::AlphaByDU() {
-  double feed = centrifuge.feed;
-  double M = centrifuge.M;
+  double M = centrifuge.M;  // UF6 kg/mol
+  double M_238 = 0.238;     // U kg/mol
+  double ratio_UF6_U = M_238 / M;
+
+  // converting feed from UF6 to U
+  double feed = centrifuge.feed * ratio_UF6_U;
   // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
-  alpha_ = 1. + std::sqrt((2. * (DU_/M) * (1. - cut_) / (cut_ * feed)));
+  alpha_ = 1. + std::sqrt((2. * DU_ * (1. - cut_) / (cut_ * feed)));
 }
 
-void StageConfig::AlphaByProductAssay(){
-  alpha_ = (1 - feed_assay_)/feed_assay_ * product_assay_/(1 - product_assay_);
+void StageConfig::AlphaByProductAssay() {
+  alpha_ =
+      (1 - feed_assay_) / feed_assay_ * product_assay_ / (1 - product_assay_);
 }
 
 void StageConfig::BetaByAlphaAndCut() {
@@ -121,15 +126,13 @@ void StageConfig::BetaByAlphaAndCut() {
   beta_ = feed_assay_ / (1. - feed_assay_) * (1. - waste_assay) / waste_assay;
 }
 
-void StageConfig::ProductAssayByGamma(double gamma){
-  double product_assay_ = ( - sqrt( pow( (feed_assay_ - cut_) * gamma, 2)
-                              + gamma * ( 2*feed_assay_ + 2*cut_
-                                          - 2*pow(feed_assay_, 2)
-                                          - 2*pow(cut_, 2))
-                        + pow(feed_assay_ + cut_ -1, 2))
-                        + gamma*(feed_assay_ + cut_)
-                        - feed_assay_ - cut_ + 1 )
-                      / (2*cut_ * (gamma -1));
+void StageConfig::ProductAssayByGamma(double gamma) {
+  product_assay_ = (-sqrt(pow((feed_assay_ - cut_) * gamma, 2) +
+                          gamma * (2 * feed_assay_ + 2 * cut_ -
+                                   2 * pow(feed_assay_, 2) - 2 * pow(cut_, 2)) +
+                          pow(feed_assay_ + cut_ - 1, 2)) +
+                    gamma * (feed_assay_ + cut_) - feed_assay_ - cut_ + 1) /
+                   (2 * cut_ * (gamma - 1));
 }
 
 void StageConfig::CutByAlphaBeta() {
@@ -157,7 +160,8 @@ void StageConfig::MachinesNeededPerStage(double tolerance) {
   // centrifuge feed flow (centrifuge.feed).
 
   // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
-  double cfeed_flow = (2 * DU_/centrifuge.M) * ((1 - cut_) / cut_) / pow((alpha_ - 1.), 2.);
+  double cfeed_flow =
+      2 * DU_ * ((1 - cut_) / cut_) / pow((alpha_ - 1.), 2.);
   double n_exact = feed_flow_ / cfeed_flow;
 
   // Adds a machine if fractional amount is needed
@@ -165,16 +169,16 @@ void StageConfig::MachinesNeededPerStage(double tolerance) {
   if (std::abs(n_exact - n_machines_) > tolerance) {
     n_machines_ = int(n_exact) + 1;
   }
-
 }
-double StageConfig::SWU(){
+double StageConfig::SWU() {
   using cyclus::toolkit::Assays;
   using cyclus::toolkit::SwuRequired;
-  if(product_assay_ == -1 || feed_assay_ == -1 || tail_assay_ == 1 || feed_flow_ == -1)
+  if (product_assay_ == -1 || feed_assay_ == -1 || tail_assay_ == 1 ||
+      feed_flow_ == -1)
     return -1;
 
-  return SwuRequired(feed_flow_, Assays(feed_assay_, product_assay_, tail_assay_));
-
+  return SwuRequired(feed_flow_,
+                     Assays(feed_assay_, product_assay_, tail_assay_));
 }
 
 }  // namespace mbmore
