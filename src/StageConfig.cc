@@ -159,10 +159,14 @@ void StageConfig::MachinesNeededPerStage(double tolerance) {
   // n_machines: the denominator should be equal to the
   // centrifuge feed flow (centrifuge.feed).
 
+  double M = centrifuge.M;  // UF6 kg/mol
+  double M_238 = 0.238;     // U kg/mol
+  double ratio_UF6_U = M_238 / M;
+
   // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
-  double cfeed_flow =
-      2 * DU_ * ((1 - cut_) / cut_) / pow((alpha_ - 1.), 2.);
-  double n_exact = feed_flow_ / cfeed_flow;
+  double centrifuge_feed_flow =
+      2 * DU_ * ((1 - cut_) / cut_) / pow((alpha_ - 1.), 2.) / ratio_UF6_U;
+  double n_exact = this->feed_flow_ / (centrifuge_feed_flow);
 
   // Adds a machine if fractional amount is needed
   n_machines_ = int(n_exact);

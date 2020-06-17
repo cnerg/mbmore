@@ -75,7 +75,7 @@ double CentrifugeConfig::ComputeDeltaU(double cut) {
 
   double a = diameter / 2.0;  // outer radius
 
-  // withdrawl radius for heavy isotope
+  // withdrawal radius for heavy isotope
   // Glaser 2009 says operationally it ranges from 0.96-0.99
   double r2 = 0.975 * a;
 
@@ -87,7 +87,7 @@ double CentrifugeConfig::ComputeDeltaU(double cut) {
   } else {
     r1_over_r2 = 0.534;
   }
-  double r1 = r2 * r1_over_r2;  // withdrawl radius for ligher isotope
+  double r1 = r2 * r1_over_r2;  // withdrawal radius for lighter isotope
 
   // Glaser eqn 12
   // Vertical location of feed

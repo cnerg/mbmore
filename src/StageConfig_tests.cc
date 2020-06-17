@@ -184,5 +184,23 @@ TEST(StageConfig_Test, AlphaBeta) {
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Verify that the centrifuge feed flow can be reconstructed if alpha
+// is not provided.
+TEST(StageConfig_Test, FeedFlow) {
+  StageConfig stage(feed_assay, feed_c, cut, delU, -1, 1e-16);
+
+  double M = centrifuge.M;  // UF6 kg/mol
+  double M_238 = 0.238;     // U kg/mol
+  double ratio_UF6_U = M_238 / M;
+
+  // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
+  double centrifuge_feed_flow =
+      2 * stage.DU() * ((1 - stage.cut()) / stage.cut())
+      / pow((stage.alpha() - 1.), 2.) / ratio_UF6_U;
+
+  EXPECT_NEAR(centrifuge_feed_flow,stage.centrifuge.feed,1e-6);
+}
+
 }  // namespace enrichfunctiontests
 }  // namespace mbmore
