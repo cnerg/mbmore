@@ -146,7 +146,7 @@ TEST(StageConfig_Test, TestStages) {
   double expected_product_assay_s = 0.0082492;
 
   // Calculated using equations from 2009 Glaser paper
-  int expected_n_mach_e = 19;
+  int expected_n_mach_e = ceil(feed_c/feed_m);
 
   EXPECT_NEAR(stage.n_machines(), expected_n_mach_e, tol_num);
   EXPECT_NEAR(stage.product_assay(), expected_product_assay_s, tol_assay);
