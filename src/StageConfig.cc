@@ -109,9 +109,9 @@ void StageConfig::AlphaByDU() {
   double ratio_UF6_U = M_238 / M;
 
   // converting feed from UF6 to U
-  double feed = centrifuge.feed * ratio_UF6_U;
+  double feed_U = centrifuge.feed * ratio_UF6_U;
   // "Uranium Enrichment By Gas Centrifuge" D.G. Avery & E. Davies pg. 18
-  alpha_ = 1. + std::sqrt((2. * DU_ * (1. - cut_) / (cut_ * feed)));
+  alpha_ = 1. + std::sqrt((2. * DU_ * (1. - cut_) / (cut_ * feed_U)));
 }
 
 void StageConfig::AlphaByProductAssay() {

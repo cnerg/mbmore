@@ -9,6 +9,7 @@
 namespace mbmore {
 
 // Benchmarked using a regression test (expected values calculated manually)
+// Calculations can be found at CNERG/enrich_calc:mbmore_unit_tests
 namespace stageconfig_test {
 // Fixed for a cascade separating out U235 from U238 in UF6 gas
 double M = 0.352;   // kg/mol UF6
@@ -69,12 +70,12 @@ TEST(StageConfig_Test, TestAssays) {
 // Calculate ideal SWU params of single machinefeed_assay
 // (separation potential delU and separation factor alpha)
 TEST(StageConfig_Test, TestSWU) {
-  double expected_U = 7.03232816847e-08;
+  double expected_U = 8.638345e-08;
   double tol = 1e-9;
 
   StageConfig stage(feed_assay, feed_m, cut, delU, -1, 1e-16);
 
-  double expected_alpha = 1.16321;
+  double expected_alpha = 1.130517;
   double tol_alpha = 1e-2;
   EXPECT_NEAR(stage.alpha(), expected_alpha, tol_alpha);
 }

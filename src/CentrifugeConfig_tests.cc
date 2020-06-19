@@ -23,6 +23,7 @@ TEST(CentrifugeConfig_Test, TestSWU) {
   double cut = 0.5;
 
   // Centrifuge params used in Python test code
+  // found at CNERG/enrich_calc:mbmore_unit_tests
   // (based on Glaser SGS 2009 paper)
   double v_a = 485;                                           // m/s
   double height = 0.5;                                        // meters
@@ -32,10 +33,10 @@ TEST(CentrifugeConfig_Test, TestSWU) {
 
   CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM,
                               x, flow_ratio);
-  // del U=7.0323281e-08 alpha=1.16321
+  // dU=8.638345e-08 alpha=1.130517
   double delU = centrifuge.ComputeDeltaU(cut);
 
-  double pycode_U = 7.03232816847e-08;
+  double pycode_U = 8.638345e-08;
   double tol = 1e-9;
 
   EXPECT_NEAR(delU, pycode_U, tol);
