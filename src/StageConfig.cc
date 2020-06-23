@@ -117,7 +117,6 @@ void StageConfig::AlphaByProductAssay() {
 void StageConfig::BetaByAlphaAndCut() {
   ProductAssay();
   double waste_assay = (feed_assay_ - cut_ * product_assay_) / (1. - cut_);
-
   beta_ = feed_assay_ / (1. - feed_assay_) * (1. - waste_assay) / waste_assay;
 }
 
