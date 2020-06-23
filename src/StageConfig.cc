@@ -12,23 +12,23 @@
 
 namespace mbmore {
 
-StageConfig::StageConfig(CentrifugeConfig cent, double f_assay, double feed__,
-                         double precision__)
+StageConfig::StageConfig(CentrifugeConfig cent, double f_assay, double _feed_,
+                         double _precision_)
     : centrifuge(cent),
       feed_assay_(f_assay),
-      feed_flow_(feed__),
-      precision_(precision__) {
+      feed_flow_(_feed_),
+      precision_(_precision_) {
   BuildIdealStg();
 }
-StageConfig::StageConfig(double f_assay, double feed__, double cut__, double DU__,
-                         double alpha__, double precision__)
+StageConfig::StageConfig(double f_assay, double _feed_, double _cut_, double _DU_,
+                         double _alpha_, double _precision_)
     : centrifuge(),
       feed_assay_(f_assay),
-      feed_flow_(feed__),
-      precision_(precision__),
-      cut_(cut__),
-      DU_(DU__),
-      alpha_(alpha__) {
+      feed_flow_(_feed_),
+      precision_(_precision_),
+      cut_(_cut_),
+      DU_(_DU_),
+      alpha_(_alpha_) {
   // if alpha is not provided, compute it from the dU
   if (alpha_ == -1) {
     AlphaByDU();
