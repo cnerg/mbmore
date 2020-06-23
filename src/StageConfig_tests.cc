@@ -16,7 +16,7 @@ double dM = 0.003;  // kg/mol U238 - U235
 double x = 1000;    // Pressure ratio (Glaser)
 
 // General cascade assumptions
-double flow_ratio = 2.0;
+double flow_internal = 2.0;
 double eff = 1.0;
 double cut = 0.5;
 
@@ -34,7 +34,7 @@ const double waste_assay = 0.001;
 const double feed_c = 739 / (30.4 * 24 * 60 * 60);    // kg/month -> kg/sec
 const double product_c = 77 / (30.4 * 24 * 60 * 60);  // kg/month -> kg/sec
 CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM, x,
-                            flow_ratio);
+                            flow_internal);
 
 // del U=7.0323281e-08 alpha=1.16321
 double delU = centrifuge.ComputeDeltaU(cut);

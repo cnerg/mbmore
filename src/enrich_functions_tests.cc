@@ -17,7 +17,7 @@ namespace mbmore {
     const double x = 1000;  // Pressure ratio (Glaser)
     
     // General cascade assumptions
-    const double flow_ratio = 2.0 ;  
+    const double flow_internal = 2.0 ;  
     const double eff = 1.0;  
     const double cut = 0.5;  
     
@@ -38,7 +38,7 @@ namespace mbmore {
 
     //del U=7.0323281e-08 alpha=1.16321
     double delU = CalcDelU(v_a, height, diameter, feed_m, temp, cut, eff,
-			   M, dM, x, flow_ratio);
+			   M, dM, x, flow_internal);
     
     double alpha = AlphaBySwu(delU, feed_m, cut, M);    
     const double tol_assay = 1e-5;
