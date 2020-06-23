@@ -93,8 +93,8 @@ TEST(StageConfig_Test, TestIdeal) {
   double expected_alpha = 1.130517;
   double tol_alpha = 1e-2;
 
-  // These value found by regression test and is
-  // working as intended as of committing this line.
+  // These expected values are found by regression test
+  // and are working as intended as of committing this line.
   double expected_cut = 0.4685952;
   double tol_cut = 1e-3;
   double expected_U = 8.281007e-08;

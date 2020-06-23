@@ -36,7 +36,7 @@ const double product_c = 77 / (30.4 * 24 * 60 * 60);  // kg/month -> kg/sec
 CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM, x,
                             flow_ratio);
 
-// del U=7.0323281e-08 alpha=1.16321
+// del U=8.638345e-08 alpha=1.130517
 double delU = centrifuge.ComputeDeltaU(cut);
 
 const double tol_assay = 1e-5;
@@ -47,11 +47,13 @@ const double tol_num = 1e-2;
 // Ideal cascade design, and then using away from ideal design
 //
 TEST(CascadeStage_Test, TestCascade) {
+  // These expected values are found by regression test
+  // and are working as intended as of committing this line.
   CascadeConfig cascade;
   cascade.centrifuge = centrifuge;
   cascade.BuildIdealCascade(feed_assay, product_assay, waste_assay, 1e-8);
-  int expected_n_enrich_stage = 11;
-  int expected_n_strip_stage = 12;
+  int expected_n_enrich_stage = 13;
+  int expected_n_strip_stage = 15;
   //  integer
   int n_stage_enrich = cascade.n_enrich;
   int n_stage_waste = cascade.n_strip;
@@ -71,10 +73,10 @@ TEST(CascadeStage_Test, TestCascade) {
   double mod_waste_assay =
       cascade_non_ideal.stgs_config[-n_stage_waste].product_assay();
 
-  double expected_mod_product_assay = 0.8189;
+  double expected_mod_product_assay = 0.791461;
   EXPECT_NEAR(mod_product_assay, expected_mod_product_assay, tol_assay);
 
-  double expected_mod_waste_assay = 0.11198;
+  double expected_mod_waste_assay = 0.097997;
   EXPECT_NEAR(mod_waste_assay, expected_mod_waste_assay, tol_assay);
 }
 
@@ -90,8 +92,8 @@ TEST(CascadeStage_Test, TestCascadeDesign) {
       0.00030693, 0.00061387, 0.0009208,  0.00122774, 0.00153467,
       0.00127889, 0.00102311, 0.00076734, 0.00051156, 0.00025578};
 
-  std::vector<int> expected_machines = {25, 46, 65, 82, 97, 76,
-                                      57, 40, 26, 13};
+  std::vector<int> expected_machines = {25, 46, 66, 84, 100, 115,
+                                      94, 74, 57, 41};
 
   CascadeConfig cascade(centrifuge, fa, pa, wa, feed_c, 1000000);
 
@@ -103,18 +105,18 @@ TEST(CascadeStage_Test, TestCascadeDesign) {
   }
 
   // not enough machines
-  int max_centrifuges = 80;
+  int max_centrifuges = 40;
   cascade.ScaleCascade(feed_c, max_centrifuges);
-  int expected_tot_mach = 80;
-  double expected_opt_feed = 4.11669203083e-05;
+  int expected_tot_mach = 40;
+  double expected_opt_feed = 1.261064e-05;
 
   EXPECT_EQ(expected_tot_mach, cascade.FindTotalMachines());
   EXPECT_NEAR(expected_opt_feed, cascade.FeedFlow(), tol_qty);
 
   // more machines than requested capacity
-  max_centrifuges = 600;
+  max_centrifuges = 800;
   cascade.ScaleCascade(feed_c, max_centrifuges);
-  expected_tot_mach = 527;
+  expected_tot_mach = 741;
   expected_opt_feed = 0.0002814;
 
   EXPECT_EQ(expected_tot_mach, cascade.FindTotalMachines());
