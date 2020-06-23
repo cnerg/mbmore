@@ -18,7 +18,7 @@ TEST(CentrifugeConfig_Test, TestSWU) {
   double x = 1000;    // Pressure ratio (Glaser)
 
   // General cascade assumptions
-  double flow_internal = 2.0;
+  double flow_ratio = 2.0;
   double eff = 1.0;
   double cut = 0.5;
 
@@ -31,7 +31,7 @@ TEST(CentrifugeConfig_Test, TestSWU) {
   double temp = 320.0;                                        // Kelvin
 
   CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM,
-                              x, flow_internal);
+                              x, flow_ratio);
   // del U=7.0323281e-08 alpha=1.16321
   double delU = centrifuge.ComputeDeltaU(cut);
 

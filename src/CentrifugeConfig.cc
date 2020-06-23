@@ -34,7 +34,7 @@ CentrifugeConfig::CentrifugeConfig() {
 
   eff = 1.0;
   x = 1000;
-  flow_internal = 2.0;
+  flow_ratio = 2.0;
 
   // default UF6 0.352 kg/mol
   M = 0.352;
@@ -58,7 +58,7 @@ CentrifugeConfig::CentrifugeConfig(double v_a_, double h_, double d_, double fee
 
   eff = eff_;
   x = x_;
-  flow_internal = flow_;
+  flow_ratio = flow_;
 
   M = M_;
   dM = dM_;
@@ -90,8 +90,8 @@ double CentrifugeConfig::ComputeDeltaU(double cut) {
 
   // Glaser eqn 12
   // Vertical location of feed
-  double Z_p = height * (1.0 - cut) * (1.0 + flow_internal) /
-               (1.0 - cut + flow_internal);
+  double Z_p = height * (1.0 - cut) * (1.0 + flow_ratio) /
+               (1.0 - cut + flow_ratio);
 
   // Glaser eqn 3
   // Converting from molecular mass to atomic mass (assuming U238)
@@ -100,18 +100,18 @@ double CentrifugeConfig::ComputeDeltaU(double cut) {
   double C1 = (2.0 * M_PI * (D_rho * M_238 / M) / (log(r2 / r1)));
   //  double C1 = (2.0 * M_PI * D_rho / (log(r2 / r1)));
   double A_p = C1 * (1.0 / feed) *
-               (cut / ((1.0 + flow_internal) * (1.0 - cut + flow_internal)));
+               (cut / ((1.0 + flow_ratio) * (1.0 - cut + flow_ratio)));
   double A_w = C1 * (1.0 / feed) *
-               ((1.0 - cut) / (flow_internal * (1.0 - cut + flow_internal)));
+               ((1.0 - cut) / (flow_ratio * (1.0 - cut + flow_ratio)));
 
   double C_therm = CalcCTherm(v_a, temp, dM);
 
   // defining terms in the Ratz equation
   double r1_over_r2_sq = r1_over_r2*r1_over_r2;
   double C_scale = pow((r2 / a), 4) * (1 - r1_over_r2_sq)*(1 - r1_over_r2_sq);
-  double bracket1 = (1 + flow_internal) / cut;
+  double bracket1 = (1 + flow_ratio) / cut;
   double exp1 = exp(-1.0 * A_p * Z_p);
-  double bracket2 = flow_internal / (1 - cut);
+  double bracket2 = flow_ratio / (1 - cut);
   double exp2 = exp(-1.0 * A_w * (height - Z_p));
 
   // Glaser eqn 10 (Ratz Equation)

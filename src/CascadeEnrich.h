@@ -272,7 +272,7 @@ class CascadeEnrich : public cyclus::Facility {
   const double dM = 0.003;  // kg/mol U238 - U235
   const double x = 1000;    // Pressure ratio (Glaser)
 
-  const double flow_internal = 2.0;  // can vary from 2-4
+  const double flow_ratio = 2.0;  // can vary from 2-4
   const double eff = 1.0;            // typical efficiencies <0.6
   const double cut = 0.5;            // target for ideal cascade
 

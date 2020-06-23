@@ -55,10 +55,16 @@ class StageConfig {
     // calculate Alpha value using the dU, Cut and the centrifuge feed flow value
     void AlphaByDU();
 
+    // calculate Alpha from the feed assay and the product assay;
+    void AlphaByProductAssay();
+
     // Compute Beta value from alpha value, cut and feed assay
     void BetaByAlphaAndCut();
     // recompute Cut value assuming Alpha and Beta fixed
     void CutByAlphaBeta();
+
+    // Compute Product from gamma
+    void ProductAssayByGamma(double gamma);
 
     // Compute Product assay from feed assay and alpha
     void ProductAssay();

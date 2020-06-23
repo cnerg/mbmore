@@ -58,7 +58,7 @@ void CascadeEnrich::Build(cyclus::Agent* parent) {
   // Calculate ideal machine performance
   double design_delU = CalcDelU(centrifuge_velocity, height, diameter,
 				Mg2kgPerSec(machine_feed), temp,
-				cut, eff, M, dM, x, flow_internal);
+				cut, eff, M, dM, x, flow_ratio);
   double design_alpha = AlphaBySwu(design_delU, Mg2kgPerSec(machine_feed),
 				   cut, M);
 
