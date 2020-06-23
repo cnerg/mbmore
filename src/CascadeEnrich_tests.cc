@@ -109,7 +109,7 @@ TEST_F(CascadeEnrichTest, CheckFlowConstraint) {
   sim.AddRecipe("natu1", cascadenrichtest::c_natu1());
   sim.AddRecipe("heu", cascadenrichtest::c_heu());
 
-  sim.AddSink("enr_u").recipe("heu").capacity(10).Finalize();
+  sim.AddSink("enr_u").recipe("heu").capacity(4).Finalize();
 
   int id = sim.Run();
 
@@ -119,7 +119,7 @@ TEST_F(CascadeEnrichTest, CheckFlowConstraint) {
   Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
 
   EXPECT_EQ(1.0, qr.rows.size());
-  EXPECT_NEAR(10, m->quantity(), 0.1)
+  EXPECT_NEAR(4, m->quantity(), 0.1)
       << "traded quantity differ from flow contraints";
 }
 
@@ -145,7 +145,7 @@ TEST_F(CascadeEnrichTest, CheckCapConstraint) {
   sim.AddRecipe("natu1", cascadenrichtest::c_natu1());
   sim.AddRecipe("heu", cascadenrichtest::c_heu());
 
-  sim.AddSink("enr_u").recipe("heu").capacity(20).Finalize();
+  sim.AddSink("enr_u").recipe("heu").capacity(100).Finalize();
 
   int id = sim.Run();
 
@@ -155,7 +155,7 @@ TEST_F(CascadeEnrichTest, CheckCapConstraint) {
   Material::Ptr m = sim.GetMaterial(qr.GetVal<int>("ResourceId"));
 
   EXPECT_EQ(1.0, qr.rows.size());
-  EXPECT_NEAR(5.831, m->quantity(), 0.01)
+  EXPECT_NEAR(24.691, m->quantity(), 0.01)
       << "traded quantity exceeds capacity constraint";
 }
 
@@ -298,7 +298,7 @@ TEST_F(CascadeEnrichTest, TailsQty) {
 
   stmt->BindText(1, "tails");
   stmt->Step();
-  EXPECT_NEAR(7.575, stmt->GetDouble(0), 0.01)
+  EXPECT_NEAR(7.100, stmt->GetDouble(0), 0.01)
       << "Not providing the requested quantity";
 }
 
