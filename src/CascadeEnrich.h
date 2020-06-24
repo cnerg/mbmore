@@ -316,14 +316,6 @@ class CascadeEnrich : public cyclus::Facility {
             "that drives the r1 / r2 ratio."}
   double x;
 
-#pragma cyclus var {					  \
-    "default" : 1.0, \
-    "tooltip" : "Overall centrifuge efficiency", \
-    "uilabel" : "Overall centrifuge efficiency", \
-    "doc" : "Centrifuge efficiency parameter that describes"\
-            "its effective separative performance."}
-  double eff;
-
   #pragma cyclus var { \
     "default": 0, \
     "userlevel": 10, \

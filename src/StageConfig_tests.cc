@@ -18,7 +18,6 @@ double x = 1000;    // Pressure ratio (Glaser)
 
 // General cascade assumptions
 double flow_ratio = 2.0;
-double eff = 1.0;
 double cut = 0.5;
 
 // Centrifgue parameters based on Glaser SGS 2009 paper
@@ -34,7 +33,7 @@ const double prod_assay = 0.035;
 const double waste_assay = 0.001;
 const double feed_c = 739 / (30.4 * 24 * 60 * 60);    // kg/month -> kg/sec
 const double product_c = 77 / (30.4 * 24 * 60 * 60);  // kg/month -> kg/sec
-CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM, x,
+CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, M, dM, x,
                             flow_ratio);
 
 // del U=8.638345e-08 alpha=1.130517
@@ -157,7 +156,6 @@ TEST(StageConfig_Test, TestStages) {
 TEST(StageConfig_Test, AlphaBeta) {
   // P1-type parameters
   v_a = 320; // m/s
-  eff = 0.564;
   x = 1000.;
   flow_ratio = 2.0;
   temp = 320; // K
@@ -169,7 +167,7 @@ TEST(StageConfig_Test, AlphaBeta) {
   double feed = 12.6 / 1000. / 1000.; // mg/s -> kg/s
   double f_assay = 0.00720;
 
-  CentrifugeConfig cent(v_a, Z, d, feed, temp, eff, M, dM, x, flow_ratio);
+  CentrifugeConfig cent(v_a, Z, d, feed, temp, M, dM, x, flow_ratio);
 
   double delU = cent.ComputeDeltaU(cut);
 

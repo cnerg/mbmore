@@ -12,7 +12,7 @@ class CentrifugeConfig {
  public:
   CentrifugeConfig();
   CentrifugeConfig(double v_a, double h, double d, double feed, double T,
-                   double eff, double M, double dM, double x, double i_flow);
+                   double M, double dM, double x, double i_flow);
 
   double ComputeDeltaU(double cut); // compute the solution of the Raetz equation using all the paramters valus and the provided cut value
 
@@ -26,7 +26,6 @@ class CentrifugeConfig {
   double diameter; // centrifuge diameter
   double feed; // feed flow rate
   double temp; // average gas temperature
-  double eff; // efficiency
 
  private:
   double D_rho;      // kg/m/s

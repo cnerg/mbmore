@@ -17,7 +17,6 @@ const double x = 1000;    // Pressure ratio (Glaser)
 
 // General cascade assumptions
 const double flow_ratio = 2.0;
-const double eff = 1.0;
 const double cut = 0.5;
 
 // Centrifuge parameters based on Glaser SGS 2009 paper
@@ -33,7 +32,7 @@ const double product_assay = 0.035;
 const double waste_assay = 0.001;
 const double feed_c = 739 / (30.4 * 24 * 60 * 60);    // kg/month -> kg/sec
 const double product_c = 77 / (30.4 * 24 * 60 * 60);  // kg/month -> kg/sec
-CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM, x,
+CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, M, dM, x,
                             flow_ratio);
 
 // del U=8.638345e-08 alpha=1.130517

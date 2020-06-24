@@ -34,7 +34,6 @@ CentrifugeConfig::CentrifugeConfig() {
   feed = 15. / 1000. / 1000.;
   temp = 320;
 
-  eff = 1.0;
   x = 1000;
   flow_ratio = 2.0;
 
@@ -50,16 +49,14 @@ CentrifugeConfig::CentrifugeConfig() {
 }
 
 CentrifugeConfig::CentrifugeConfig(double v_a_, double h_, double d_,
-                                   double feed_, double T_, double eff_,
-                                   double M_, double dM_, double x_,
-                                   double flow_) {
+                                   double feed_, double T_, double M_,
+                                   double dM_, double x_, double flow_) {
   v_a = v_a_;
   height = h_;
   diameter = d_;
   feed = feed_;
   temp = T_;
 
-  eff = eff_;
   x = x_;
   flow_ratio = flow_;
 
@@ -123,7 +120,7 @@ double CentrifugeConfig::ComputeDeltaU(double cut) {
   double major_term =
       0.5 * cut * (1.0 - cut) * (C_therm * C_therm) * C_scale *
       pow(((bracket1 * (1 - exp1)) + (bracket2 * (1 - exp2))), 2);  // kg/s
-  double del_U = feed_U * major_term;  //* eff; // kg/s
+  double del_U = feed_U * major_term; // kg/s
 
   return del_U;
 }

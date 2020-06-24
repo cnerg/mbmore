@@ -19,7 +19,6 @@ TEST(CentrifugeConfig_Test, TestSWU) {
 
   // General cascade assumptions
   double flow_ratio = 2.0;
-  double eff = 1.0;
   double cut = 0.5;
 
   // Centrifuge params used in Python test code
@@ -31,7 +30,7 @@ TEST(CentrifugeConfig_Test, TestSWU) {
   double feed_m = 15 * 60 * 60 / ((1e3) * 60 * 60 * 1000.0);  // kg/sec
   double temp = 320.0;                                        // Kelvin
 
-  CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, eff, M, dM,
+  CentrifugeConfig centrifuge(v_a, height, diameter, feed_m, temp, M, dM,
                               x, flow_ratio);
   // dU=8.638345e-08 alpha=1.130517
   double delU = centrifuge.ComputeDeltaU(cut);
