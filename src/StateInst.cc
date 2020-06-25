@@ -239,16 +239,16 @@ void StateInst::DeploySecret() {
   // calculated
   
   // Any factors not defined for sim should have a value of zero in the table
-  std::vector<std::string>& master_factors = pseudo_region->GetMasterFactors();
+  std::vector<std::string>& main_factors = pseudo_region->GetmainFactors();
   std::map<std::string, bool> present = pseudo_region->DefinedFactors("Pursuit");
 
   double pursuit_eqn = 0;
 
-  // Iterate through master list of factors. If not present then record 0
+  // Iterate through main list of factors. If not present then record 0
   // in database. If present then calculate current value based on time
   // dynamics
-  for(int f = 0; f < master_factors.size(); f++){
-    const std::string& factor = master_factors[f];
+  for(int f = 0; f < main_factors.size(); f++){
+    const std::string& factor = main_factors[f];
     bool f_defined  = present[std::string(factor)];
     // for most factors 'relation' defines the function for time dynamics of
     // the factor. But for Conflict, 'relation' is the pair state in the

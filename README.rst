@@ -4,7 +4,7 @@ Mbmore!
 This repository is a collection of custom Cyclus facility archetypes that
 utilize a random number generator (RNG) to create non-deterministic behaviors.
 General methods controlling the behavior (including random number generation
-and Gaussian distributions) are defined in the `behavior functions. <https://github.com/cnerg/mbmore/blob/master/src/behavior_functions.h>`_
+and Gaussian distributions) are defined in the `behavior functions. <https://github.com/cnerg/mbmore/blob/main/src/behavior_functions.h>`_
 
 
 Behavior Functions
