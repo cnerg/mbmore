@@ -239,7 +239,7 @@ void StateInst::DeploySecret() {
   // calculated
   
   // Any factors not defined for sim should have a value of zero in the table
-  std::vector<std::string>& main_factors = pseudo_region->GetmainFactors();
+  std::vector<std::string>& main_factors = pseudo_region->GetMainFactors();
   std::map<std::string, bool> present = pseudo_region->DefinedFactors("Pursuit");
 
   double pursuit_eqn = 0;

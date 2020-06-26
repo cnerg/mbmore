@@ -60,7 +60,7 @@ class InteractRegion
   std::map<std::string, bool> GetDefinedFactors(std::string eqn_type);
 
   // Returns the main list of all factors to be recorded in database
-  std::vector<std::string>& GetmainFactors();
+  std::vector<std::string>& GetMainFactors();
 
   // Tracks weapons status of each state (0 = not pursuing, 2 = pursuing,
   // 3 = acquired) by updating the sim_weapon_status map

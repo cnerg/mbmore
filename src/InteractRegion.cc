@@ -116,7 +116,7 @@ std::map<std::string, bool>
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
-std::vector<std::string>& InteractRegion::GetmainFactors() {
+std::vector<std::string>& InteractRegion::GetMainFactors() {
   return column_names;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
