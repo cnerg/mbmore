@@ -8,7 +8,7 @@
 
 /*
 Working with cycamore Develop build:  3ada148442de636d
-cyclus master commit b54c91516c6
+cyclus main commit b54c91516c6
 
 Conceptual Design:
 x Build phase: Design cascade

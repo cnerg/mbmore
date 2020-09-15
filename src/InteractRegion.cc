@@ -51,15 +51,15 @@ void InteractRegion::Tick() {
     // Create conflict score map
     BuildScoreMatrix();
     
-    // Define Master List of column names for the database only once.
-    std::string master_factors [] = { "Auth", "Conflict", "Enrich",
+    // Define main List of column names for the database only once.
+    std::string main_factors [] = { "Auth", "Conflict", "Enrich",
 				      "Mil_Iso","Mil_Sp","Reactors",
 				      "Sci_Net", "U_Reserve"};
-    int n_factors = sizeof(master_factors) / sizeof(master_factors[0]);
+    int n_factors = sizeof(main_factors) / sizeof(main_factors[0]);
     
     if (column_names.size() == 0){
       for(int f_it = 0; f_it < n_factors; f_it++) {
-	column_names.push_back(master_factors[f_it]);
+	column_names.push_back(main_factors[f_it]);
       }
     }
     
@@ -116,7 +116,7 @@ std::map<std::string, bool>
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Returns a map of regularly used factors and bool to indicate whether they are
 // defined in this sim.
-std::vector<std::string>& InteractRegion::GetMasterFactors() {
+std::vector<std::string>& InteractRegion::GetMainFactors() {
   return column_names;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -59,8 +59,8 @@ class InteractRegion
   // the are defined in this sim.
   std::map<std::string, bool> GetDefinedFactors(std::string eqn_type);
 
-  // Returns the master list of all factors to be recorded in database
-  std::vector<std::string>& GetMasterFactors();
+  // Returns the main list of all factors to be recorded in database
+  std::vector<std::string>& GetMainFactors();
 
   // Tracks weapons status of each state (0 = not pursuing, 2 = pursuing,
   // 3 = acquired) by updating the sim_weapon_status map
@@ -139,7 +139,7 @@ bool symmetric;
 // pointers persist
 static std::vector<std::string> column_names;
 
-// Defines which of the master factor list are being used based on weights
+// Defines which of the main factor list are being used based on weights
 std::map<std::string, bool> p_present;
 std::map<std::string, bool> a_present;
 
