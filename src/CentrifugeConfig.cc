@@ -36,6 +36,7 @@ CentrifugeConfig::CentrifugeConfig() {
 
   x = 1000;
   flow_ratio = 2.0;
+  design_cut = 0.5;
 
   // default UF6 0.352 kg/mol
   M = 0.352;
@@ -59,6 +60,7 @@ CentrifugeConfig::CentrifugeConfig(double v_a_, double h_, double d_,
 
   x = x_;
   flow_ratio = flow_;
+  design_cut = 0.5;
 
   M = M_;
   dM = dM_;
@@ -89,7 +91,7 @@ double CentrifugeConfig::ComputeDeltaU(double cut) {
   // Glaser eqn 12
   // Vertical location of feed
   double Z_p =
-      height * (1.0 - cut) * (1.0 + flow_ratio) / (1.0 - cut + flow_ratio);
+      height * (1.0 - design_cut) * (1.0 + flow_ratio) / (1.0 - design_cut + flow_ratio);
 
   // Glaser eqn 3
   // Converting from molecular mass to atomic mass (assuming U238)

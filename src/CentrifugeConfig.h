@@ -32,6 +32,8 @@ class CentrifugeConfig {
   double gas_const;  // J/K/mol
   double M_238;      // kg/mol
 
+  double design_cut; // used for calculating the rectifier length
+
   // two method to compute some part of the solution to the Raetz equation
   double CalcCTherm(double v_a, double temp, double dM);
   double CalcV(double assay);
